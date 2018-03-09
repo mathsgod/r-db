@@ -1,0 +1,16 @@
+{
+    "name": "hostlink/r-db",
+    "description": "raymond framework db",
+    "autoload": {
+        "psr-4": {
+            "DB\\": "DB"
+        }
+    },
+    "require": {
+        "php": ">=5.4"
+    },
+    "type": "library",
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "version": "1.0.6"
+}
