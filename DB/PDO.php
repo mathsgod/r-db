@@ -9,7 +9,7 @@ class PDO extends \PDO
     {
         //\PDO::ERRMODE_EXCEPTION;
         $this->log = $log;
-
+     
         try {
             parent::__construct("mysql:dbname={$database};host={$hostname};charset={$charset}", $username, $password, [
                 \PDO::ATTR_PERSISTENT => true,
@@ -21,7 +21,6 @@ class PDO extends \PDO
             $this->schema = new Schema($this, $database);
         } catch (\PDOException $e) {
             echo "SQLSTATE[HY000] [1045] Access denied";
-            // echo $e->getMessage();
             if ($this->log) $log->error("SQLSTATE[HY000] [1045] Access denied");
             exit();
         }

@@ -11,6 +11,5 @@
     },
     "type": "library",
     "license": "MIT",
-    "minimum-stability": "stable",
-    "version": "1.0.6"
+    "minimum-stability": "stable"
 }
