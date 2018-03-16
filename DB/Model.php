@@ -61,10 +61,16 @@ abstract class Model
             }
         } else {
             $key = static::__key();
+
             $rs = static::__table()->where("$key=:$key", [$key => $id])->select();
             if (count($rs)) {
                 foreach ($rs[0] as $n => $v) {
-                    $this->$n = $v;
+                    $attr = $this->__attribute($n);
+                    if ($attr["Type"] == "json") {
+                        $this->$n = json_decode($v, true);
+                    } else {
+                        $this->$n = $v;
+                    }
                 }
             } else {
                 $table = static::__table();
@@ -82,12 +88,17 @@ abstract class Model
                 continue;
             $records[$name] = ($value === "") ? null : $value;
 
+
             if ($attribue = self::__attribute($name)) {
+                if ($attribue["Type"] == "json") {
+                    $records[$name] = json_encode($records[$name], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                }
                 if ($attribue["Null"] == "YES" && $records[$name] === "") {
                     $records[$name] = null;
                 } elseif ($attribue["Null"] == "NO" && $records[$name] === null) {
                     unset($records[$name]);
                 }
+
             }
         }
         if ($id = $this->id()) { // update
