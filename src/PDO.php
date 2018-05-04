@@ -4,12 +4,12 @@ namespace DB;
 class PDO extends \PDO
 {
     private $schema;
-    private $log;
-    public function __construct($database, $hostname, $username, $password, $charset = "utf8", $log)
+    private $logger;
+    public function __construct($database, $hostname, $username, $password, $charset = "utf8", $logger)
     {
         //\PDO::ERRMODE_EXCEPTION;
-        $this->log = $log;
-     
+        $this->logger = $logger;
+
         try {
             parent::__construct("mysql:dbname={$database};host={$hostname};charset={$charset}", $username, $password, [
                 \PDO::ATTR_PERSISTENT => true,
@@ -21,7 +21,7 @@ class PDO extends \PDO
             $this->schema = new Schema($this, $database);
         } catch (\PDOException $e) {
             echo "SQLSTATE[HY000] [1045] Access denied";
-            if ($this->log) $log->error("SQLSTATE[HY000] [1045] Access denied");
+            if ($this->logger) $logger->error("SQLSTATE[HY000] [1045] Access denied");
             exit();
         }
     }
@@ -48,20 +48,21 @@ class PDO extends \PDO
 
     public function logger()
     {
-        return $this->log;
+        return $this->logger;
     }
 
     public function query()
     {
-        if ($this->log) $this->log->info("PDO::query",func_get_args());
+        if ($this->logger) $this->logger->debug("PDO::query", func_get_args());
         $reflector = new \ReflectionClass(get_class($this));
         $parent = $reflector->getParentClass();
         $method = $parent->getMethod('query');
         return $method->invokeArgs($this, func_get_args());
     }
 
-    public function prepare($statement){
-        if ($this->log) $this->log->info("PDO::prepare",func_get_args());
+    public function prepare($statement)
+    {
+        if ($this->logger) $this->logger->debug("PDO::prepare", func_get_args());
         $reflector = new \ReflectionClass(get_class($this));
         $parent = $reflector->getParentClass();
         $method = $parent->getMethod('prepare');
