@@ -9,8 +9,16 @@
     "require": {
         "php": ">=5.4"
     },
+    "require-dev": {
+        "phpunit/phpunit": "*"
+    },
     "type": "library",
     "license": "MIT",
     "minimum-stability": "stable",
-    "version": "1.1.4"
+    "authors": [
+        {
+            "name": "Raymond Chong"
+        }
+    ],
+    "version": "1.2.0"
 }

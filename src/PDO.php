@@ -43,7 +43,7 @@ class PDO extends \PDO
 
     public function table($name)
     {
-        return new Table($this, $name);
+        return new Table($this, $name, $this->logger);
     }
 
     public function logger()

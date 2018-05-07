@@ -1,5 +1,4 @@
 <?php
-
 namespace DB;
 
 class Table
@@ -62,9 +61,10 @@ class Table
     public function describe()
     {
         $sql = "DESCRIBE `{$this->name}`";
-		//		$sql .= $this->where();
-        $sth = $this->db->query($sql)->fetchAll();
-        return $sth;
+        if($sth = $this->db->query($sql)){
+            return $sth->fetchAll();
+        }
+        
     }
 
     public function keys()

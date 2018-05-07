@@ -1,5 +1,4 @@
 <?
-
 namespace DB;
 class Column {
 
