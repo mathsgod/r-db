@@ -20,6 +20,8 @@ class PDO extends \PDO
 
             $this->schema = new Schema($this, $database);
         } catch (\PDOException $e) {
+            print_R($e);
+            die();
             echo "SQLSTATE[HY000] [1045] Access denied";
             if ($this->logger) $logger->error("SQLSTATE[HY000] [1045] Access denied");
             exit();

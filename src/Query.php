@@ -3,15 +3,15 @@ namespace DB;
 
 class Query
 {
-    private $step = array();
+    private $step = [];
     private $table = null;
     private $ref = null;
-    private $from = array();
-    private $set = array();
-    private $join = array();
-    private $where = array();
-    private $orderby = array();
-    private $groupby = array();
+    private $from = [];
+    private $set = [];
+    private $join = [];
+    private $where = [];
+    private $orderby = [];
+    private $groupby = [];
 
     private $db = null;
 
@@ -90,7 +90,7 @@ class Query
     {
         if (func_num_args() == 0) {
             if (!count($this->orderby)) return "";
-            $orderby = array();
+            $orderby = [];
             foreach ($this->orderby as $values) {
                 $orderby[] = $values[0] . " " . $values[1];
             }
@@ -171,7 +171,7 @@ class Query
 
     public function select($query = null)
     {
-        $ts = array();
+        $ts = [];
         foreach ($this->from as $i => $f) {
             $class = $f[0];
             $t = "`" . $this->table . "`";
@@ -217,7 +217,7 @@ class Query
 
     public function count($query = "*")
     {
-        $ts = array();
+        $ts = [];
         foreach ($this->from as $i => $f) {
             $class = $f[0];
             $t = "`" . $this->table . "`";

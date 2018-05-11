@@ -1,6 +1,6 @@
 <?php
 namespace DB;
-
+use Exception;
 class Table
 {
     private $db;
@@ -24,20 +24,35 @@ class Table
     {
         $sql = "ALTER TABLE `{$this->name}` DROP COLUMN `$name`";
         $this->sql = $sql;
-        return $this->db->exec($sql);
+        $ret=$this->db->exec($sql);
+        if($ret===FALSE){
+            $error=$this->db->errorInfo();
+            throw new Exception($error[2],$error[1]);
+        }
+        return $ret;
     }
 
     public function addColumn($name, $type, $constraint)
     {
         $sql = "ALTER TABLE `{$this->name}` ADD COLUMN `$name` $type $constraint";
         $this->sql = $sql;
-        return $this->db->exec($sql);
+        $ret=$this->db->exec($sql);
+        if($ret===FALSE){
+            $error=$this->db->errorInfo();
+            throw new Exception($error[2],$error[1]);
+        }
+        return $ret;
     }
 
     public function truncate()
     {
         $this->sql = "TRUNCATE `{$this->name}`";
-        return $this->db->exec($this->sql);
+        $ret=$this->db->exec($sql);
+        if($ret===FALSE){
+            $error=$this->db->errorInfo();
+            throw new Exception($error[2],$error[1]);
+        }
+        return $ret;
     }
 
     public function columns($field)
