@@ -1,5 +1,5 @@
 <?php
-namespace DB;
+namespace R\DB;
 
 class PDO extends \PDO
 {
@@ -67,6 +67,11 @@ class PDO extends \PDO
         $parent = $reflector->getParentClass();
         $method = $parent->getMethod('prepare');
         return $method->invokeArgs($this, func_get_args());
+    }
+
+    public function from($table)
+    {
+        return new Query($this, $table);
     }
 
 }

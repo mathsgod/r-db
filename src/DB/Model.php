@@ -1,5 +1,7 @@
 <?php
-namespace DB;
+namespace R\DB;
+
+use R\RSList;
 
 abstract class Model
 {
@@ -10,7 +12,7 @@ abstract class Model
 
     abstract public static function __db();
 
-    public static function __table()
+    public static function _table()
     {
         $class = new \ReflectionClass(get_called_class());
         $props = $class->getStaticProperties();
@@ -22,7 +24,7 @@ abstract class Model
         return static::__db()->table($table);
     }
 
-    public static function __key()
+    public static function _key()
     {
         $class = get_called_class();
         if (self::$_Keys[$class])
@@ -49,7 +51,7 @@ abstract class Model
         if (self::$_Attributes[$class])
             return self::$_Attributes[$class];
 
-        self::$_Attributes[$class] = static::__table()->describe();
+        self::$_Attributes[$class] = static::_table()->describe();
         return self::$_Attributes[$class];
     }
 
@@ -60,10 +62,13 @@ abstract class Model
                 $this->{$attribute["Field"]} = $attribute["Default"];
             }
         } else {
-            $key = static::__key();
-
-            $rs = static::__table()->where("$key=:$key", [$key => $id])->select();
+            $key = static::_key();
+            
+            $rs = static::__db()->from(static::_table()->name)->where([["$key=?", $id]])->select();
+            $rs=$rs->fetchAll();
+            
             if (count($rs)) {
+
                 foreach ($rs[0] as $n => $v) {
                     $attr = $this->__attribute($n);
                     if ($attr["Type"] == "json") {
@@ -73,7 +78,7 @@ abstract class Model
                     }
                 }
             } else {
-                $table = static::__table();
+                $table = static::_table();
                 throw new \Exception("$table:$id not found", 404);
             }
         }
@@ -81,7 +86,7 @@ abstract class Model
 
     public function save()
     {
-        $key = static::__key();
+        $key = static::_key();
         $records = array();
         foreach (get_object_vars($this) as $name => $value) {
             if (is_null($value) || $name[0] == "_" || $name == $key)
@@ -101,25 +106,55 @@ abstract class Model
 
             }
         }
-        if ($id = $this->id()) { // update
-            return static::__table()->where("$key=:$key", [$key => $id])->update($records);
+        if ($id = $this->_id()) { // update
+            return static::_table()->from()->where("$key=:$key", [$key => $id])->update($records);
         } else {
-            $table = static::__table();
+            $table = static::_table();
             $stm = $table->insert($records);
             $this->$key = $table->db()->lastInsertId();
             return $stm;
         }
     }
 
+    public function _id(){
+        $key=$this->_key();
+        return $this->$key;
+    }
+
     public function update($records = [])
     {
-        $key = static::__key();
-        return static::__table()->where("`$key`=:$key", [$key => $this->$key])->update($records);
+        $key = static::_key();
+        return static::_table()->from()->where("`$key`=:$key", [$key => $this->$key])->update($records);
     }
 
     public function delete()
     {
-        $key = static::__key();
-        return static::__table()->where("`$key`=:$key", [$key => $this->$key])->delete();
+        $key = static::_key();
+        return static::_table()->from()->where("`$key`=:$key", [$key => $this->$key])->delete();
     }
+
+    public static function Find($where, $order, $limit)
+    {
+        $sth = static::_table()->find($where,$order,$limit);
+        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, get_called_class(), []);
+        return new RSList($sth);
+    }
+
+    public static function First($where, $order)
+    {
+        return self::Find($where, $order, 1)->first();
+    }
+
+    public static function _top($count, $where, $order)
+    {
+        return self::Find($where, $order, $count);
+    }
+
+    public static function _count($where)
+    {
+        return static::_table()->count($where);
+    }
+
+
+
 }

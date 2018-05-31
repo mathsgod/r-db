@@ -1,5 +1,5 @@
 <?php
-namespace DB;
+namespace R\DB;
 
 class Query
 {
@@ -17,18 +17,12 @@ class Query
 
     private $bindParam = [];
 
-    public function __construct($class, $ref = null)
+    public function __construct(PDO $db, $table)
     {
-        $this->class = $class;
-        $this->db = $class::__db();
-        $this->table = $class::__table();
+        $this->db = $db;
+        $this->table = $table;
         $this->ref = ($ref) ? $ref : $this->table;
-        $this->from[] = [$class, $ref];
-    }
-
-    public static function from($class, $ref = null)
-    {
-        return new Query($class, $ref);
+        $this->from[] = [$table, $table];
     }
 
     public function set()
@@ -55,32 +49,39 @@ class Query
         $this->db->query($sql);
     }
 
-    public function where($where = null)
+    public function where($where, $bindParam)
     {
         if (func_num_args() == 0) {
-            if (!count($this->where)) return "";
-            return " where (" . implode(") and (", $this->where) . ")";
+            if (!count($this->where)) {
+                return "";
+            }
+            return " WHERE (" . implode(") AND (", $this->where) . ")";
         }
-        if (is_null($where)) return $this;
+
+        if (is_null($where)) {
+            return $this;
+        }
+
         if (is_array($where)) {
             foreach ($where as $w) {
-                if (is_null($w)) continue;
                 if (is_array($w)) {
-                    $this->where[] = $w[0];
-
-                    if (is_array($w[1])) {
-                        foreach ($w[1] as $k => $v) {
-                            $this->bindParam[] = $v;
-                        }
-                    } else {
-                        $this->bindParam[] = $w[1];
-                    }
+                    $this->where($w[0], $w[1]);
                 } else {
-                    $this->where[] = $w;
+                    $this->where($w);
                 }
             }
-        } else {
-            $this->where[] = $where;
+            return $this;
+        }
+
+        $this->where[] = $where;
+        if (isset($bindParam)) {
+            if (is_array($bindParam)) {
+                foreach ($bindParam as $k => $v) {
+                    $this->bindParam[$k] = $v;
+                }
+            } else {
+                $this->bindParam[] = $bindParam;
+            }
         }
 
         return $this;
@@ -138,7 +139,7 @@ class Query
         $limit = func_get_arg(0);
         if (is_null($limit)) return $this;
         if (is_array($limit)) { // page limit
-            $this->limit = array( ($limit[0] - 1) * $limit[1], $limit[1]);
+            $this->limit = array(($limit[0] - 1) * $limit[1], $limit[1]);
         } else {
             $this->limit = func_get_args();
         }
@@ -173,7 +174,6 @@ class Query
     {
         $ts = [];
         foreach ($this->from as $i => $f) {
-            $class = $f[0];
             $t = "`" . $this->table . "`";
             if ($f[1] != "") $t .= " " . $f[1];
             $ts[] = $t;
@@ -187,19 +187,23 @@ class Query
             $sql = "Select $query From $from";
         }
 
+
         $sql .= $this->join();
         $sql .= $this->where();
         $sql .= $this->groupBy();
         $sql .= $this->orderBy();
         $sql .= $this->limit();
-
         if ($this->bindParam) {
+
             if ($sth = $this->db->prepare($sql)) {
                 $sth->execute($this->bindParam);
+
                 return $sth;
             }
         } else {
-            return $this->db->query($sql);
+            $sth = $this->db->prepare($sql);
+            $sth->execute();
+            return $sth;
         }
     }
 
@@ -207,12 +211,21 @@ class Query
     {
         $class = $this->class;
         $table = $this->table;
-        $sql = "Delete `{$table}`.* From `$table`";
+        $sql = "DELETE `{$table}`.* From `$table`";
         $sql .= $this->join();
         $sql .= $this->where();
         $sql .= $this->orderBy();
         $sql .= $this->limit();
-        return $this->db->exec($sql);
+        if ($this->bindParam) {
+            if ($sth = $this->db->prepare($sql)) {
+                $sth->execute($this->bindParam);
+                return $sth;
+            }
+        } else {
+            $sth = $this->db->prepare($sql);
+            $sth->execute();
+            return $sth;
+        }
     }
 
     public function count($query = "*")
@@ -225,7 +238,7 @@ class Query
             $ts[] = $t;
         }
         $from = implode(",", $ts);
-        $sql = "Select count($query) From $from";
+        $sql = "SELECT count($query) From $from";
         $sql .= $this->join();
         $sql .= $this->where();
         try {
@@ -241,5 +254,30 @@ class Query
             throw new \Exception($e->getMessage() . " " . $sql);
         }
         return $result;
+    }
+
+    public function insert(array $records = [])
+    {
+        $names = array_keys($records);
+        $values = implode(",", array_map(function ($name) {
+            return ":" . $name;
+        }, $names));
+        $names = implode(",", array_map(function ($name) {
+            return "`" . $name . "`";
+        }, $names));
+
+        $sth = $this->db->prepare("INSERT INTO `$this->table` ({$names}) values ({$values})");
+        $sth->execute($records);
+        return $sth;
+    }
+
+    public function truncate()
+    {
+        $table = $this->table;
+        $sql = "TRUNCATE `$table`";
+
+        return $this->db->exec($sql);
+        
+
     }
 }

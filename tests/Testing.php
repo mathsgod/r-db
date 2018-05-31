@@ -1,10 +1,10 @@
 <?
 
-class Testing extends DB\Model
+class Testing extends R\DB\Model
 {
     public static function __db()
     {
-        return new DB\PDO("raymond", "127.0.0.1", "root", "1111112");
+        return new R\DB\PDO("raymond", "127.0.0.1", "root", "111111");
     }
 
 }

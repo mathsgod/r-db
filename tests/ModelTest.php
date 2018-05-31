@@ -14,13 +14,13 @@ final class ModelTest extends TestCase
 
     public function test_key()
     {
-        $key = Testing::__key();
+        $key = Testing::_key();
         $this->assertEquals("testing_id", $key);
     }
 
     public function test_table()
     {
-        $table = Testing::__table();
+        $table = Testing::_table();
         $this->assertEquals("Testing", $table->name);
     }
 
@@ -30,5 +30,38 @@ final class ModelTest extends TestCase
         $this->assertTrue(is_array($attr));
         $this->assertTrue(sizeof($attr) > 0);
     }
+
+    public function test_first()
+    {
+        Testing::_table()->from()->truncate();
+
+        $f = new Testing();
+        $f->save();
+
+        $f = Testing::First();
+        $this->assertEquals($f, new Testing($f->testing_id));
+    }
+
+    /*public function test_save()
+    {
+
+        $count = Testing::_count();
+
+        $t = new Testing();
+        $t->save();
+        $this->assertTrue($t->testing_id > 0);
+
+        $this->assertEquals($count + 1, Testing::_count());
+
+
+        $t->delete();
+
+        $this->assertEquals($count, Testing::_count());
+
+
+
+
+    }*/
+
 
 }
