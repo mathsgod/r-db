@@ -62,14 +62,11 @@ abstract class Model
                 $this->{$attribute["Field"]} = $attribute["Default"];
             }
         } else {
-            $key = static::_key();
-            
-            $rs = static::__db()->from(static::_table()->name)->where([["$key=?", $id]])->select();
-            $rs=$rs->fetchAll();
-            
-            if (count($rs)) {
 
-                foreach ($rs[0] as $n => $v) {
+            $key = static::_key();
+            $rs = static::_table()->find("`$key`=:$key")->execute([$key => $id])->fetch();
+            if (count($rs)) {
+                foreach ($rs as $n => $v) {
                     $attr = $this->__attribute($n);
                     if ($attr["Type"] == "json") {
                         $this->$n = json_decode($v, true);
@@ -88,11 +85,11 @@ abstract class Model
     {
         $key = static::_key();
         $records = array();
+
         foreach (get_object_vars($this) as $name => $value) {
             if (is_null($value) || $name[0] == "_" || $name == $key)
                 continue;
             $records[$name] = ($value === "") ? null : $value;
-
 
             if ($attribue = self::__attribute($name)) {
                 if ($attribue["Type"] == "json") {
@@ -106,18 +103,20 @@ abstract class Model
 
             }
         }
-        if ($id = $this->_id()) { // update
-            return static::_table()->from()->where("$key=:$key", [$key => $id])->update($records);
+        if ($id = $this->$key) { // update
+            return static::_table()->update($records)->where("$key=:$key")->execute([$key => $id]);
         } else {
             $table = static::_table();
-            $stm = $table->insert($records);
+            $records[$key] = null;
+            $stm = $table->insert($records)->execute();
             $this->$key = $table->db()->lastInsertId();
             return $stm;
         }
     }
 
-    public function _id(){
-        $key=$this->_key();
+    public function _id()
+    {
+        $key = $this->_key();
         return $this->$key;
     }
 
@@ -135,7 +134,7 @@ abstract class Model
 
     public static function Find($where, $order, $limit)
     {
-        $sth = static::_table()->find($where,$order,$limit);
+        $sth = static::_table()->find($where, $order, $limit)->execute();
         $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, get_called_class(), []);
         return new RSList($sth);
     }

@@ -33,7 +33,7 @@ final class ModelTest extends TestCase
 
     public function test_first()
     {
-        Testing::_table()->from()->truncate();
+        Testing::_table()->truncate();
 
         $f = new Testing();
         $f->save();
@@ -41,6 +41,25 @@ final class ModelTest extends TestCase
         $f = Testing::First();
         $this->assertEquals($f, new Testing($f->testing_id));
     }
+
+    public function test_save()
+    {
+        
+        $t=new Testing();
+        $t->name="abc";
+        $t->save();
+
+        $n=new Testing($t->testing_id);
+        $this->assertEquals("abc", $n->name);
+        
+        $t->name="xyz";
+        $t->save();
+
+        $n=new Testing($t->testing_id);
+        $this->assertEquals("xyz", $n->name);
+    }
+
+
 
     /*public function test_save()
     {

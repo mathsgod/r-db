@@ -48,7 +48,7 @@ class Table
 
     public function truncate()
     {
-        $this->sql = "TRUNCATE `{$this->name}`";
+        $sql = "TRUNCATE `{$this->name}`";
         $ret = $this->db->exec($sql);
         if ($ret === false) {
             $error = $this->db->errorInfo();
@@ -96,19 +96,36 @@ class Table
 
     }
 
+    public function update($records = [])
+    {
+        $q = new Query($this->db);
+        $q->update($this->name);
+        $q->set($records);
+        return $q;
+    }
+
+    public function select($field)
+    {
+        $q = new Query($this->db);
+        $q->select($field)->from($this->name);
+        return $q;
+    }
+
     public function insert($records = [])
     {
-        $names = array_keys($records);
-        $values = implode(",", array_map(function ($name) {
-            return ":" . $name;
-        }, $names));
-        $names = implode(",", array_map(function ($name) {
-            return "`" . $name . "`";
-        }, $names));
+        $q = new Query($this->db);
+        $q->insert($this->name);
+        $q->set($records);
+        return $q;
+    }
 
-        $stm = $this->db->prepare("INSERT INTO `$this->name` ({$names}) values ({$values})");
-        $stm->execute($records);
-        return $stm;
+    public function delete()
+    {
+        $q = new Query($this->db);
+        $q->delete()->from($this->name);
+        return $q;
+        $q = $this->from();
+        return $q->delete();
     }
 
     public function replace($records = [])
@@ -123,32 +140,13 @@ class Table
         return $this->db->prepare("REPLACE INTO `$this->name` ({$names}) values ({$values})")->execute($records);
     }
 
-    public function orderBy()
+    public function count($where)
     {
-        if (func_num_args() == 0) {
-            if (!count($this->orderby)) {
-                return "";
-            }
-            $orderby = array();
-            foreach ($this->orderby as $values) {
-                $orderby[] = $values[0] . " " . $values[1];
-            }
-            return " ORDER BY " . implode(",", $orderby);
-        }
-
-        if (func_get_arg(0) == "") {
-            return $this;
-        }
-
-        $order = func_get_arg(0);
-        if (is_array($order)) {
-            $this->orderby[] = $order;
-        } else {
-            $this->orderby[] = func_get_args();
-        }
-
-        return $this;
+        $q = new Query($this->db);
+        $q->select("count(*)")->from($this->name)->where($where);
+        return $q->execute()->fetchColumn(0);
     }
+
 
     public function updateOrCreate($records = [])
     {
@@ -171,43 +169,7 @@ class Table
     }
 
 
-    public function update($values = [])
-    {
-        $set = [];
-        foreach ($values as $k => $v) {
-            $set[] = "`$k`=:$k";
-        }
-        $set = implode(",", $set);
 
-        $sql = "UPDATE `$this->name` SET $set ";
-
-        $sql .= $this->where();
-        $this->sql = $sql;
-
-        if ($this->bindParam) {
-            $values = array_merge($this->bindParam, $values);
-        }
-
-        $stm = $this->db->prepare($sql);
-        $stm->execute($values);
-        return $stm;
-    }
-
-
-    public function count($where)
-    {
-        $q = $this->from();
-        $q->where($where);
-        $rs = $q->select("count(*)");
-        return $rs->fetchColumn(0);
-    }
-
-    public function delete($where)
-    {
-        $q = $this->from();
-        $q->where($where);
-        return $q->delete();
-    }
 
     public function name()
     {
@@ -224,31 +186,34 @@ class Table
         return $this->db->from($this->name);
     }
 
-    public function find($where, $order, $limit)
+    public function find($where, $orderby,$limit)
     {
-        $q = $this->from();
+        $q = new Query($this->db);
+        $q->select()->from($this->name);
         $q->where($where);
-        $q->orderBy($order);
+        $q->orderby($orderby);
         $q->limit($limit);
-        return $q->select();
+        
+        return $q;
+
+
+        $q->select()->from($this->name)->where($where)->orderBy($order)->limit($limit);
+        return $q->execute();
     }
 
     public function first($where, $order)
     {
-        $q = $this->from();
-        $q->where($where);
-        $q->orderBy($order);
-        $q->limit(1);
-        return $q->select()->fetch();
+        $q = new Query($this->db);
+        $q->select()->from($this->name)->where($where)->orderBy($order)->limit(1);
+        return $q->execute()->fetch();
     }
 
     public function top($count, $where, $order)
     {
-        $q = $this->from();
-        $q->where($where);
-        $q->orderBy($order);
-        $q->limit($count);
-        return $q->select();
+        $q = new Query($this->db);
+        $q->select()->from($this->name)->where($where)->orderBy($order)->limit($count);
+        return $q->execute();
     }
+
 
 }
