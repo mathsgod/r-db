@@ -81,7 +81,6 @@ class Table
         if ($sth = $this->db->query($sql)) {
             return $sth->fetchAll();
         }
-
     }
 
     public function keys()
@@ -186,14 +185,14 @@ class Table
         return $this->db->from($this->name);
     }
 
-    public function find($where, $orderby,$limit)
+    public function find($where, $orderby, $limit)
     {
         $q = new Query($this->db);
         $q->select()->from($this->name);
         $q->where($where);
         $q->orderby($orderby);
         $q->limit($limit);
-        
+
         return $q;
 
 
@@ -214,6 +213,27 @@ class Table
         $q->select()->from($this->name)->where($where)->orderBy($order)->limit($count);
         return $q->execute();
     }
+
+
+    public function __get($name)
+    {
+        if ($name == "columns") {
+            return $this->describe();
+        }
+
+        if ($name == "index") {
+            return $this->_index();
+        }
+    }
+
+    private function _index()
+    {
+        $sql = "SHOW INDEX FROM `{$this->name}`";
+        if ($sth = $this->db->query($sql)) {
+            return $sth->fetchAll();
+        }
+    }
+
 
 
 }
