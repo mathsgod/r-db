@@ -155,5 +155,53 @@ abstract class Model
     }
 
 
+    public function __call($class_name, $args)
+    {
+        $ro = new \ReflectionObject($this);
+
+        $namespace = $ro->getNamespaceName();
+        if ($namespace == "") {
+            $class = $class_name;
+        } else {
+            $class = $namespace . "\\" . $class_name;
+            if (!class_exists($class)) {
+                $class = $class_name;
+            }
+        }
+
+        if (!class_exists($class)) {
+            throw new \Exception($class . " class not found");
+        }
+
+        $key = forward_static_call(array($class, "_key"));
+
+        if (in_array($key, array_keys(get_object_vars($this)))) {
+            $id = $this->$key;
+            if (!$id) return null;
+            return new $class($this->$key);
+        }
+
+        if (!$this->_id()) {
+            return new DataList();
+        }
+        $key = static::_key();
+        if (is_array($args[0])) {
+            $args[0][] = "{$key}={$this->_id()}";
+        } else {
+            if ($args[0] != "") {
+                $args[0] = "({$key}={$this->_id()}) AND ($args[0])";
+            } else {
+                $args[0] = "{$key}={$this->_id()}";
+            }
+        }
+        // if($class_name=="UserLog"){
+        // print_r($args);
+        // echo $class_name;
+        // outp(\App\UserLog::find(["user_id=1"]));
+        // }
+
+        return forward_static_call_array(array($class, "find"), $args);
+    }
+
 
 }

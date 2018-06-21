@@ -30,7 +30,7 @@ class Query implements IteratorAggregate
     private $_iterator = null;
 
 
-    public function __construct(PDO $db)
+    public function __construct(PDO $db,$table)
     {
         $this->db = $db;
         if ($table) {
