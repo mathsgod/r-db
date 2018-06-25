@@ -123,13 +123,13 @@ abstract class Model
     public function update($records = [])
     {
         $key = static::_key();
-        return static::_table()->from()->where("`$key`=:$key", [$key => $this->$key])->update($records);
+        return static::_table()->from()->where("`$key`=:$key", [$key => $this->$key])->update($records)->execute();
     }
 
     public function delete()
     {
         $key = static::_key();
-        return static::_table()->from()->where("`$key`=:$key", [$key => $this->$key])->delete();
+        return static::_table()->from()->where("`$key`=:$key", [$key => $this->$key])->delete()->execute();
     }
 
     public static function Find($where, $order, $limit)
