@@ -231,7 +231,12 @@ class Query implements IteratorAggregate
         if (isset($bindParam)) {
             if (is_array($bindParam)) {
                 foreach ($bindParam as $k => $v) {
-                    $this->params[$k] = $v;
+                    if(is_string($k)){
+                        $this->params[$k] = $v;
+                    }else{
+                        $this->params[] = $v;
+                    }
+                    
                 }
             } else {
                 $this->params[] = $bindParam;
