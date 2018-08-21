@@ -65,7 +65,7 @@ abstract class Model
 
             $key = static::_key();
             $rs = static::_table()->find("`$key`=:$key")->execute([$key => $id])->fetch();
-            if (count($rs)) {
+            if ($rs) {
                 foreach ($rs as $n => $v) {
                     $attr = $this->__attribute($n);
                     if ($attr["Type"] == "json") {
