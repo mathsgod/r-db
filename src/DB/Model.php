@@ -2,6 +2,7 @@
 namespace R\DB;
 
 use R\RSList;
+use Exception;
 
 abstract class Model
 {
@@ -84,7 +85,7 @@ abstract class Model
     public function save()
     {
         $key = static::_key();
-        $records = array();
+        $records = [];
 
         foreach (get_object_vars($this) as $name => $value) {
             if (is_null($value) || $name[0] == "_" || $name == $key)
@@ -108,9 +109,12 @@ abstract class Model
         } else {
             $table = static::_table();
             $records[$key] = null;
-            $stm = $table->insert($records)->execute();
+            $q=$table->insert($records);
+            if(!$q->execute()){
+                $error=$q->errorInfo();
+                throw new Exception($error[2]);
+            }
             $this->$key = $table->db()->lastInsertId();
-            return $stm;
         }
     }
 
@@ -134,7 +138,8 @@ abstract class Model
 
     public static function Find($where, $order, $limit)
     {
-        $sth = static::_table()->find($where, $order, $limit)->execute();
+        $sth = static::_table()->find($where, $order, $limit);
+        $sth->execute();
         $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, get_called_class(), []);
         return new RSList($sth);
     }

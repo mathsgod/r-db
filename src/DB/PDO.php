@@ -28,12 +28,12 @@ class PDO extends \PDO
 
     public function update($table, $records, $where)
     {
-        return $this->table($table)->where($where)->update($records);
+        return $this->table($table)->where($where)->update($records)->execute();
     }
 
     public function insert($table, $records)
     {
-        return $this->table($table)->insert($records);
+        return $this->table($table)->insert($records)->execute();
     }
 
     public function schema()

@@ -167,9 +167,6 @@ class Table
         return $this->db->prepare("INSERT INTO `$this->name` ({$names}) values ({$values}) on duplicate key update {$set}")->execute($records);
     }
 
-
-
-
     public function name()
     {
         return $this->name;

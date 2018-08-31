@@ -4,7 +4,7 @@ namespace R\DB;
 use Exception;
 use IteratorAggregate;
 
-class Query implements IteratorAggregate 
+class Query implements IteratorAggregate
 {
     private $_type = "SELECT";
     private $_dirty = true;
@@ -27,10 +27,9 @@ class Query implements IteratorAggregate
     private $params = [];
 
     private $statement = null;
-    private $_iterator = null;
 
 
-    public function __construct(PDO $db,$table)
+    public function __construct(PDO $db, $table)
     {
         $this->db = $db;
         if ($table) {
@@ -40,12 +39,17 @@ class Query implements IteratorAggregate
         }
     }
 
+    public function setFetchMode($mode, $classname, $ctorargs)
+    {
+        return $this->statement->setFetchMode($mode, $classname, $ctorargs);
+    }
+
     public function getIterator()
     {
-        if ($this->_iterator === null || $this->_dirty) {
-            $this->_iterator = $this->execute();
+        if ($this->statement === null || $this->_dirty) {
+            $this->execute();
         }
-        return $this->_iterator;
+        return $this->statement;
     }
 
     public function from($table, $ref)
@@ -194,6 +198,11 @@ class Query implements IteratorAggregate
         return $this;
     }
 
+    public function errorInfo()
+    {
+        return $this->statement->errorInfo();
+    }
+
     public function execute($input_parameters = [])
     {
         $params = array_merge($this->params, $input_parameters);
@@ -204,10 +213,10 @@ class Query implements IteratorAggregate
         }
         $this->_dirty = false;
 
-        if ($params) {
-            $this->statement->execute($params);
-        } else {
-            $this->statement->execute();
+        if (!$this->statement->execute($params)) {
+            $error = $this->statement->errorInfo();
+            throw new Exception($error[2], $error[1]);
+
         }
         return $this->statement;
     }
@@ -231,12 +240,12 @@ class Query implements IteratorAggregate
         if (isset($bindParam)) {
             if (is_array($bindParam)) {
                 foreach ($bindParam as $k => $v) {
-                    if(is_string($k)){
+                    if (is_string($k)) {
                         $this->params[$k] = $v;
-                    }else{
+                    } else {
                         $this->params[] = $v;
                     }
-                    
+
                 }
             } else {
                 $this->params[] = $bindParam;
@@ -367,8 +376,8 @@ class Query implements IteratorAggregate
     {
         $this->select = [];
         $this->select[] = "count($query)";
-        $s = $this->execute();
-        return $s->fetchColumn(0);
+        $this->execute();
+        return $this->statement->fetchColumn(0);
     }
 
     public function truncate($table)
