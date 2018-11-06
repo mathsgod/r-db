@@ -1,5 +1,5 @@
 <?php
-namespace DB;
+namespace R\DB;
 
 class PDO extends \PDO
 {
@@ -28,12 +28,12 @@ class PDO extends \PDO
 
     public function update($table, $records, $where)
     {
-        return $this->table($table)->where($where)->update($records);
+        return $this->table($table)->where($where)->update($records)->execute();
     }
 
     public function insert($table, $records)
     {
-        return $this->table($table)->insert($records);
+        return $this->table($table)->insert($records)->execute();
     }
 
     public function schema()
@@ -44,6 +44,49 @@ class PDO extends \PDO
     public function table($name)
     {
         return new Table($this, $name, $this->logger);
+    }
+
+    private function _tables()
+    {
+        $data = [];
+        $s = $this->query("SHOW TABLES");
+        while ($r = $s->fetchColumn(0)) {
+            $data[] = $this->table($r);
+        }
+        return $data;
+    }
+
+    private function _function()
+    {
+        $data = [];
+        return $this->query("SHOW FUNCTION STATUS")->fetchAll();
+        /*while($r=$s->fetchmn()){
+            $data[]=
+        }
+        return $data;*/
+    }
+
+    private function _procedure()
+    {
+        $data = [];
+        return $this->query("SHOW PROCEDURE STATUS")->fetchAll();
+        /*while($r=$s->fetchmn()){
+            $data[]=
+        }
+        return $data;*/
+    }
+
+    public function __get($name)
+    {
+        if ($name == "tables") {
+            return $this->_tables();
+        }
+        if ($name == "function") {
+            return $this->_function();
+        }
+        if ($name == "procedure") {
+            return $this->_procedure();
+        }
     }
 
     public function logger()
@@ -67,6 +110,11 @@ class PDO extends \PDO
         $parent = $reflector->getParentClass();
         $method = $parent->getMethod('prepare');
         return $method->invokeArgs($this, func_get_args());
+    }
+
+    public function from($table)
+    {
+        return new Query($this, $table);
     }
 
 }

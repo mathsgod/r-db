@@ -1,5 +1,5 @@
 <?
-namespace DB;
+namespace R\DB;
 
 use Exception;
 

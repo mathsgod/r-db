@@ -8,8 +8,8 @@ final class SchemaTest extends TestCase
 
     public function testCreate()
     {
-        $schema = new DB\Schema($db, "raymond");
-        $this->assertInstanceOf(DB\Schema::class, $schema);
+        $schema = new R\DB\Schema($db, "raymond");
+        $this->assertInstanceOf(R\DB\Schema::class, $schema);
     }
 
 }

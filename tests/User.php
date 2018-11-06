@@ -1,6 +1,6 @@
 <?
 
-class Testing extends R\DB\Model
+class User extends R\DB\Model
 {
     public static function __db()
     {

@@ -6,13 +6,17 @@ use PHPUnit\Framework\TestCase;
 final class TableTest extends TestCase
 {
 
+
     public function testCreate()
     {
-        $db = new DB\PDO("raymond", "127.0.0.1", "root", "111111");
+        $db = new R\DB\PDO("raymond", "127.0.0.1", "root", "111111");
 
-        $table = new DB\Table($db, "Testing");
+        $table = new R\DB\Table($db, "Testing");
 
-        $this->assertInstanceOf(DB\Table::class, $table);
+        $this->assertInstanceOf(R\DB\Table::class, $table);
     }
+
+
+
 
 }
