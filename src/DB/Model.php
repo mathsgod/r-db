@@ -109,9 +109,9 @@ abstract class Model
         } else {
             $table = static::_table();
             $records[$key] = null;
-            $q=$table->insert($records);
-            if(!$q->execute()){
-                $error=$q->errorInfo();
+            $q = $table->insert($records);
+            if (!$q->execute()) {
+                $error = $q->errorInfo();
                 throw new Exception($error[2]);
             }
             $this->$key = $table->db()->lastInsertId();
@@ -127,7 +127,8 @@ abstract class Model
     public function update($records = [])
     {
         $key = static::_key();
-        return static::_table()->from()->where("`$key`=:$key", [$key => $this->$key])->update($records)->execute();
+        return static::_table()->update($records)->where("`$key`=:$key", [$key => $this->$key])->execute();
+
     }
 
     public function delete()
