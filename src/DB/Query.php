@@ -391,4 +391,9 @@ class Query implements IteratorAggregate
         return array_map($callback, $this->toArray());
     }
 
+    public function first()
+    {
+        $this->limit(1);
+        return $this->getIterator()->current();
+    }
 }
