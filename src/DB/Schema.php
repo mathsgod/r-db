@@ -8,7 +8,7 @@ class Schema
     public $name;
     public $logger;
 
-    public function __construct($db, $name, $logger)
+    public function __construct(PDO $db, $name, $logger)
     {
         $this->db = $db;
         $this->name = $name;

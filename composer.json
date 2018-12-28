@@ -1,13 +1,20 @@
 {
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://raymond2.hostlink.com.hk/satis/web"
+        }
+    ],
     "name": "hostlink/r-db",
     "description": "raymond framework db",
     "autoload": {
         "psr-4": {
-            "R\\":"src"
+            "R\\": "src"
         }
     },
     "require": {
-        "php": ">=5.4"
+        "php": ">=5.4",
+        "mathsgod/data-structure": "^1.0"
     },
     "require-dev": {
         "phpunit/phpunit": "*"

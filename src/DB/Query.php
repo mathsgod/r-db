@@ -396,4 +396,9 @@ class Query implements IteratorAggregate
         $this->limit(1);
         return $this->getIterator()->current();
     }
+    
+    public function each(callable $callback){
+        array_walk($this->getIterator(),$callback);
+    }
+
 }

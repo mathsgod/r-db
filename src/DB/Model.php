@@ -1,6 +1,5 @@
 <?php
 namespace R\DB;
-
 use R\RSList;
 use Exception;
 
