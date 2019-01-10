@@ -5,7 +5,7 @@
             "url": "https://raymond2.hostlink.com.hk/satis/web"
         }
     ],
-    "name": "mathsgod/db",
+    "name": "mathsgod/r-db",
     "description": "raymond framework db",
     "autoload": {
         "psr-4": {
