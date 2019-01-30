@@ -15,7 +15,7 @@ class Table
     private $having = [];
     private $logger = null;
 
-    public function __construct(PDO $db, $name, $logger)
+    public function __construct(PDO $db, $name, $logger = null)
     {
         $this->db = $db;
         $this->name = $name;
@@ -123,8 +123,6 @@ class Table
         $q = new Query($this->db);
         $q->delete()->from($this->name);
         return $q;
-        $q = $this->from();
-        return $q->delete();
     }
 
     public function replace($records = [])
@@ -182,7 +180,7 @@ class Table
         return $this->db->from($this->name);
     }
 
-    public function find($where, $orderby, $limit)
+    public function find($where = null, $orderby = null, $limit = null)
     {
         $q = new Query($this->db);
         $q->select()->from($this->name);
@@ -197,14 +195,14 @@ class Table
         return $q->execute();
     }
 
-    public function first($where, $order)
+    public function first($where = null, $order = null)
     {
         $q = new Query($this->db);
         $q->select()->from($this->name)->where($where)->orderBy($order)->limit(1);
         return $q->execute()->fetch();
     }
 
-    public function top($count, $where, $order)
+    public function top($count = null, $where = null, $order = null)
     {
         $q = new Query($this->db);
         $q->select()->from($this->name)->where($where)->orderBy($order)->limit($count);

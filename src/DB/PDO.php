@@ -5,7 +5,7 @@ class PDO extends \PDO
 {
     private $schema;
     private $logger;
-    public function __construct($database, $hostname, $username, $password, $charset = "utf8", $logger)
+    public function __construct($database, $hostname, $username, $password, $charset = "utf8", $logger = null)
     {
         //\PDO::ERRMODE_EXCEPTION;
         $this->logger = $logger;

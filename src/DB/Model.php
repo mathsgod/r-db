@@ -1,5 +1,6 @@
 <?php
 namespace R\DB;
+
 use R\RSList;
 use Exception;
 
@@ -136,7 +137,7 @@ abstract class Model
         return static::_table()->from()->where("`$key`=:$key", [$key => $this->$key])->delete()->execute();
     }
 
-    public static function Find($where, $order, $limit)
+    public static function Find($where = null, $order = null, $limit = null)
     {
         $sth = static::_table()->find($where, $order, $limit);
         $sth->execute();
@@ -144,7 +145,7 @@ abstract class Model
         return new RSList($sth);
     }
 
-    public static function First($where, $order)
+    public static function First($where = null, $order = null)
     {
         return self::Find($where, $order, 1)->first();
     }

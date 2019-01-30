@@ -29,7 +29,7 @@ class Query implements IteratorAggregate
     private $statement = null;
 
 
-    public function __construct(PDO $db, $table)
+    public function __construct(PDO $db, $table = null)
     {
         $this->db = $db;
         if ($table) {
@@ -52,7 +52,7 @@ class Query implements IteratorAggregate
         return $this->statement;
     }
 
-    public function from($table, $ref)
+    public function from($table, $ref = null)
     {
         $this->from[] = [$table, $ref];
         return $this;
@@ -221,7 +221,7 @@ class Query implements IteratorAggregate
         return $this->statement;
     }
 
-    public function where($where, $bindParam)
+    public function where($where, $bindParam = null)
     {
         $this->_dirty = true;
         if (is_null($where)) return $this;
@@ -396,9 +396,10 @@ class Query implements IteratorAggregate
         $this->limit(1);
         return $this->getIterator()->current();
     }
-    
-    public function each(callable $callback){
-        array_walk($this->getIterator(),$callback);
+
+    public function each(callable $callback)
+    {
+        array_walk($this->getIterator(), $callback);
     }
 
 }
