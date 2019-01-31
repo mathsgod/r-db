@@ -8,26 +8,26 @@ class Stream
     private $_table;
     private $_path;
 
-    private static $_pdos=[];
+    private static $_pdos = [];
 
-    public static function Register($pdo, $protocol, $flags = 0)
+    public static function Register(Schema $pdo, $protocol, $flags = 0)
     {
-        stream_wrapper_register($protocol, __CLASS__, $flags) or die("Failed to register protocol");
-        self::$_pdos[$protocol]=$pdo;
+        stream_wrapper_register($protocol, __class__, $flags) or die("Failed to register protocol");
+        self::$_pdos[$protocol] = $pdo;
     }
 
     function stream_open($path, $mode, $options, &$opath)
     {
         $url = parse_url($path);
-        
-        $this->_pdo=self::$_pdos[$url["scheme"]];
-        parse_str($url["query"], $this->query);
-        $this->_scheme=$url["scheme"];
-        $this->_table=new Table($this->_pdo, $url["host"]);
-        $this->_path=$url["path"];
-        $this->_segment=explode("/", substr($this->_path, 1));
 
-        
+        $this->_pdo = self::$_pdos[$url["scheme"]];
+        parse_str($url["query"], $this->query);
+        $this->_scheme = $url["scheme"];
+        $this->_table = new Table($this->_pdo, $url["host"]);
+        $this->_path = $url["path"];
+        $this->_segment = explode("/", substr($this->_path, 1));
+
+
         switch ($mode) {
             case 'r':
                 break;
@@ -44,25 +44,25 @@ class Stream
     function stream_read()
     {
         if (!$this->_eof) {
-            $this->_eof=true;
+            $this->_eof = true;
 
             if (is_numeric($id = $this->_segment[0])) {
-                $key=$this->_table->keys()[0];
-                $ret=$this->_table->where("$key=?",[$id])->select();
+                $key = $this->_table->keys()[0];
+                $ret = $this->_table->where("$key=?", [$id])->select();
                 return json_encode($ret[0], JSON_UNESCAPED_UNICODE);
             } else {
                 if ($this->query["filter"]) {
                     foreach ($this->query["filter"] as $k => $v) {
-                        if(is_array($v)){
-                            foreach($v as $a=>$b){
-                                if($a=="lt"){
+                        if (is_array($v)) {
+                            foreach ($v as $a => $b) {
+                                if ($a == "lt") {
                                     $this->_table->where("$k>?", [$b]);
                                 }
                             }
-                        }else{
+                        } else {
                             $this->_table->where("$k=?", [$v]);
                         }
-                        
+
                     }
                 }
 
@@ -73,13 +73,13 @@ class Stream
 
     function stream_write($data)
     {
-        $data=json_decode($data, true);
-        $strlen=strlen($data);
+        $data = json_decode($data, true);
+        $strlen = strlen($data);
 
         if (is_numeric($id = $this->_segment[0])) {
             //update
-            $key=$this->_table->keys()[0];
-            $ret=$this->_table->where("$key=$id")->update($data);
+            $key = $this->_table->keys()[0];
+            $ret = $this->_table->where("$key=$id")->update($data);
         } else {
             //insert
 

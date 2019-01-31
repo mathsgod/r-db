@@ -7,67 +7,43 @@ class Table
 {
     private $db;
     public $name;
-    private $sql;
-    private $where = [];
-    private $bindParam = [];
-    private $join = [];
-    private $groupby = [];
-    private $having = [];
-    private $logger = null;
 
-    public function __construct(PDO $db, $name, $logger = null)
+    public function __construct(Schema $db, $name)
     {
         $this->db = $db;
         $this->name = $name;
-        $this->logger = $logger;
     }
 
     public function dropColumn($name)
     {
         $sql = "ALTER TABLE `{$this->name}` DROP COLUMN `$name`";
-        $this->sql = $sql;
-        $ret = $this->db->exec($sql);
-        if ($ret === false) {
-            $error = $this->db->errorInfo();
-            throw new Exception($error[2], $error[1]);
-        }
-        return $ret;
+        return $this->db->exec($sql);
     }
 
-    public function addColumn($name, $type, $constraint)
+    public function addColumn($name, $type, $constraint = null)
     {
         $sql = "ALTER TABLE `{$this->name}` ADD COLUMN `$name` $type $constraint";
-        $this->sql = $sql;
-        $ret = $this->db->exec($sql);
-        if ($ret === false) {
-            $error = $this->db->errorInfo();
-            throw new Exception($error[2], $error[1]);
-        }
-        return $ret;
+        return $this->db->exec($sql);
     }
 
     public function truncate()
     {
         $sql = "TRUNCATE `{$this->name}`";
-        $ret = $this->db->exec($sql);
-        if ($ret === false) {
-            $error = $this->db->errorInfo();
-            throw new Exception($error[2], $error[1]);
-        }
-        return $ret;
+        return $this->db->exec($sql);
     }
 
-    public function columns($field)
+    public function columns()
     {
-        if ($field) {
-            $sth = $this->db->query("SHOW COLUMNS FROM `{$this->name}` WHERE Field='$field'");
-            $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, "\DB\Column", [$this]);
-            return $sth->fetch();
-        }
-
         $sth = $this->db->query("SHOW COLUMNS FROM `$this->name`");
-        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, "\DB\Column", [$this]);
+        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, "\R\DB\Column", [$this]);
         return $sth->fetchAll();
+    }
+
+    public function column($field)
+    {
+        $sth = $this->db->query("SHOW COLUMNS FROM `{$this->name}` WHERE Field='$field'");
+        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, "\R\DB\Column", [$this]);
+        return $sth->fetch();
     }
 
     public function __toString()
@@ -187,12 +163,7 @@ class Table
         $q->where($where);
         $q->orderby($orderby);
         $q->limit($limit);
-
         return $q;
-
-
-        $q->select()->from($this->name)->where($where)->orderBy($order)->limit($limit);
-        return $q->execute();
     }
 
     public function first($where = null, $order = null)
@@ -209,11 +180,10 @@ class Table
         return $q->execute();
     }
 
-
     public function __get($name)
     {
         if ($name == "columns") {
-            return $this->describe();
+            return $this->columns();
         }
 
         if ($name == "index") {

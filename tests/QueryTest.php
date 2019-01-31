@@ -3,7 +3,7 @@ declare (strict_types = 1);
 error_reporting(E_ALL && ~E_WARNING);
 use PHPUnit\Framework\TestCase;
 
-use R\DB\PDO;
+use R\DB\Schema;
 use R\DB\Table;
 use R\DB\Query;
 
@@ -11,7 +11,7 @@ final class QueryTest extends TestCase
 {
     private function getQuery()
     {
-        $db = new R\DB\PDO("raymond", "127.0.0.1", "root", "111111");;
+        $db = new R\DB\Schema("raymond", "127.0.0.1", "root", "111111");;
         return new Query($db);
     }
 

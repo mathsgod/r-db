@@ -1,6 +1,7 @@
 <?php
 namespace R\DB;
 
+use PDO;
 use R\RSList;
 use Exception;
 
@@ -141,7 +142,7 @@ abstract class Model
     {
         $sth = static::_table()->find($where, $order, $limit);
         $sth->execute();
-        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, get_called_class(), []);
+        $sth->setFetchMode(PDO::FETCH_CLASS | PDO::FETCH_PROPS_LATE, get_called_class(), []);
         return new RSList($sth);
     }
 
