@@ -9,8 +9,6 @@ class Query implements IteratorAggregate
     private $_type = "SELECT";
     private $_dirty = true;
     private $step = [];
-    private $table = null;
-    private $ref = null;
     private $from = [];
     private $set = [];
     private $into = [];
@@ -29,13 +27,12 @@ class Query implements IteratorAggregate
     private $statement = null;
 
 
-    public function __construct(Schema $db, $table = null)
+    public function __construct(Schema $db, $table = null, $ref = null)
     {
         $this->db = $db;
         if ($table) {
-            $this->table = $table;
-            $this->ref = ($ref) ? $ref : $this->table;
-            $this->from[] = [$table, $table];
+            $this->from[] = [$table, $ref];
+            $this->into[] = $table;
         }
     }
 
@@ -54,6 +51,11 @@ class Query implements IteratorAggregate
 
     public function from($table, $ref = null)
     {
+        foreach ($this->from as $f) {
+            if ($f[0] == $table && $f[1] == $ref) {
+                return $this;
+            }
+        }
         $this->from[] = [$table, $ref];
         return $this;
     }
@@ -108,7 +110,7 @@ class Query implements IteratorAggregate
 
         if ($this->_type == "INSERT") {
             $sql = "INSERT";
-            $sql .= " " . $this->insert;
+            $sql .= " `" . $this->from[0][0] . "`";
 
             if ($this->into) {
 
@@ -258,7 +260,7 @@ class Query implements IteratorAggregate
     public function orderBy($order)
     {
         $this->_dirty = true;
-        if (!$order) return;
+        if (!$order) return $this;
         if (is_array($order)) {
             foreach ($order as $k => $v) {
                 $this->orderby[] = "$k $v";
@@ -332,30 +334,17 @@ class Query implements IteratorAggregate
     {
         $this->_type = "SELECT";
         if (is_null($query)) {
-            $query = "*";
+            $query = ["*"];
         }
-        $this->select[] = $query;
+        $this->select = $query;
         return $this;
     }
 
-    public function insert($tbl)
+    public function insert($table)
     {
+        $this->into = $table;
         $this->_type = "INSERT";
-        $this->insert = $tbl;
         return $this;
-
-        $values = implode(", ", array_map(function ($name) {
-            return " : " . $name;
-        }, $columns));
-        $names = implode(", ", array_map(function ($name) {
-            return " `" . $name . "` ";
-        }, $columns));
-
-        $table = $this->from[0][0];
-        $this->sql = " INSERT INTO `$table` ({
-            $names}) values({
-            $values}) ";
-        return $this->prepare();
     }
 
     public function value($column, $value)
@@ -365,10 +354,10 @@ class Query implements IteratorAggregate
         return $this;
     }
 
-
-    public function delete()
+    public function delete($tbl)
     {
         $this->_type = "DELETE";
+        $this->from[] = [$tbl];
         return $this;
     }
 
@@ -380,8 +369,9 @@ class Query implements IteratorAggregate
         return $this->statement->fetchColumn(0);
     }
 
-    public function truncate($table)
+    public function truncate()
     {
+        $table = $this->from[0][0];
         $sql = "TRUNCATE `$table` ";
         return $this->db->exec($sql);
     }

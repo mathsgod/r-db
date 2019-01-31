@@ -110,12 +110,9 @@ abstract class Model
         } else {
             $table = static::_table();
             $records[$key] = null;
-            $q = $table->insert($records);
-            if (!$q->execute()) {
-                $error = $q->errorInfo();
-                throw new Exception($error[2]);
-            }
+            $ret = $table->insert($records);
             $this->$key = $table->db()->lastInsertId();
+            return $ret;
         }
     }
 
@@ -128,14 +125,14 @@ abstract class Model
     public function update($records = [])
     {
         $key = static::_key();
-        return static::_table()->update($records)->where("`$key`=:$key", [$key => $this->$key])->execute();
+        return static::_table()->update($records)->where("`$key`=:$key", [$key => $this->$key]);
 
     }
 
     public function delete()
     {
         $key = static::_key();
-        return static::_table()->from()->where("`$key`=:$key", [$key => $this->$key])->delete()->execute();
+        return static::_table()->delete([$key => $this->$key]);
     }
 
     public static function Find($where = null, $order = null, $limit = null)
@@ -208,6 +205,12 @@ abstract class Model
         // }
 
         return forward_static_call_array(array($class, "find"), $args);
+    }
+
+    public static function Query()
+    {
+        $table = self::_table();
+        return new Query($table->db(), $table->name);
     }
 
 

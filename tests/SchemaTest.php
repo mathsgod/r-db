@@ -12,26 +12,25 @@ final class SchemaTest extends TestCase
 
     public function testCreate()
     {
-        $db = new Schema("raymond", "127.0.0.1", "root", "111111");
-
+        $db = Testing::__db();
         $this->assertInstanceOf(Schema::class, $db);
     }
 
     public function test_table()
     {
-        $db = new Schema("raymond", "127.0.0.1", "root", "111111");
+        $db = Testing::__db();
         $this->assertInstanceOf(Table::class, $db->table("Testing"));
     }
 
     public function test_from()
     {
-        $db = new Schema("raymond", "127.0.0.1", "root", "111111");
+        $db = Testing::__db();
         $this->assertInstanceOf(Query::class, $db->from("Testing"));
     }
 
     public function testTable()
     {
-        $db = new Schema("raymond", "127.0.0.1", "root", "111111");
+        $db = Testing::__db();
         $table = $db->table("Testing");
         $this->assertInstanceOf(Table::class, $table);
 

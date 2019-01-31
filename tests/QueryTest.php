@@ -11,10 +11,9 @@ final class QueryTest extends TestCase
 {
     private function getQuery()
     {
-        $db = new R\DB\Schema("raymond", "127.0.0.1", "root", "111111");;
-        return new Query($db);
+        $db = Testing::__db();
+        return new Query($db, "Testing");
     }
-
 
     public function test_select()
     {
@@ -22,9 +21,32 @@ final class QueryTest extends TestCase
         $this->assertInstanceOf(PDOStatement::class, $q->select()->from("Testing")->execute());
     }
 
+    public function testSQL()
+    {
 
+        $q = $this->getQuery();
+        $q->from("Testing");
+        $q->select();
+        $this->assertEquals($q->sql(), "SELECT * FROM `Testing` ");
 
-    
+        $q = $this->getQuery();
+        $q->from("Testing");
+        $q->select(["testing_id"]);
+        $this->assertEquals($q->sql(), "SELECT testing_id FROM `Testing` ");
+    }
+
+    public function testCount()
+    {
+        $q = $this->getQuery();
+        $q->truncate();
+        $this->assertEquals($q->count(), 0);
+
+        $q = $this->getQuery();
+        $q->set(["name" => "abc"])->insert();
+        $q->execute();
+        $this->assertEquals($q->count(), 1);
+
+    }
 
     /*public function test_delete()
     {

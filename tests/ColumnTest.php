@@ -9,7 +9,7 @@ final class ColumnTest extends TestCase
 {
     public function testRename()
     {
-        $db = new Schema("raymond", "127.0.0.1", "root", "111111");
+        $db = Testing::__db();
         $table = $db->table("Testing");
 
         $col_name = $table->column("name");

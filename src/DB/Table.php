@@ -43,7 +43,11 @@ class Table
     {
         $sth = $this->db->query("SHOW COLUMNS FROM `{$this->name}` WHERE Field='$field'");
         $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, "\R\DB\Column", [$this]);
-        return $sth->fetch();
+        $ret = $sth->fetch();
+        if ($ret === false) {
+            return null;
+        }
+        return $ret;
     }
 
     public function __toString()
@@ -91,14 +95,20 @@ class Table
         $q = new Query($this->db);
         $q->insert($this->name);
         $q->set($records);
-        return $q;
+        return $q->execute();
     }
 
-    public function delete()
+    public function delete($where = [])
     {
         $q = new Query($this->db);
-        $q->delete()->from($this->name);
-        return $q;
+
+        $w = [];
+        foreach ($where as $name => $value) {
+            $w[] = ["$name=?", $value];
+        }
+
+        $q->delete($this->name)->where($w);
+        return $q->execute();
     }
 
     public function replace($records = [])
@@ -113,13 +123,12 @@ class Table
         return $this->db->prepare("REPLACE INTO `$this->name` ({$names}) values ({$values})")->execute($records);
     }
 
-    public function count($where)
+    public function count($where = null)
     {
         $q = new Query($this->db);
-        $q->select("count(*)")->from($this->name)->where($where);
-        return $q->execute()->fetchColumn(0);
+        $q->from($this->name)->where($where);
+        return $q->count();
     }
-
 
     public function updateOrCreate($records = [])
     {
@@ -139,11 +148,6 @@ class Table
 
 
         return $this->db->prepare("INSERT INTO `$this->name` ({$names}) values ({$values}) on duplicate key update {$set}")->execute($records);
-    }
-
-    public function name()
-    {
-        return $this->name;
     }
 
     public function db()
@@ -177,7 +181,7 @@ class Table
     {
         $q = new Query($this->db);
         $q->select()->from($this->name)->where($where)->orderBy($order)->limit($count);
-        return $q->execute();
+        return $q->execute()->fetchAll();
     }
 
     public function __get($name)

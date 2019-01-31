@@ -44,43 +44,44 @@ final class ModelTest extends TestCase
 
     public function test_save()
     {
-        
-        $t=new Testing();
-        $t->name="abc";
+
+        $t = new Testing();
+        $t->name = "abc";
         $t->save();
 
-        $n=new Testing($t->testing_id);
+        $n = new Testing($t->testing_id);
         $this->assertEquals("abc", $n->name);
-        
-        $t->name="xyz";
+
+        $t->name = "xyz";
         $t->save();
 
-        $n=new Testing($t->testing_id);
+        $n = new Testing($t->testing_id);
         $this->assertEquals("xyz", $n->name);
     }
 
-
-
-    /*public function test_save()
+    public function testDelete()
     {
-
-        $count = Testing::_count();
+        //clear all
+        Testing::_table()->truncate();
+        $this->assertEquals(Testing::Query()->count(), 0);
 
         $t = new Testing();
+        $t->name = "abc";
         $t->save();
-        $this->assertTrue($t->testing_id > 0);
 
-        $this->assertEquals($count + 1, Testing::_count());
+        $this->assertEquals(Testing::Query(["name" => "abc"])->count(), 1);
 
+        $n = new Testing($t->testing_id);
+        $n->delete();
 
-        $t->delete();
+        $this->assertEquals(Testing::Query(["name" => "abc"])->count(), 0);
+    }
 
-        $this->assertEquals($count, Testing::_count());
-
-
-
-
-    }*/
+    public function testFind()
+    {
+        $testing = Testing::Find();
+        $this->assertInstanceOf(R\RSList::class, $testing);
+    }
 
 
 }

@@ -28,11 +28,6 @@ class Column
 		$sql = "ALTER TABLE `{$this->table}` CHANGE COLUMN `$this->Field` `$field` {$this->Type} {$this->Extra}";
 		$this->Field = $field;
 		$db = $this->table->db();
-		$ret = $this->table->db()->exec($sql);
-		if ($ret === false) {
-			$error = $db->errorInfo();
-			throw new Exception($error[2], $error[1]);
-		}
-		return $ret;
+		return $this->table->db()->exec($sql);
 	}
 }
