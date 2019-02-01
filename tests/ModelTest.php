@@ -101,16 +101,23 @@ final class ModelTest extends TestCase
     public function testGet()
     {
         $u = new User(1);
+
+        $a = $u->first_name;
         $this->assertInstanceOf(User::class, $u);
-
-
         $this->assertInstanceOf(R\ORM\Query::class, $u->UserList);
 
+
+        $ul = $u->UserList->first();
+        $this->assertInstanceOf(UserList::class, $ul);
+
+
+        $user = $ul->User;
+        $this->assertInstanceOf(User::class, $user);
+
+
+        $b = $user->first_name;
+
+        $this->assertEquals($a, $b);
+
     }
-
-
-
-
-
-
 }

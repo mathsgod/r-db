@@ -217,6 +217,14 @@ abstract class Model
         if (!class_exists($class)) {
             return null;
         }
+
+        $key = forward_static_call(array($class, "_key"));
+        if (in_array($key, array_keys(get_object_vars($this)))) {
+            $id = $this->$key;
+            if (!$id) return null;
+            return new $class($this->$key);
+        }
+
         $key = static::_key();
         return $class::Query([$key => $this->$key]);
     }
