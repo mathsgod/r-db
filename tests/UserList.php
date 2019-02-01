@@ -1,6 +1,6 @@
 <?
 
-class User extends R\ORM\Model
+class UserList extends R\ORM\Model
 {
     public static function __db()
     {

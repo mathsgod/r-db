@@ -83,6 +83,34 @@ final class ModelTest extends TestCase
         $this->assertInstanceOf(R\RSList::class, $testing);
     }
 
+    public function testUpdate()
+    {
+        Testing::_table()->truncate();
+        $t = new Testing();
+        $t->name = "abc";
+        $t->save();
+
+
+        $t = new Testing($t->testing_id);
+        $t->name = "xyz";
+        $t->save();
+        $this->assertEquals(Testing::Query(["name" => "xyz"])->count(), 1);
+
+    }
+
+    public function testGet()
+    {
+        $u = new User(1);
+        $this->assertInstanceOf(User::class, $u);
+
+
+        $this->assertInstanceOf(R\ORM\Query::class, $u->UserList);
+
+    }
+
+
+
+
 
 
 }

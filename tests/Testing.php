@@ -1,6 +1,8 @@
 <?
+require_once(__DIR__ . "/User.php");
+require_once(__DIR__ . "/UserList.php");
 
-class Testing extends R\DB\Model
+class Testing extends R\ORM\Model
 {
     public static function __db()
     {

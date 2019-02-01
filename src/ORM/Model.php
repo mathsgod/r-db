@@ -1,5 +1,5 @@
 <?php
-namespace R\DB;
+namespace R\ORM;
 
 use PDO;
 use R\RSList;
@@ -106,7 +106,7 @@ abstract class Model
             }
         }
         if ($id = $this->$key) { // update
-            return static::_table()->where([$key => $id])->update($records);
+            return $this->update($records);
         } else {
             $table = static::_table();
             $records[$key] = null;
@@ -148,17 +148,6 @@ abstract class Model
         return self::Find($where, $order, 1)->first();
     }
 
-    public static function _top($count, $where, $order)
-    {
-        return self::Find($where, $order, $count);
-    }
-
-    public static function _count($where)
-    {
-        return static::_table()->count($where);
-    }
-
-
     public function __call($class_name, $args)
     {
         $ro = new \ReflectionObject($this);
@@ -198,21 +187,37 @@ abstract class Model
                 $args[0] = "{$key}={$this->_id()}";
             }
         }
-        // if($class_name=="UserLog"){
-        // print_r($args);
-        // echo $class_name;
-        // outp(\App\UserLog::find(["user_id=1"]));
-        // }
 
         return forward_static_call_array(array($class, "find"), $args);
     }
 
     public static function Query($where = [])
     {
-        $table = self::_table();
-        return $table->where($where);
+        $q = new Query(get_called_class());
+        foreach ($where as $k => $v) {
+            $q->where("$k=:$k", [":$k" => $v]);
+        }
+        return $q->select();
     }
 
+    public function __get($name)
+    {
+        $ro = new \ReflectionObject($this);
 
+        $namespace = $ro->getNamespaceName();
+        if ($namespace == "") {
+            $class = $name;
+        } else {
+            $class = $namespace . "\\" . $name;
+            if (!class_exists($class)) {
+                $class = $name;
+            }
+        }
 
+        if (!class_exists($class)) {
+            return null;
+        }
+        $key = static::_key();
+        return $class::Query([$key => $this->$key]);
+    }
 }

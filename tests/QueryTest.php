@@ -18,7 +18,7 @@ final class QueryTest extends TestCase
     public function test_select()
     {
         $q = $this->getQuery();
-        $this->assertInstanceOf(PDOStatement::class, $q->select()->from("Testing")->execute());
+        $this->assertInstanceOf(PDOStatement::class, $q->select()->execute());
     }
 
     public function testSQL()
@@ -45,7 +45,7 @@ final class QueryTest extends TestCase
         $q->set(["name" => "abc"])->insert();
         $q->execute();
 
-        
+
         $q = $this->getQuery();
         $this->assertEquals($q->count(), 1);
 
