@@ -228,4 +228,17 @@ abstract class Model
         $key = static::_key();
         return $class::Query([$key => $this->$key]);
     }
+
+
+    public static function Scalar($query, $where = null)
+    {
+        $q = self::_table()->where($where)->select([$query]);
+        return $q->execute()->fetchColumn(0);
+    }
+
+    public static function Count($where = null)
+    {
+        $q = self::_table()->query();
+        return $q->where($where)->count();
+    }
 }

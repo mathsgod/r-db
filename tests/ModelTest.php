@@ -120,4 +120,30 @@ final class ModelTest extends TestCase
         $this->assertEquals($a, $b);
 
     }
+
+    public function testScalar()
+    {
+        $table = Testing::_table();
+        $table->truncate();
+        $table->insert(["name" => '1']);
+        $table->insert(["name" => '2']);
+        $table->insert(["name" => '3']);
+
+        $this->assertEquals(Testing::Scalar("max(name)"), "3");
+    }
+
+    public function testCount()
+    {
+        $table = Testing::_table();
+        $table->truncate();
+        $table->insert(["name" => '1']);
+        $table->insert(["name" => '2']);
+        $table->insert(["name" => '3']);
+
+        $this->assertEquals(Testing::Count(), 3);
+        $this->assertEquals(Testing::Count("name=1"), 1);
+
+    }
+
+
 }
