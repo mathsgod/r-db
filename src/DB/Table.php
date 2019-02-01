@@ -7,6 +7,7 @@ class Table
 {
     private $db;
     public $name;
+    private $query;
 
     public function __construct(Schema $db, $name)
     {
@@ -75,39 +76,53 @@ class Table
 
     }
 
-    public function update($records = [])
+    public function query()
     {
-        $q = new Query($this->db);
-        $q->update($this->name);
-        $q->set($records);
-        return $q;
+        if ($this->query) {
+            return $this->query;
+        }
+        $this->query = new Query($this->db, $this->name);
+        return $this->query;
     }
 
-    public function select($field)
+    public function where($where = [])
     {
-        $q = new Query($this->db);
-        $q->select($field)->from($this->name);
+        $q = $this->query();
+        foreach ($where as $k => $v) {
+            $q->where("$k=:$k", [":$k" => $v]);
+        }
+        return $this;
+    }
+
+    public function update($records = [])
+    {
+        $q = $this->query();
+        $q->set($records);
+        $q->update();
+        return $q->execute();
+    }
+
+    public function select($field = [])
+    {
+        $q = $this->query();
+        $q->select($field);
         return $q;
     }
 
     public function insert($records = [])
     {
-        $q = new Query($this->db);
-        $q->insert($this->name);
+        $q = $this->query();
         $q->set($records);
+        $q->insert();
+        $this->query = null;
         return $q->execute();
     }
 
-    public function delete($where = [])
+    public function delete()
     {
-        $q = new Query($this->db);
-
-        $w = [];
-        foreach ($where as $name => $value) {
-            $w[] = ["$name=?", $value];
-        }
-
-        $q->delete($this->name)->where($w);
+        $q = $this->query();
+        $q->delete();
+        $this->query = null;
         return $q->execute();
     }
 
@@ -121,13 +136,6 @@ class Table
             return "`" . $name . "`";
         }, $names));
         return $this->db->prepare("REPLACE INTO `$this->name` ({$names}) values ({$values})")->execute($records);
-    }
-
-    public function count($where = null)
-    {
-        $q = new Query($this->db);
-        $q->from($this->name)->where($where);
-        return $q->count();
     }
 
     public function updateOrCreate($records = [])
@@ -170,17 +178,18 @@ class Table
         return $q;
     }
 
-    public function first($where = null, $order = null)
+    public function first()
     {
-        $q = new Query($this->db);
-        $q->select()->from($this->name)->where($where)->orderBy($order)->limit(1);
+        $q = $this->query();
+        $q->select();
+        $q->limit(1);
         return $q->execute()->fetch();
     }
 
     public function top($count = null, $where = null, $order = null)
     {
-        $q = new Query($this->db);
-        $q->select()->from($this->name)->where($where)->orderBy($order)->limit($count);
+        $q = new Query($this->db, $this->name);
+        $q->select()->where($where)->orderBy($order)->limit($count);
         return $q->execute()->fetchAll();
     }
 
@@ -195,6 +204,30 @@ class Table
         }
     }
 
+    public function max($column)
+    {
+        $q = $this->select(["max($column)"]);
+        return $q->execute()->fetchColumn(0);
+    }
+
+    public function count()
+    {
+        $q = $this->select(["count(*)"]);
+        return $q->execute()->fetchColumn(0);
+    }
+
+    public function min($column)
+    {
+        $q = $this->select(["min($column)"]);
+        return $q->execute()->fetchColumn(0);
+    }
+
+    public function avg($column)
+    {
+        $q = $this->select(["avg($column)"]);
+        return $q->execute()->fetchColumn(0);
+    }
+
     private function _index()
     {
         $sql = "SHOW INDEX FROM `{$this->name}`";
@@ -203,6 +236,10 @@ class Table
         }
     }
 
-
-
+    public function orderBy($orderBy)
+    {
+        $q = $this->query();
+        $q->orderBy($orderBy);
+        return $this;
+    }
 }

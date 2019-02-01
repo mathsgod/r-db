@@ -44,6 +44,9 @@ final class QueryTest extends TestCase
         $q = $this->getQuery();
         $q->set(["name" => "abc"])->insert();
         $q->execute();
+
+        
+        $q = $this->getQuery();
         $this->assertEquals($q->count(), 1);
 
     }

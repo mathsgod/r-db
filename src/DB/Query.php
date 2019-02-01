@@ -32,7 +32,7 @@ class Query implements IteratorAggregate
         $this->db = $db;
         if ($table) {
             $this->from[] = [$table, $ref];
-            $this->into[] = $table;
+            $this->table = $table;
         }
     }
 
@@ -109,8 +109,8 @@ class Query implements IteratorAggregate
 
 
         if ($this->_type == "INSERT") {
-            $sql = "INSERT";
-            $sql .= " `" . $this->from[0][0] . "`";
+            $sql = "INSERT INTO";
+            $sql .= " `" . $this->table . "`";
 
             if ($this->into) {
 
@@ -128,7 +128,14 @@ class Query implements IteratorAggregate
             }
 
             if ($this->set) {
-                $sql .= " SET " . implode(",", $this->set);
+                $this->params = [];
+                $sql .= " SET ";
+                $s = [];
+                foreach ($this->set as $k => $v) {
+                    $s[] = "`$k`=:$k";
+                    $this->params[":$k"] = $v;
+                }
+                $sql .= implode(",", $s);
             }
 
             return $sql;
@@ -138,7 +145,13 @@ class Query implements IteratorAggregate
             $sql = "UPDATE `$this->table`";
 
             if ($this->set) {
-                $sql .= " SET " . implode(",", $this->set);
+                $sql .= " SET ";
+                $s = [];
+                foreach ($this->set as $k => $v) {
+                    $s[] = "`$k`=:$k";
+                    $this->params[":$k"] = $v;
+                }
+                $sql .= implode(",", $s);
             }
 
             if ($this->where) {
@@ -169,8 +182,10 @@ class Query implements IteratorAggregate
         return $sql;
     }
 
-    public function set($set)
+    public function set($set = [])
     {
+        $this->set = $set;
+        return $this;
         if (is_array($set)) {
             foreach ($set as $k => $v) {
                 if ($v === null) {
@@ -192,11 +207,9 @@ class Query implements IteratorAggregate
         return $this;
     }
 
-    public function update($table)
+    public function update()
     {
-        $this->_dirty = true;
         $this->_type = "UPDATE";
-        $this->table = $table;
         return $this;
     }
 
@@ -207,17 +220,18 @@ class Query implements IteratorAggregate
 
     public function execute($input_parameters = [])
     {
-        $params = array_merge($this->params, $input_parameters);
-
-        if (!$this->statement = $this->db->prepare($this->sql())) {
+        $sql = $this->sql();
+        if (!$this->statement = $this->db->prepare($sql)) {
             $error = $this->db->errorInfo();
-            throw new Exception($error[2], $error[1]);
+            throw new Exception($error[2] . " sql: $sql", $error[1]);
         }
         $this->_dirty = false;
 
+        $params = array_merge($this->params, $input_parameters);
         if (!$this->statement->execute($params)) {
             $error = $this->statement->errorInfo();
-            throw new Exception($error[2], $error[1]);
+            print_r($params);
+            throw new Exception($error[2] . " sql: $sql params:" . json_encode($params), $error[1]);
 
         }
         return $this->statement;
@@ -340,9 +354,8 @@ class Query implements IteratorAggregate
         return $this;
     }
 
-    public function insert($table)
+    public function insert()
     {
-        $this->into = $table;
         $this->_type = "INSERT";
         return $this;
     }
@@ -354,10 +367,9 @@ class Query implements IteratorAggregate
         return $this;
     }
 
-    public function delete($tbl)
+    public function delete()
     {
         $this->_type = "DELETE";
-        $this->from[] = [$tbl];
         return $this;
     }
 
@@ -365,8 +377,8 @@ class Query implements IteratorAggregate
     {
         $this->select = [];
         $this->select[] = "count($query)";
-        $this->execute();
-        return $this->statement->fetchColumn(0);
+        $statement = $this->execute();
+        return $statement->fetchColumn(0);
     }
 
     public function truncate()

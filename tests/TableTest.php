@@ -11,8 +11,7 @@ final class TableTest extends TestCase
 {
     public function getTable()
     {
-        $db = Testing::__db();
-        return $db->table("Testing");
+        return Testing::_table();
     }
 
     public function testCreate()
@@ -54,10 +53,15 @@ final class TableTest extends TestCase
         $table->truncate();
         $this->assertEquals($table->count(), 0);
 
+        $table = $this->getTable();
         $table->insert(["name" => 'test1']);
+
+        $table = $this->getTable();
         $this->assertEquals($table->count(), 1);
 
-        $table->delete(["name" => "test1"]);
+        $table = $this->getTable();
+        $table->where(["name" => "test1"]);
+        $table->delete();
         $this->assertEquals($table->count(), 0);
     }
 
@@ -91,6 +95,57 @@ final class TableTest extends TestCase
         $result = $table->top(2);
 
         $this->assertEquals(count($result), 2);
+    }
+
+    public function testMax()
+    {
+        $table = $this->getTable();
+        $table->truncate();
+
+        $table->insert(["name" => '1']);
+        $table->insert(["name" => '2']);
+        $table->insert(["name" => '3']);
+
+        $this->assertEquals($table->max('name'), '3');
+    }
+
+    public function testMin()
+    {
+        $table = $this->getTable();
+        $table->truncate();
+
+        $table->insert(["name" => '1']);
+        $table->insert(["name" => '2']);
+        $table->insert(["name" => '3']);
+
+        $this->assertEquals($table->min('name'), '1');
+    }
+
+
+    public function testAvg()
+    {
+        $table = $this->getTable();
+        $table->truncate();
+
+        $table->insert(["name" => '1']);
+        $table->insert(["name" => '2']);
+        $table->insert(["name" => '3']);
+
+        $this->assertEquals($table->avg('name'), '2');
+    }
+
+    public function testOrderby()
+    {
+        $table = $this->getTable();
+        $table->truncate();
+
+        $table->insert(["name" => '1']);
+        $table->insert(["name" => '2']);
+        $table->insert(["name" => '3']);
+
+        $table = $this->getTable();
+        $first = $table->orderBy("name desc")->first();
+        $this->assertEquals($first["name"], '3');
     }
 
 }
