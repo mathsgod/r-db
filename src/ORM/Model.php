@@ -195,9 +195,7 @@ abstract class Model
     public static function Query($where = [])
     {
         $q = new Query(get_called_class());
-        foreach ($where as $k => $v) {
-            $q->where("$k=:$k", [":$k" => $v]);
-        }
+        $q->where($where);
         return $q->select();
     }
 

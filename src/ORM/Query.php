@@ -26,5 +26,14 @@ class Query extends \R\DB\Query
         return $l->first();
     }
 
+    public function where($query = [], $bindParam = null)
+    {
+        foreach ($query as $k => $v) {
+            parent::where("$k=:$k", [":$k" => $v]);
+        }
+        return $this;
+
+    }
+
     
 }
