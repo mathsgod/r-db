@@ -142,7 +142,28 @@ final class ModelTest extends TestCase
 
         $this->assertEquals(Testing::Count(), 3);
         $this->assertEquals(Testing::Count("name=1"), 1);
+    }
 
+    public function testCall()
+    {
+        $u = new User(1);
+        $this->assertInstanceOf(R\ORM\Query::class, $u->UserList);
+
+        $ul=$u->UserList->First();
+        $this->assertInstanceOf(UserList::class,$ul);
+
+
+        $user=$ul->User;
+        $this->assertInstanceOf(User::class,$user);
+
+
+        $ul=$u->UserList();
+        $this->assertInstanceOf(R\DataList::class, $ul);
+
+        $ul=$ul->First();
+        $this->assertInstanceOf(UserList::class,$ul);
+        $user=$ul->User();
+        $this->assertInstanceOf(User::class,$user);
     }
 
 

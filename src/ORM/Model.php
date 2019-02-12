@@ -4,6 +4,7 @@ namespace R\ORM;
 use PDO;
 use R\RSList;
 use Exception;
+use R\DataList;
 
 abstract class Model
 {
