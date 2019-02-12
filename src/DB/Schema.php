@@ -131,7 +131,7 @@ class Schema extends PDO
         return $method->invokeArgs($this, func_get_args());
     }
 
-    public function prepare($statement)
+    public function prepare($statement, $options = null)
     {
         if ($this->logger) $this->logger->debug("PDO::prepare", func_get_args());
         $reflector = new \ReflectionClass(get_class($this));
@@ -145,7 +145,7 @@ class Schema extends PDO
         return new Query($this, $table);
     }
 
-    public function exec()
+    public function exec($query)
     {
         if ($this->logger) $this->logger->debug("PDO::exec", func_get_args());
         $reflector = new \ReflectionClass(get_class($this));

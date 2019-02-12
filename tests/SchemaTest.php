@@ -46,4 +46,19 @@ final class SchemaTest extends TestCase
         $this->assertFalse($db->hasTable("NEW_TABLE"));
     }
 
+    public function testPrepare()
+    {
+        $s = Testing::__db();
+        $sth = $s->prepare("select * from User");
+        $this->assertInstanceOf(\PDOStatement::class, $sth);
+    }
+
+    public function testExec()
+    {
+        $s = Testing::__db();
+        $i = $s->exec("select * from User");
+        $this->assertTrue($i === 0);
+
+    }
+
 }
