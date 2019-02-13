@@ -32,8 +32,21 @@ class Query extends \R\DB\Query
             parent::where("$k=:$k", [":$k" => $v]);
         }
         return $this;
-
     }
 
-    
+    public function delete()
+    {
+        return parent::delete()->execute();
+    }
+
+    public function insert()
+    {
+        return parent::insert()->execute();
+    }
+
+    public function update()
+    {
+        return parent::update()->execute();
+    }
+
 }

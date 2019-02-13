@@ -176,7 +176,10 @@ class Query implements IteratorAggregate
             }
 
             return $sql;
+        }
 
+        if ($this->_type == "TRUNCATE") {
+            $sql = "TRUNCATE `$this->table`";
         }
 
         return $sql;
@@ -209,6 +212,7 @@ class Query implements IteratorAggregate
 
     public function update()
     {
+        $this->_dirty = true;
         $this->_type = "UPDATE";
         return $this;
     }
@@ -220,19 +224,19 @@ class Query implements IteratorAggregate
 
     public function execute($input_parameters = [])
     {
-        $sql = $this->sql();
-        if (!$this->statement = $this->db->prepare($sql)) {
-            $error = $this->db->errorInfo();
-            throw new Exception($error[2] . " sql: $sql", $error[1]);
+        if ($this->_dirty) {
+            $sql = $this->sql();
+            if (!$this->statement = $this->db->prepare($sql)) {
+                $error = $this->db->errorInfo();
+                throw new Exception($error[2] . " sql: $sql", $error[1]);
+            }
+            $this->_dirty = false;
         }
-        $this->_dirty = false;
 
         $params = array_merge($this->params, $input_parameters);
         if (!$this->statement->execute($params)) {
             $error = $this->statement->errorInfo();
-            print_r($params);
             throw new Exception($error[2] . " sql: $sql params:" . json_encode($params), $error[1]);
-
         }
         return $this->statement;
     }
@@ -289,6 +293,7 @@ class Query implements IteratorAggregate
 
     public function groupBy($group)
     {
+        $this->_dirty = true;
         if (!$group) return $this;
         if (is_array($group)) {
             foreach ($group as $k => $v) {
@@ -303,6 +308,7 @@ class Query implements IteratorAggregate
 
     public function limit($limit)
     {
+        $this->_dirty = true;
         if (is_array($limit)) { // page limit
             $this->limit = ($limit[0] - 1) * $limit[1] . "," . $limit[1];
         } else {
@@ -346,6 +352,7 @@ class Query implements IteratorAggregate
 
     public function select($query = null)
     {
+        $this->_dirty = true;
         $this->_type = "SELECT";
         if (is_null($query)) {
             $query = ["*"];
@@ -356,6 +363,7 @@ class Query implements IteratorAggregate
 
     public function insert()
     {
+        $this->_dirty = true;
         $this->_type = "INSERT";
         return $this;
     }
@@ -369,12 +377,14 @@ class Query implements IteratorAggregate
 
     public function delete()
     {
+        $this->_dirty = true;
         $this->_type = "DELETE";
         return $this;
     }
 
     public function count($query = " * ")
     {
+        $this->_dirty = true;
         $this->select = [];
         $this->select[] = "count($query)";
         $statement = $this->execute();
@@ -383,9 +393,9 @@ class Query implements IteratorAggregate
 
     public function truncate()
     {
-        $table = $this->from[0][0];
-        $sql = "TRUNCATE `$table` ";
-        return $this->db->exec($sql);
+        $this->_dirty = true;
+        $this->_type = "TRUNCATE";
+        return $this;
     }
 
     public function map($callback)

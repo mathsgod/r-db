@@ -38,7 +38,7 @@ final class QueryTest extends TestCase
     public function testCount()
     {
         $q = $this->getQuery();
-        $q->truncate();
+        $q->truncate()->execute();
         $this->assertEquals($q->count(), 0);
 
         $q = $this->getQuery();
@@ -51,16 +51,31 @@ final class QueryTest extends TestCase
 
     }
 
-    /*public function test_delete()
+    public function test_delete()
     {
+        $q = $this->getQuery();
+        $q->truncate()->execute();
+        $q = $this->getQuery();
+        $q->set(["name" => 1]);
+        $q->insert()->execute();
+        $q = $this->getQuery();
+        $q->set(["name" => 1]);
+        $q->insert()->execute();
+        $q = $this->getQuery();
+        $q->set(["name" => 3]);
+        $q->insert()->execute();
 
-        //$db = new PDO("raymond", "127.0.0.1", "root", "111111");
-        //$q=new Query($db,"Testing");
-    }*/
-
-    /*public function test_insert(){
-
-    }*/
+        $q = $this->getQuery();
+        $this->assertEquals($q->count(), 3);
 
 
+        $q = $this->getQuery();
+        $q->where("name='1'");
+        $q->delete()->execute();
+
+        $q = $this->getQuery();
+        $this->assertEquals($q->count(), 1);
+
+
+    }
 }

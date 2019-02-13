@@ -94,6 +94,13 @@ class Table
         return $this;
     }
 
+    public function whereRaw($where)
+    {
+        $q = $this->query();
+        $q->where($where);
+        return $this;
+    }
+
     public function update($records = [])
     {
         $q = $this->query();
