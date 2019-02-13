@@ -320,30 +320,23 @@ class Query implements IteratorAggregate
 
     public function leftJoin($table, $on)
     {
-/*        if (func_num_args() == 0) {
-            if (!count($this->join)) return " ";
+/*        if ($this->join) {
             foreach ($this->join as $values) {
-                $class = $values[0];
-                $table = forward_static_call(array($this->class, " __table "));
-                $join_table = forward_static_call(array($class, " __table "));
-                $key = $class::__key();
+
+                $table = $this->db->table($this->table);
+                $join_table = $this->db->table($values[0]);
+                $key = $join_table->keys()[0];
+
                 if ($values[2] != " ") {
                     $join[] = " Left Join `" . $join_table . "` " . $values[1] . " on " . $values[2];
                 } elseif ($values[1] != " ") {
                     $join[] = " Left Join " . $join_table . " on " . $values[1];
                 } else {
-                    $join[] = " Left Join " . $join_table . " on `{$join_table}` . {
-            $key
-        }
-        = `{$this->ref}` . {
-            $key
-        }
-        ";
+                    $join[] = " Left Join " . $join_table . " on `{$join_table}`.{$key}=`{$this->ref}`.{$key}";
                 }
             }
-            return implode(chr(10), $join);
+            $sql .= implode("\n", $join);
         }*/
-
 
         $this->join[] = "$table on $on";
         return $this;

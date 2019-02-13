@@ -75,7 +75,13 @@ final class QueryTest extends TestCase
 
         $q = $this->getQuery();
         $this->assertEquals($q->count(), 1);
+    }
 
+    public function testLeftJoin()
+    {
+        $q = UserGroup::Query()->leftJoin('UserList', 'UserList.usergroup_id=UserGroup.usergroup_id');
+        $q->where("UserList.user_id=1");
+        $this->assertEquals($q->count(), 1);
 
     }
 }

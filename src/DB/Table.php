@@ -177,8 +177,8 @@ class Table
 
     public function find($where = null, $orderby = null, $limit = null)
     {
-        $q = new Query($this->db);
-        $q->select()->from($this->name);
+        $q = new Query($this->db, $this->name);
+        $q->select();
         $q->where($where);
         $q->orderby($orderby);
         $q->limit($limit);
