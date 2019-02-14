@@ -25,8 +25,6 @@ class Query implements IteratorAggregate
     private $params = [];
 
     private $statement = null;
-
-
     public function __construct(Schema $db, $table = null, $ref = null)
     {
         $this->db = $db;
@@ -180,6 +178,8 @@ class Query implements IteratorAggregate
 
         if ($this->_type == "TRUNCATE") {
             $sql = "TRUNCATE `$this->table`";
+
+            return $sql;
         }
 
         return $sql;
@@ -246,8 +246,11 @@ class Query implements IteratorAggregate
         $this->_dirty = true;
         if (is_null($where)) return $this;
         if (is_array($where)) {
-            foreach ($where as $w) {
-                if (is_array($w)) {
+            foreach ($where as $k => $w) {
+
+                if (is_string($k)) {
+                    $this->where("`$k`=:$k", [":$k" => $k]);
+                } elseif (is_array($w)) {
                     $this->where($w[0], $w[1]);
                 } else {
                     $this->where($w);

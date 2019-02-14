@@ -25,12 +25,10 @@ final class QueryTest extends TestCase
     {
 
         $q = $this->getQuery();
-        $q->from("Testing");
         $q->select();
         $this->assertEquals($q->sql(), "SELECT * FROM `Testing` ");
 
         $q = $this->getQuery();
-        $q->from("Testing");
         $q->select(["testing_id"]);
         $this->assertEquals($q->sql(), "SELECT testing_id FROM `Testing` ");
     }
@@ -83,5 +81,18 @@ final class QueryTest extends TestCase
         $q->where("UserList.user_id=1");
         $this->assertEquals($q->count(), 1);
 
+    }
+
+    public function testUpdate()
+    {
+        $q = $this->getQuery();
+        $q->truncate()->execute();
+
+        $this->getQuery()->set(["name" => 1])->insert()->execute();
+
+        $q = $this->getQuery()->update()->set(["name" => 2])->where(["testing_id" => 1]);
+        $this->assertEquals($q->sql(), "UPDATE `Testing` SET `name`=:name WHERE (`testing_id`=:testing_id)");
+
+        $q->execute();
     }
 }

@@ -36,14 +36,14 @@ class Table
     public function columns()
     {
         $sth = $this->db->query("SHOW COLUMNS FROM `$this->name`");
-        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, "\R\DB\Column", [$this]);
+        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this]);
         return $sth->fetchAll();
     }
 
     public function column($field)
     {
         $sth = $this->db->query("SHOW COLUMNS FROM `{$this->name}` WHERE Field='$field'");
-        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, "\R\DB\Column", [$this]);
+        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this]);
         $ret = $sth->fetch();
         if ($ret === false) {
             return null;

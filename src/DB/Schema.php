@@ -20,6 +20,7 @@ class Schema extends PDO
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false
+                //PDO::ATTR_STATEMENT_CLASS => [Statement::class, [$this]]
             ]);
 
         } catch (PDOException $e) {
@@ -27,16 +28,6 @@ class Schema extends PDO
             if ($this->logger) $logger->error("SQLSTATE[HY000] [1045] Access denied");
             exit();
         }
-    }
-
-    public function update($table, $records, $where)
-    {
-        return $this->table($table)->where($where)->update($records)->execute();
-    }
-
-    public function insert($table, $records)
-    {
-        return $this->table($table)->insert($records)->execute();
     }
 
     public function table($name)
@@ -69,22 +60,12 @@ class Schema extends PDO
 
     private function _function()
     {
-        $data = [];
         return $this->query("SHOW FUNCTION STATUS")->fetchAll();
-        /*while($r=$s->fetchmn()){
-            $data[]=
-        }
-        return $data;*/
     }
 
     private function _procedure()
     {
-        $data = [];
         return $this->query("SHOW PROCEDURE STATUS")->fetchAll();
-        /*while($r=$s->fetchmn()){
-            $data[]=
-        }
-        return $data;*/
     }
 
     public function __get($name)
@@ -122,7 +103,7 @@ class Schema extends PDO
         return $this->exec("DROP TABLE `$name`");
     }
 
-    public function query()
+    public function query($sql)
     {
         if ($this->logger) $this->logger->debug("PDO::query", func_get_args());
         $reflector = new \ReflectionClass(get_class($this));

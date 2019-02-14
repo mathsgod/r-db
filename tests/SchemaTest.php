@@ -61,4 +61,14 @@ final class SchemaTest extends TestCase
 
     }
 
+    public function testQuery()
+    {
+        $s = Testing::__db();
+        $r = $s->query("select * from Testing");
+        foreach ($r as $ss) {
+            $this->assertTrue(is_array(($ss)));
+        }
+
+    }
+
 }
