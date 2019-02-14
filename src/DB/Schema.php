@@ -31,9 +31,6 @@ class Schema extends PDO
 
     public function table($name)
     {
-        if (!$this->hasTable($name)) {
-            return null;
-        }
         return new Table($this, $name);
     }
 
