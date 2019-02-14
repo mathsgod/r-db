@@ -88,15 +88,6 @@ class Table
     public function where($where = [])
     {
         $q = $this->query();
-        foreach ($where as $k => $v) {
-            $q->where("$k=:$k", [":$k" => $v]);
-        }
-        return $this;
-    }
-
-    public function whereRaw($where)
-    {
-        $q = $this->query();
         $q->where($where);
         return $this;
     }
@@ -193,10 +184,10 @@ class Table
         return $q->execute()->fetch();
     }
 
-    public function top($count = null, $where = null, $order = null)
+    public function top($count = null)
     {
-        $q = new Query($this->db, $this->name);
-        $q->select()->where($where)->orderBy($order)->limit($count);
+        $q = $this->query();
+        $q->limit($count);
         return $q->execute()->fetchAll();
     }
 

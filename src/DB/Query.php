@@ -20,7 +20,7 @@ class Query implements IteratorAggregate
     private $values = [];
 
     private $db = null;
-    private $select = [];
+    private $select = ["*"];
 
     private $params = [];
 
@@ -249,7 +249,7 @@ class Query implements IteratorAggregate
             foreach ($where as $k => $w) {
 
                 if (is_string($k)) {
-                    $this->where("`$k`=:$k", [":$k" => $k]);
+                    $this->where("`$k`=:$k", [":$k" => $w]);
                 } elseif (is_array($w)) {
                     $this->where($w[0], $w[1]);
                 } else {

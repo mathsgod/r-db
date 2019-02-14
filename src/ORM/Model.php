@@ -65,9 +65,8 @@ abstract class Model
                 $this->{$attribute["Field"]} = $attribute["Default"];
             }
         } else {
-
             $key = static::_key();
-            $rs = static::_table()->find("`$key`=:$key")->execute([$key => $id])->fetch();
+            $rs = static::_table()->where([$key=>$id])->first();
             if ($rs) {
                 foreach ($rs as $n => $v) {
                     $attr = $this->__attribute($n);
@@ -195,10 +194,7 @@ abstract class Model
     public static function Query($where = [])
     {
         $q = new Query(get_called_class());
-        foreach ($where as $k => $v) {
-            $q->where("$k=:$k", [":$k" => $v]);
-        }
-        
+        $q->where($where);
         return $q->select();
     }
 
