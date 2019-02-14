@@ -147,5 +147,6 @@ final class TableTest extends TestCase
         $first = $table->orderBy("name desc")->first();
         $this->assertEquals($first["name"], '3');
     }
+    
 
 }

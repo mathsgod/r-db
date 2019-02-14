@@ -7,7 +7,20 @@ setlocale(LC_ALL, 'en_US.UTF-8'); //do not remove
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
+print_r(Testing::__attribute());
+return;
+$a = new stdClass();
+$st = Testing::_table()->where(["testing_id" => 100])->get();
+$st->setFetchMode(PDO::FETCH_INTO, $a);
+if ($st->fetch() === false) {
+    echo "false";
+} else {
+    print_r($a);
+}
 
+
+
+return;
 $t = new Testing(1);
 
 $t->delete();

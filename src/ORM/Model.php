@@ -66,19 +66,16 @@ abstract class Model
             }
         } else {
             $key = static::_key();
-            $rs = static::_table()->where([$key=>$id])->first();
-            if ($rs) {
-                foreach ($rs as $n => $v) {
-                    $attr = $this->__attribute($n);
-                    if ($attr["Type"] == "json") {
-                        $this->$n = json_decode($v, true);
-                    } else {
-                        $this->$n = $v;
-                    }
-                }
-            } else {
-                $table = static::_table();
+            $s = static::_table()->where([$key => $id])->get();
+            $s->setFetchMode(PDO::FETCH_INTO, $this);
+            if ($s->fetch() === false) {
                 throw new \Exception("$table:$id not found", 404);
+            }
+            foreach ($this->__attribute() as $a) {
+                if ($a["Type"] == "json") {
+                    $n = $a["Field"];
+                    $this->$n = json_decode($this->$n, true);
+                }
             }
         }
     }
@@ -109,7 +106,7 @@ abstract class Model
             return $this->update($records);
         } else {
             $table = static::_table();
-            $records[$key] = null;
+            unset($records[$key]);
             $ret = $table->insert($records);
             $this->$key = $table->db()->lastInsertId();
             return $ret;
@@ -230,13 +227,11 @@ abstract class Model
 
     public static function Scalar($query, $where = null)
     {
-        $q = self::_table()->where($where)->select([$query]);
-        return $q->execute()->fetchColumn(0);
+        return self::_table()->where($where)->select([$query])->get()->fetchColumn(0);
     }
 
     public static function Count($where = null)
     {
-        $q = self::_table()->query();
-        return $q->where($where)->count();
+        return self::_table()->where($where)->count();
     }
 }

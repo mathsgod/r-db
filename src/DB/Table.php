@@ -85,10 +85,10 @@ class Table
         return $this->query;
     }
 
-    public function where($where = [])
+    public function where($where = null, $bindParam = null)
     {
         $q = $this->query();
-        $q->where($where);
+        $q->where($where, $bindParam);
         return $this;
     }
 
@@ -104,7 +104,7 @@ class Table
     {
         $q = $this->query();
         $q->select($field);
-        return $q;
+        return $this;
     }
 
     public function insert($records = [])
@@ -204,26 +204,22 @@ class Table
 
     public function max($column)
     {
-        $q = $this->select(["max($column)"]);
-        return $q->execute()->fetchColumn(0);
+        return $this->select(["max(`$column`)"])->get()->fetchColumn(0);
     }
 
     public function count()
     {
-        $q = $this->select(["count(*)"]);
-        return $q->execute()->fetchColumn(0);
+        return $this->select(["count(*)"])->get()->fetchColumn(0);
     }
 
     public function min($column)
     {
-        $q = $this->select(["min($column)"]);
-        return $q->execute()->fetchColumn(0);
+        return $this->select(["min(`$column`)"])->get()->fetchColumn(0);
     }
 
     public function avg($column)
     {
-        $q = $this->select(["avg($column)"]);
-        return $q->execute()->fetchColumn(0);
+        return $this->select(["avg(`$column`)"])->get()->fetchColumn(0);
     }
 
     private function _index()
@@ -240,4 +236,11 @@ class Table
         $q->orderBy($orderBy);
         return $this;
     }
+
+    public function get()
+    {
+        return $this->query()->execute();
+    }
+
+
 }
