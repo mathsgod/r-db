@@ -66,7 +66,8 @@ abstract class Model
             }
         } else {
             $key = static::_key();
-            $s = static::_table()->where([$key => $id])->get();
+            $table = static::_table();
+            $s = $table->where([$key => $id])->get();
             $s->setFetchMode(PDO::FETCH_INTO, $this);
             if ($s->fetch() === false) {
                 throw new \Exception("$table:$id not found", 404);
@@ -99,7 +100,6 @@ abstract class Model
                 } elseif ($attribue["Null"] == "NO" && $records[$name] === null) {
                     unset($records[$name]);
                 }
-
             }
         }
         if ($id = $this->$key) { // update
@@ -123,7 +123,6 @@ abstract class Model
     {
         $key = static::_key();
         return static::_table()->where([$key => $this->$key])->update($records);
-
     }
 
     public function delete()
@@ -235,7 +234,8 @@ abstract class Model
         return self::_table()->where($where)->count();
     }
 
-    public static function Distinct($query,$where=null){
+    public static function Distinct($query, $where = null)
+    {
         return self::_table()->where($where)->select(["distinct $query"])->get()->fetchAll();
     }
 }
