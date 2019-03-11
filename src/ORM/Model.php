@@ -54,7 +54,7 @@ abstract class Model
         if (self::$_Attributes[$class])
             return self::$_Attributes[$class];
 
-        self::$_Attributes[$class] = static::_table()->describe();
+        self::$_Attributes[$class] = static::_table()->d7escribe();
         return self::$_Attributes[$class];
     }
 
@@ -233,5 +233,9 @@ abstract class Model
     public static function Count($where = null)
     {
         return self::_table()->where($where)->count();
+    }
+
+    public static function Distinct($query,$where=null){
+        return self::_table()->where($where)->select(["distinct $query"])->get()->fetchAll();
     }
 }
