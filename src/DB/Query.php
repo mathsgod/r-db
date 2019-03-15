@@ -260,7 +260,7 @@ class Query implements IteratorAggregate
         }
 
         $this->where[] = $where;
-        if (isset($bindParam)) {
+        if (func_num_args()==2) {
             if (is_array($bindParam)) {
                 foreach ($bindParam as $k => $v) {
                     if (is_string($k)) {
