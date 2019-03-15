@@ -54,7 +54,7 @@ abstract class Model
         if (self::$_Attributes[$class])
             return self::$_Attributes[$class];
 
-        self::$_Attributes[$class] = static::_table()->d7escribe();
+        self::$_Attributes[$class] = static::_table()->describe();
         return self::$_Attributes[$class];
     }
 
