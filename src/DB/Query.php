@@ -366,7 +366,7 @@ class Query implements IteratorAggregate
 
     public function value($column, $value)
     {
-        $this->columns[] = $columns;
+        $this->columns[] = $column;
         $this->values[] = $value;
         return $this;
     }
