@@ -2,6 +2,7 @@
 namespace R\ORM;
 
 use R\RSList;
+use R\ObjectList;
 
 class Query extends \R\DB\Query
 {
@@ -13,10 +14,12 @@ class Query extends \R\DB\Query
 
     public function getIterator()
     {
-
         $iterator = parent::getIterator();
-
-        return new RSList($iterator, $this->class);
+        if ($this->select === null) {
+            return new RSList($iterator, $this->class);
+        } else {
+            return new RSList($iterator);
+        }
     }
 
     public function first()
@@ -40,5 +43,4 @@ class Query extends \R\DB\Query
     {
         return parent::update()->execute();
     }
-
 }

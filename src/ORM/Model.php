@@ -136,7 +136,7 @@ abstract class Model
         $sth = static::_table()->find($where, $order, $limit);
         $sth->execute();
         $sth->setFetchMode(PDO::FETCH_CLASS | PDO::FETCH_PROPS_LATE, get_called_class(), []);
-        return new RSList($sth);
+        return new RSList($sth, get_called_class());
     }
 
     public static function First($where = null, $order = null)
@@ -231,6 +231,9 @@ abstract class Model
 
     public static function Count($where = null)
     {
+        if (is_string($where)) {
+            $where = [$where];
+        }
         return self::_table()->where($where)->count();
     }
 

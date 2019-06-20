@@ -13,8 +13,8 @@
         }
     },
     "require": {
-        "php": ">=5.4",
-        "mathsgod/data-structure": "^1.0"
+        "php": ">=7.0",
+        "mathsgod/data-structure": "1.0.1"
     },
     "require-dev": {
         "phpunit/phpunit": "*"

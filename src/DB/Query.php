@@ -20,7 +20,7 @@ class Query implements IteratorAggregate
     private $values = [];
 
     private $db = null;
-    private $select = ["*"];
+    protected $select = null;
 
     private $params = [];
 
@@ -73,7 +73,12 @@ class Query implements IteratorAggregate
     {
         if ($this->_type == "SELECT") {
             $sql = "SELECT";
-            $sql .= " " . implode(",", $this->select);
+            if ($this->select) {
+                $sql .= " " . implode(",", $this->select);
+            } else {
+                $sql .= " *";
+            }
+
             $from = [];
             foreach ($this->from as $f) {
                 $from[] = "`" . $f[0] . "` " . $f[1];
@@ -196,7 +201,6 @@ class Query implements IteratorAggregate
                 } else {
                     $this->set[] = "`$k`=" . $this->db->quote($v);
                 }
-
             }
             return $this;
         }
@@ -260,7 +264,7 @@ class Query implements IteratorAggregate
         }
 
         $this->where[] = $where;
-        if (func_num_args()==2) {
+        if (func_num_args() == 2) {
             if (is_array($bindParam)) {
                 foreach ($bindParam as $k => $v) {
                     if (is_string($k)) {
@@ -268,7 +272,6 @@ class Query implements IteratorAggregate
                     } else {
                         $this->params[] = $v;
                     }
-
                 }
             } else {
                 $this->params[] = $bindParam;
@@ -323,7 +326,7 @@ class Query implements IteratorAggregate
 
     public function leftJoin($table, $on)
     {
-/*        if ($this->join) {
+        /*        if ($this->join) {
             foreach ($this->join as $values) {
 
                 $table = $this->db->table($this->table);
@@ -350,9 +353,6 @@ class Query implements IteratorAggregate
     {
         $this->_dirty = true;
         $this->_type = "SELECT";
-        if (is_null($query)) {
-            $query = ["*"];
-        }
         $this->select = $query;
         return $this;
     }
@@ -409,5 +409,4 @@ class Query implements IteratorAggregate
     {
         array_walk($this->getIterator(), $callback);
     }
-
 }
