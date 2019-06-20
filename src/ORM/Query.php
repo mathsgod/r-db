@@ -15,10 +15,10 @@ class Query extends \R\DB\Query
     public function getIterator()
     {
         $iterator = parent::getIterator();
-        if ($this->select === null) {
-            return new RSList($iterator, $this->class);
-        } else {
+        if ($this->select) {
             return new RSList($iterator);
+        } else {
+            return new RSList($iterator, $this->class);
         }
     }
 

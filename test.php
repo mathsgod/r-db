@@ -8,6 +8,12 @@ require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
 
+
+foreach (User::Query()->select(["username"]) as $a) {
+    print_r($a);
+}
+return;
+
 print_r(Testing::__attribute());
 return;
 $a = new stdClass();

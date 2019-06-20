@@ -20,7 +20,7 @@ class Query implements IteratorAggregate
     private $values = [];
 
     private $db = null;
-    protected $select = null;
+    protected $select = [];
 
     private $params = [];
 
@@ -349,7 +349,7 @@ class Query implements IteratorAggregate
     }
 
 
-    public function select($query = null)
+    public function select($query = [])
     {
         $this->_dirty = true;
         $this->_type = "SELECT";
