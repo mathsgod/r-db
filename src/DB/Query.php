@@ -6,25 +6,28 @@ use IteratorAggregate;
 
 class Query implements IteratorAggregate
 {
-    private $_type = "SELECT";
-    private $_dirty = true;
-    private $step = [];
-    private $from = [];
-    private $set = [];
-    private $into = [];
-    private $join = [];
-    private $where = [];
-    private $orderby = [];
-    private $groupby = [];
+    protected $_type = "SELECT";
+    protected $_dirty = true;
+    protected $step = [];
+    protected $from = [];
+    protected $set = [];
+    protected $into = [];
+    protected $join = [];
+    protected $where = [];
+    protected $orderby = [];
+    protected $groupby = [];
 
-    private $values = [];
+    protected $values = [];
 
-    private $db = null;
-    protected $select = [];
+    protected $db = null;
+    protected $select = ["*"];
 
-    private $params = [];
+    protected $params = [];
 
-    private $statement = null;
+    protected $statement = null;
+
+    protected $set_raw = [];
+
     public function __construct(Schema $db, $table = null, $ref = null)
     {
         $this->db = $db;
@@ -76,7 +79,7 @@ class Query implements IteratorAggregate
             if ($this->select) {
                 $sql .= " " . implode(",", $this->select);
             } else {
-                $sql .= " *";
+                $sql .= " * ";
             }
 
             $from = [];
@@ -147,15 +150,18 @@ class Query implements IteratorAggregate
         if ($this->_type == "UPDATE") {
             $sql = "UPDATE `$this->table`";
 
-            if ($this->set) {
-                $sql .= " SET ";
-                $s = [];
-                foreach ($this->set as $k => $v) {
-                    $s[] = "`$k`=:$k";
-                    $this->params[":$k"] = $v;
-                }
-                $sql .= implode(",", $s);
+            $sql .= " SET ";
+            $s = [];
+            foreach ($this->set as $k => $v) {
+                $s[] = "`$k`=:$k";
+                $this->params[":$k"] = $v;
             }
+
+            foreach ($this->set_raw as $set) {
+                $s[] = $set;
+            }
+
+            $sql .= implode(",", $s);
 
             if ($this->where) {
                 $sql .= " WHERE (" . implode(") AND (", $this->where) . ")";
@@ -188,6 +194,12 @@ class Query implements IteratorAggregate
         }
 
         return $sql;
+    }
+
+    public function setRaw($set_raw = [])
+    {
+        $this->set_raw = $set_raw;
+        return $this;
     }
 
     public function set($set = [])
@@ -349,7 +361,7 @@ class Query implements IteratorAggregate
     }
 
 
-    public function select($query = [])
+    public function select($query = null)
     {
         $this->_dirty = true;
         $this->_type = "SELECT";
