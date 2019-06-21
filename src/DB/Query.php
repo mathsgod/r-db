@@ -206,18 +206,6 @@ class Query implements IteratorAggregate
     {
         $this->set = $set;
         return $this;
-        if (is_array($set)) {
-            foreach ($set as $k => $v) {
-                if ($v === null) {
-                    $this->set[] = "`$k`=null";
-                } else {
-                    $this->set[] = "`$k`=" . $this->db->quote($v);
-                }
-            }
-            return $this;
-        }
-        $this->set[] = $set;
-        return $this;
     }
 
     public function into($into)
@@ -338,24 +326,6 @@ class Query implements IteratorAggregate
 
     public function leftJoin($table, $on)
     {
-        /*        if ($this->join) {
-            foreach ($this->join as $values) {
-
-                $table = $this->db->table($this->table);
-                $join_table = $this->db->table($values[0]);
-                $key = $join_table->keys()[0];
-
-                if ($values[2] != " ") {
-                    $join[] = " Left Join `" . $join_table . "` " . $values[1] . " on " . $values[2];
-                } elseif ($values[1] != " ") {
-                    $join[] = " Left Join " . $join_table . " on " . $values[1];
-                } else {
-                    $join[] = " Left Join " . $join_table . " on `{$join_table}`.{$key}=`{$this->ref}`.{$key}";
-                }
-            }
-            $sql .= implode("\n", $join);
-        }*/
-
         $this->join[] = "$table on $on";
         return $this;
     }
