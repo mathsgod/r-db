@@ -79,7 +79,7 @@ class Query implements IteratorAggregate
             if ($this->select) {
                 $sql .= " " . implode(",", $this->select);
             } else {
-                $sql .= " * ";
+                $sql .= " *";
             }
 
             $from = [];

@@ -1,4 +1,5 @@
 <?
+
 namespace R\ORM;
 
 use R\RSList;
@@ -42,5 +43,10 @@ class Query extends \R\DB\Query
     public function update()
     {
         return parent::update()->execute();
+    }
+
+    public function truncate()
+    {
+        return parent::truncate()->execute();
     }
 }

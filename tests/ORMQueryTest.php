@@ -1,7 +1,8 @@
 <?php
 
-declare (strict_types = 1);
+declare(strict_types=1);
 error_reporting(E_ALL && ~E_WARNING);
+
 use PHPUnit\Framework\TestCase;
 
 
@@ -37,5 +38,14 @@ final class ORMQueryTest extends TestCase
 
         $this->assertEquals(Testing::Query()->count(), 1);
     }
-}
 
+    public function testTruncate()
+    {
+
+        $query = Testing::Query();
+        $query->set(["name" => '1']);
+        $query->insert();
+        Testing::Query()->truncate();
+        $this->assertEquals(0, Testing::Query()->count());
+    }
+}
