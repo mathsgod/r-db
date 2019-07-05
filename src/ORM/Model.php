@@ -131,6 +131,36 @@ abstract class Model
         return static::_table()->where([$key => $this->$key])->delete();
     }
 
+    public function bind($rs)
+    {
+        foreach (get_object_vars($this) as $key => $val) {
+            if (is_object($rs)) {
+                if (isset($rs->$key)) {
+                    if ($key[0] != "_") {
+                        if (is_array($rs->$key)) {
+                            $this->$key = implode(",", $rs->$key);
+                        } else {
+                            $this->$key = $rs->$key;
+                        }
+                    }
+                }
+            } else {
+                if (array_key_exists($key, $rs)) {
+                    if ($key[0] != "_") {
+                        if (is_array($rs[$key])) {
+                            $this->$key = implode(",", array_filter($rs[$key], function ($o) {
+                                return $o !== "";
+                            }));
+                        } else {
+                            $this->$key = $rs[$key];
+                        }
+                    }
+                }
+            }
+        }
+        return $this;
+    }
+
     public static function Find($where = null, $order = null, $limit = null)
     {
         $sth = static::_table()->find($where, $order, $limit);
