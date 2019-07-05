@@ -1,4 +1,5 @@
 <?php
+
 namespace R\DB;
 
 use Exception;
@@ -16,6 +17,8 @@ class Query implements IteratorAggregate
     protected $where = [];
     protected $orderby = [];
     protected $groupby = [];
+    protected $limit;
+    protected $offset;
 
     protected $values = [];
 
@@ -108,6 +111,10 @@ class Query implements IteratorAggregate
 
             if ($this->limit) {
                 $sql .= " LIMIT " . $this->limit;
+            }
+
+            if ($this->offset) {
+                $sql .= " OFFSET " . $this->offset;
             }
             //
             return $sql;
@@ -316,11 +323,18 @@ class Query implements IteratorAggregate
     {
         $this->_dirty = true;
         if (is_array($limit)) { // page limit
-            $this->limit = ($limit[0] - 1) * $limit[1] . "," . $limit[1];
+            $this->limit =  $limit[1];
+            $this->offset = ($limit[0] - 1) * $limit[1];
         } else {
             $this->limit = $limit;
         }
 
+        return $this;
+    }
+
+    public function offset($offset = 0)
+    {
+        $this->offset = $offset;
         return $this;
     }
 

@@ -95,4 +95,13 @@ final class QueryTest extends TestCase
 
         $q->execute();
     }
+
+    public function testLimit()
+    {
+        $q = $this->getQuery();
+        $q->limit(1);
+        $q->offset(2);
+
+        $this->assertEquals($q->sql(), "SELECT * FROM `Testing`  LIMIT 1 OFFSET 2");
+    }
 }
