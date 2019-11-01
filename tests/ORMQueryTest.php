@@ -8,6 +8,22 @@ use PHPUnit\Framework\TestCase;
 
 final class ORMQueryTest extends TestCase
 {
+    public function test_filter()
+    {
+
+        $table = Testing::_table();
+        $table->truncate();
+        $table->insert(["name" => 1]);
+
+        $query = Testing::Query()->filter(["name" => 1]);
+
+        $this->assertEquals($query->count(), 1);
+
+        $query = Testing::Query()->filter(["name" => 2]);
+
+        $this->assertEquals($query->count(), 0);
+    }
+
     public function testUpdate()
     {
         $table = Testing::_table();

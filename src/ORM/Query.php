@@ -49,4 +49,9 @@ class Query extends \R\DB\Query
     {
         return parent::truncate()->execute();
     }
+
+    public function filter(array $filter=[]){
+        $this->where($filter);
+        return $this;
+    }
 }
