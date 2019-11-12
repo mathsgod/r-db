@@ -147,6 +147,11 @@ abstract class Model
             } else {
                 if (array_key_exists($key, $rs)) {
                     if ($key[0] != "_") {
+                        if($this->__attribute($key)["Type"]=="json"){
+                            $this->$key = $rs[$key];
+                            continue;
+                        }
+                        
                         if (is_array($rs[$key])) {
                             $this->$key = implode(",", array_filter($rs[$key], function ($o) {
                                 return $o !== "";
