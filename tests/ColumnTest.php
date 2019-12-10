@@ -1,6 +1,8 @@
 <?
-declare (strict_types = 1);
+
+declare(strict_types=1);
 error_reporting(E_ALL && ~E_WARNING);
+
 use PHPUnit\Framework\TestCase;
 
 use R\DB\Schema;
@@ -24,8 +26,5 @@ final class ColumnTest extends TestCase
         $org_name = $table->column("name");
 
         $this->assertEquals($org_name->Field, "name");
-
     }
-
-
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace R\DB;
 
 use Exception;
@@ -9,19 +10,19 @@ class Table
     public $name;
     private $query;
 
-    public function __construct(Schema $db, $name)
+    public function __construct(Schema $db, string $name)
     {
         $this->db = $db;
         $this->name = $name;
     }
 
-    public function dropColumn($name)
+    public function dropColumn(string $name)
     {
         $sql = "ALTER TABLE `{$this->name}` DROP COLUMN `$name`";
         return $this->db->exec($sql);
     }
 
-    public function addColumn($name, $type, $constraint = null)
+    public function addColumn(string $name, string $type, $constraint = null)
     {
         $sql = "ALTER TABLE `{$this->name}` ADD COLUMN `$name` $type $constraint";
         return $this->db->exec($sql);
@@ -40,7 +41,7 @@ class Table
         return $sth->fetchAll();
     }
 
-    public function column($field)
+    public function column(string $field)
     {
         $sth = $this->db->query("SHOW COLUMNS FROM `{$this->name}` WHERE Field='$field'");
         $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this]);
@@ -73,7 +74,6 @@ class Table
         return array_map(function ($o) {
             return $o["Field"];
         }, $ret);
-
     }
 
     public function query()
@@ -92,7 +92,7 @@ class Table
         return $this;
     }
 
-    public function update($records = [])
+    public function update(array $records = [])
     {
         $q = $this->query();
         $q->set($records);
@@ -100,14 +100,14 @@ class Table
         return $q->execute();
     }
 
-    public function select($field = [])
+    public function select(array $field = [])
     {
         $q = $this->query();
         $q->select($field);
         return $this;
     }
 
-    public function insert($records = [])
+    public function insert(array $records = [])
     {
         $q = $this->query();
         $q->set($records);
@@ -124,7 +124,7 @@ class Table
         return $q->execute();
     }
 
-    public function replace($records = [])
+    public function replace(array $records = [])
     {
         $names = array_keys($records);
         $values = implode(",", array_map(function ($name) {
@@ -136,7 +136,7 @@ class Table
         return $this->db->prepare("REPLACE INTO `$this->name` ({$names}) values ({$values})")->execute($records);
     }
 
-    public function updateOrCreate($records = [])
+    public function updateOrCreate(array $records = [])
     {
         $names = array_keys($records);
         $values = implode(",", array_map(function ($name) {
@@ -184,7 +184,7 @@ class Table
         return $q->execute()->fetch();
     }
 
-    public function top($count = null)
+    public function top(int $count = null)
     {
         $q = $this->query();
         $q->limit($count);
@@ -207,17 +207,17 @@ class Table
         return $this->select(["max(`$column`)"])->get()->fetchColumn(0);
     }
 
-    public function count()
+    public function count(): int
     {
         return $this->select(["count(*)"])->get()->fetchColumn(0);
     }
 
-    public function min($column)
+    public function min(string $column)
     {
         return $this->select(["min(`$column`)"])->get()->fetchColumn(0);
     }
 
-    public function avg($column)
+    public function avg(string $column)
     {
         return $this->select(["avg(`$column`)"])->get()->fetchColumn(0);
     }
@@ -241,6 +241,4 @@ class Table
     {
         return $this->query()->execute();
     }
-
-
 }

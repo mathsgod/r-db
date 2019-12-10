@@ -16,7 +16,7 @@ abstract class Model
 
     abstract public static function __db();
 
-    public static function _table()
+    public static function _table(): \R\DB\Table
     {
         $class = new \ReflectionClass(get_called_class());
         $props = $class->getStaticProperties();
@@ -120,7 +120,7 @@ abstract class Model
         return $this->$key;
     }
 
-    public function update($records = [])
+    public function update(array $records = [])
     {
         $key = static::_key();
         return static::_table()->where([$key => $this->$key])->update($records);
@@ -230,7 +230,7 @@ abstract class Model
         return $q->select();
     }
 
-    public function __get($name)
+    public function __get(string $name)
     {
         $ro = new \ReflectionObject($this);
 
@@ -248,7 +248,7 @@ abstract class Model
             return null;
         }
 
-        $key = forward_static_call(array($class, "_key"));
+        $key = forward_static_call([$class, "_key"]);
         if (in_array($key, array_keys(get_object_vars($this)))) {
             $id = $this->$key;
             if (!$id) return null;

@@ -35,7 +35,7 @@ class Schema extends PDO implements LoggerAwareInterface
         $this->logger = $logger;
     }
 
-    public function table($name)
+    public function table(string $name)
     {
         return new Table($this, $name);
     }

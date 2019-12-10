@@ -2,8 +2,6 @@
 
 namespace R\DB;
 
-use Exception;
-
 class Column
 {
 	private $table;
@@ -19,7 +17,7 @@ class Column
 		$this->table = $table;
 	}
 
-	public function table()
+	public function table(): Table
 	{
 		return $this->table;
 	}
@@ -28,7 +26,6 @@ class Column
 	{
 		$sql = "ALTER TABLE `{$this->table}` CHANGE COLUMN `$this->Field` `$field` {$this->Type} {$this->Extra}";
 		$this->Field = $field;
-		$db = $this->table->db();
 		return $this->table->db()->exec($sql);
 	}
 }

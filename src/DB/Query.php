@@ -203,13 +203,13 @@ class Query implements IteratorAggregate
         return $sql;
     }
 
-    public function setRaw($set_raw = [])
+    public function setRaw(array $set_raw = [])
     {
         $this->set_raw = $set_raw;
         return $this;
     }
 
-    public function set($set = [])
+    public function set(array $set = [])
     {
         $this->set = $set;
         return $this;
@@ -233,7 +233,7 @@ class Query implements IteratorAggregate
         return $this->statement->errorInfo();
     }
 
-    public function execute($input_parameters = []): PDOStatement
+    public function execute(array $input_parameters = []): PDOStatement
     {
         if ($this->_dirty) {
             $sql = $this->sql();
@@ -390,7 +390,7 @@ class Query implements IteratorAggregate
         return $this;
     }
 
-    public function map($callback)
+    public function map(callable $callback)
     {
         return array_map($callback, $this->toArray());
     }

@@ -1,4 +1,5 @@
 <?php
+
 namespace R\DB;
 
 class Stream
@@ -12,7 +13,7 @@ class Stream
 
     public static function Register(Schema $pdo, $protocol, $flags = 0)
     {
-        stream_wrapper_register($protocol, __class__, $flags) or die("Failed to register protocol");
+        stream_wrapper_register($protocol, __CLASS__, $flags) or die("Failed to register protocol");
         self::$_pdos[$protocol] = $pdo;
     }
 
@@ -62,7 +63,6 @@ class Stream
                         } else {
                             $this->_table->where("$k=?", [$v]);
                         }
-
                     }
                 }
 
@@ -96,8 +96,7 @@ class Stream
     }
 
     function stream_tell()
-    {
-    }
+    { }
 
     function stream_eof()
     {
