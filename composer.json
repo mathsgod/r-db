@@ -15,7 +15,8 @@
     "require": {
         "php": ">=7.0",
         "ext-pdo": "*",
-        "mathsgod/data-structure": "~1.0.1"
+        "mathsgod/data-structure": "~1.0.1",
+        "psr/log": "^1.1"
     },
     "require-dev": {
         "phpunit/phpunit": "*"

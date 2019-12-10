@@ -13,6 +13,7 @@ final class QueryTest extends TestCase
 {
     private function getQuery()
     {
+        //Testing::Query
         $db = Testing::__db();
         return new Query($db, "Testing");
     }

@@ -7,7 +7,7 @@ use R\ObjectList;
 
 class Query extends \R\DB\Query
 {
-    public function __construct($class)
+    public function __construct(string $class)
     {
         $this->class = $class;
         parent::__construct($class::__db(), $class::_table());
@@ -50,7 +50,8 @@ class Query extends \R\DB\Query
         return parent::truncate()->execute();
     }
 
-    public function filter(array $filter=[]){
+    public function filter(array $filter = [])
+    {
         $this->where($filter);
         return $this;
     }

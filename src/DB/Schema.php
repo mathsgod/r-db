@@ -5,11 +5,13 @@ namespace R\DB;
 use PDO;
 use PDOException;
 use Exception;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
 
-class Schema extends PDO
+class Schema extends PDO implements LoggerAwareInterface
 {
     private $logger;
-    public function __construct($database, $hostname, $username, $password, $charset = "utf8", $logger = null)
+    public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8", $logger = null)
     {
         //PDO::ERRMODE_EXCEPTION;
         $this->logger = $logger;
@@ -21,12 +23,16 @@ class Schema extends PDO
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false
             ]);
-
         } catch (PDOException $e) {
             echo $e->getMessage();
             if ($this->logger) $logger->error("SQLSTATE[HY000] [1045] Access denied");
             exit();
         }
+    }
+
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
     }
 
     public function table($name)
@@ -135,5 +141,4 @@ class Schema extends PDO
         }
         return $ret;
     }
-
 }

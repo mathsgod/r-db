@@ -1,4 +1,5 @@
 <?php
+
 namespace R\ORM;
 
 use PDO;
@@ -147,11 +148,11 @@ abstract class Model
             } else {
                 if (array_key_exists($key, $rs)) {
                     if ($key[0] != "_") {
-                        if($this->__attribute($key)["Type"]=="json"){
+                        if ($this->__attribute($key)["Type"] == "json") {
                             $this->$key = $rs[$key];
                             continue;
                         }
-                        
+
                         if (is_array($rs[$key])) {
                             $this->$key = implode(",", array_filter($rs[$key], function ($o) {
                                 return $o !== "";
@@ -222,10 +223,10 @@ abstract class Model
         return forward_static_call_array(array($class, "find"), $args);
     }
 
-    public static function Query($where = [])
+    public static function Query(array $filter = [])
     {
         $q = new Query(get_called_class());
-        $q->where($where);
+        $q->where($filter);
         return $q->select();
     }
 

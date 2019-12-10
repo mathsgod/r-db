@@ -1,4 +1,5 @@
 <?
+
 namespace R\DB;
 
 use Exception;
@@ -23,7 +24,7 @@ class Column
 		return $this->table;
 	}
 
-	public function rename($field)
+	public function rename(string $field)
 	{
 		$sql = "ALTER TABLE `{$this->table}` CHANGE COLUMN `$this->Field` `$field` {$this->Type} {$this->Extra}";
 		$this->Field = $field;

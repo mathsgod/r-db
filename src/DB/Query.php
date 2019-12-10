@@ -4,6 +4,7 @@ namespace R\DB;
 
 use Exception;
 use IteratorAggregate;
+use PDOStatement;
 
 class Query implements IteratorAggregate
 {
@@ -31,7 +32,7 @@ class Query implements IteratorAggregate
 
     protected $set_raw = [];
 
-    public function __construct(Schema $db, $table = null, $ref = null)
+    public function __construct(Schema $db, string $table = null, string $ref = null)
     {
         $this->db = $db;
         if ($table) {
@@ -40,7 +41,7 @@ class Query implements IteratorAggregate
         }
     }
 
-    public function setFetchMode($mode, $classname, $ctorargs)
+    public function setFetchMode(int $mode, string $classname, array $ctorargs): bool
     {
         return $this->statement->setFetchMode($mode, $classname, $ctorargs);
     }
@@ -69,13 +70,12 @@ class Query implements IteratorAggregate
         return $this->sql();
     }
 
-    public function toArray()
+    public function toArray(): array
     {
-
         return iterator_to_array($this->getIterator());
     }
 
-    public function sql()
+    public function sql(): string
     {
         if ($this->_type == "SELECT") {
             $sql = "SELECT";
@@ -228,12 +228,12 @@ class Query implements IteratorAggregate
         return $this;
     }
 
-    public function errorInfo()
+    public function errorInfo(): array
     {
         return $this->statement->errorInfo();
     }
 
-    public function execute($input_parameters = [])
+    public function execute($input_parameters = []): PDOStatement
     {
         if ($this->_dirty) {
             $sql = $this->sql();
@@ -332,13 +332,13 @@ class Query implements IteratorAggregate
         return $this;
     }
 
-    public function offset($offset = 0)
+    public function offset(int $offset = 0)
     {
         $this->offset = $offset;
         return $this;
     }
 
-    public function leftJoin($table, $on)
+    public function leftJoin(string $table, string $on)
     {
         $this->join[] = "$table on $on";
         return $this;
@@ -374,7 +374,7 @@ class Query implements IteratorAggregate
         return $this;
     }
 
-    public function count($query = " * ")
+    public function count(string $query = " * ")
     {
         $this->_dirty = true;
         $this->select = [];
