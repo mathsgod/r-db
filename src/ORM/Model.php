@@ -96,18 +96,15 @@ abstract class Model
                 if ($attribue["Type"] == "json") {
                     $records[$name] = json_encode($records[$name], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 }
-                if ($attribue["Null"] == "YES" && $records[$name] === "") {
-                    $records[$name] = null;
-                } elseif ($attribue["Null"] == "NO" && $records[$name] === null) {
+                if ($attribue["Null"] == "NO" && $records[$name] === null) {
                     unset($records[$name]);
                 }
             }
         }
-        if ($id = $this->$key) { // update
+        if ($this->$key) { // update
             return $this->update($records);
         } else {
             $table = static::_table();
-            unset($records[$key]);
             $ret = $table->insert($records);
             $this->$key = $table->db()->lastInsertId();
             return $ret;
