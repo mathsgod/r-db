@@ -96,8 +96,17 @@ abstract class Model
                 if ($attribue["Type"] == "json") {
                     $records[$name] = json_encode($records[$name], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 }
+                
                 if ($attribue["Null"] == "NO" && $records[$name] === null) {
                     $records[$name] = "";
+                }
+
+                if ($attribue["Type"] == "date" && $records[$name] === "") {
+                    $records[$name] = null;
+                }
+
+                if ($attribue["Type"] == "datetime" && $records[$name] === "") {
+                    $records[$name] = null;
                 }
             }
         }
