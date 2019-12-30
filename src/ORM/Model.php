@@ -88,9 +88,9 @@ abstract class Model
         $records = [];
 
         foreach (get_object_vars($this) as $name => $value) {
-            if (is_null($value) || $name[0] == "_" || $name == $key)
+            if ($name[0] == "_" || $name == $key)
                 continue;
-            $records[$name] = ($value === "") ? null : $value;
+            $records[$name] = $value;
 
             if ($attribue = self::__attribute($name)) {
                 if ($attribue["Type"] == "json") {
