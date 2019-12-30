@@ -7,6 +7,13 @@ setlocale(LC_ALL, 'en_US.UTF-8'); //do not remove
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
+
+$a = ["a" => 1, "b" => null];
+//unset($a["b"]);
+print_r($a);
+
+return;
+
 /*print_r(User::Query()->filter([
     "username" => "admin"
 ])->toArray()[0]->username);

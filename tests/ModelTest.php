@@ -1,6 +1,8 @@
 <?
-declare (strict_types = 1);
+
+declare(strict_types=1);
 error_reporting(E_ALL && ~E_WARNING);
+
 use PHPUnit\Framework\TestCase;
 
 final class ModelTest extends TestCase
@@ -95,7 +97,6 @@ final class ModelTest extends TestCase
         $t->name = "xyz";
         $t->save();
         $this->assertEquals(Testing::Query(["name" => "xyz"])->count(), 1);
-
     }
 
     public function testGet()
@@ -118,7 +119,6 @@ final class ModelTest extends TestCase
         $b = $user->first_name;
 
         $this->assertEquals($a, $b);
-
     }
 
     public function testScalar()
@@ -187,6 +187,29 @@ final class ModelTest extends TestCase
         $this->assertEquals($query->count(), 2);
     }
 
+    public function testSaveNull()
+    {
+        $table = Testing2::_table();
+        $table->truncate();
+        //insert
+        $o = new Testing2();
+        $o->name = "null test";
+        $o->null_field = null;
+        $o->not_null_field = null;
+        $o->save();
 
-    
+        $o1 = new Testing2($o->testing_id);
+        $this->assertNull($o1->null_field);
+        $this->assertEquals("", $o1->not_null_field);
+
+
+        //update
+        $o1->null_field=null;
+        $o1->not_null_field = null;
+        $o->save();
+
+        $o2 = new Testing2($o1->testing_id);
+        $this->assertNull($o2->null_field);
+        $this->assertEquals("", $o2->not_null_field);
+    }
 }

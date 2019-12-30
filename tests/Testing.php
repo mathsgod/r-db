@@ -11,5 +11,14 @@ class Testing extends R\ORM\Model
         ///aaa
         return new R\DB\Schema("raymond", "127.0.0.1", "root", "111111");
     }
+}
 
+class Testing2 extends R\ORM\Model
+{
+    public static function __db()
+    {
+
+        ///aaa
+        return new R\DB\Schema("raymond", "127.0.0.1", "root", "111111");
+    }
 }

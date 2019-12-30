@@ -97,7 +97,7 @@ abstract class Model
                     $records[$name] = json_encode($records[$name], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 }
                 if ($attribue["Null"] == "NO" && $records[$name] === null) {
-                    unset($records[$name]);
+                    $records[$name] = "";
                 }
             }
         }
