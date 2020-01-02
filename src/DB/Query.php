@@ -23,11 +23,13 @@ class Query implements IteratorAggregate
 
     protected $values = [];
 
+    /** @var Schema */
     protected $db = null;
     protected $select = ["*"];
 
     protected $params = [];
 
+    /** @var PDOStatement */
     protected $statement = null;
 
     protected $set_raw = [];
@@ -72,7 +74,7 @@ class Query implements IteratorAggregate
 
     public function toArray(): array
     {
-        return iterator_to_array($this->getIterator());
+        return (array) iterator_to_array($this->getIterator());
     }
 
     public function sql(): string
@@ -374,7 +376,7 @@ class Query implements IteratorAggregate
         return $this;
     }
 
-    public function count(string $query = " * ")
+    public function count(string $query = " * "): int
     {
         $this->_dirty = true;
         $this->select = [];
@@ -398,7 +400,8 @@ class Query implements IteratorAggregate
     public function first()
     {
         $this->limit(1);
-        return $this->getIterator()->current();
+        $statment = $this->getIterator();
+        return $statment->fetch();
     }
 
     public function each(callable $callback)
