@@ -57,12 +57,13 @@ class Table
         return $this->name;
     }
 
-    public function describe()
+    public function describe(): array
     {
         $sql = "DESCRIBE `{$this->name}`";
         if ($sth = $this->db->query($sql)) {
             return $sth->fetchAll();
         }
+        return [];
     }
 
     public function keys()

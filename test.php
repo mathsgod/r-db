@@ -8,9 +8,10 @@ require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
 
-$q = new R\DB\Query(User::__db(), "User");
+$table = User::_table();
 
-print_r($q->first());
+
+print_r($table->describe());
 die();
 
 $a = ["a" => 1, "b" => null];

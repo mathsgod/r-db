@@ -23,7 +23,6 @@ class Query implements IteratorAggregate
 
     protected $values = [];
 
-    /** @var Schema */
     protected $db = null;
     protected $select = ["*"];
 
@@ -400,8 +399,7 @@ class Query implements IteratorAggregate
     public function first()
     {
         $this->limit(1);
-        $statment = $this->getIterator();
-        return $statment->fetch();
+        return $this->execute()->fetch();
     }
 
     public function each(callable $callback)

@@ -6,11 +6,12 @@ use PDO;
 use PDOException;
 use Exception;
 use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 
 class Schema extends PDO implements LoggerAwareInterface
 {
-    private $logger;
+    use LoggerAwareTrait;
     public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8", LoggerInterface $logger = null)
     {
         //PDO::ERRMODE_EXCEPTION;
@@ -30,17 +31,12 @@ class Schema extends PDO implements LoggerAwareInterface
         }
     }
 
-    public function setLogger(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-    }
-
     public function table(string $name)
     {
         return new Table($this, $name);
     }
 
-    public function hasTable($name)
+    public function hasTable($name): bool
     {
         $data = [];
         $s = $this->query("SHOW TABLES");
@@ -50,7 +46,7 @@ class Schema extends PDO implements LoggerAwareInterface
         return in_array($name, $data);
     }
 
-    private function tables()
+    private function tables(): array
     {
         $data = [];
         $s = $this->query("SHOW TABLES");
@@ -60,33 +56,18 @@ class Schema extends PDO implements LoggerAwareInterface
         return $data;
     }
 
-    private function _function()
-    {
-        return $this->query("SHOW FUNCTION STATUS")->fetchAll();
-    }
-
-    private function _procedure()
-    {
-        return $this->query("SHOW PROCEDURE STATUS")->fetchAll();
-    }
-
     public function __get(string $name)
     {
         if ($name == "tables") {
             return $this->tables();
         }
         if ($name == "function") {
-            return $this->_function();
+            return $this->query("SHOW FUNCTION STATUS")->fetchAll();
         }
         if ($name == "procedure") {
-            return $this->_procedure();
+            return $this->query("SHOW PROCEDURE STATUS")->fetchAll();
         }
         return $this->$name;
-    }
-
-    public function logger()
-    {
-        return $this->logger;
     }
 
     public function createTable(string $name, array $columns = [])

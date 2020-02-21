@@ -17,7 +17,7 @@ class Stream
         self::$_pdos[$protocol] = $pdo;
     }
 
-    function stream_open($path, $mode, $options, &$opath)
+    function stream_open(string $path, string $mode): bool
     {
         $url = parse_url($path);
 
@@ -96,7 +96,8 @@ class Stream
     }
 
     function stream_tell()
-    { }
+    {
+    }
 
     function stream_eof()
     {
