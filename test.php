@@ -10,6 +10,12 @@ require_once __DIR__ . "/tests/Testing.php";
 
 $table = User::_table();
 
+$q=User::Query()->where("username like :u or password like :u",["u"=>"a"]);
+
+print_r($q->toArray());
+
+die();
+
 
 print_r($table->describe());
 die();

@@ -240,7 +240,7 @@ class Query implements IteratorAggregate
             $sql = $this->sql();
             if (!$this->statement = $this->db->prepare($sql)) {
                 $error = $this->db->errorInfo();
-                throw new Exception($error[2] . " sql: $sql", $error[1]);
+                throw new Exception("PDO SQLSTATE [" . $error[0] . "] " . $error[2] . " sql: $sql", $error[1]);
             }
             $this->_dirty = false;
         }
@@ -248,7 +248,7 @@ class Query implements IteratorAggregate
         $params = array_merge($this->params, $input_parameters);
         if (!$this->statement->execute($params)) {
             $error = $this->statement->errorInfo();
-            throw new Exception($error[2] . " sql: $sql params:" . json_encode($params), $error[1]);
+            throw new Exception("PDO SQLSTATE [" . $error[0] . "] " . $error[2] . " sql: $sql params:" . json_encode($params), $error[1]);
         }
         return $this->statement;
     }
