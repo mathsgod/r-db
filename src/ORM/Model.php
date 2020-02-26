@@ -143,32 +143,15 @@ abstract class Model
     public function bind($rs)
     {
         foreach (get_object_vars($this) as $key => $val) {
+            if ($key[0] == "_") continue;
+
             if (is_object($rs)) {
-                if (isset($rs->$key)) {
-                    if ($key[0] != "_") {
-                        if (is_array($rs->$key)) {
-                            $this->$key = implode(",", $rs->$key);
-                        } else {
-                            $this->$key = $rs->$key;
-                        }
-                    }
+                if (property_exists($rs, $key)) {
+                    $this->$key = $rs->$key;
                 }
             } else {
                 if (array_key_exists($key, $rs)) {
-                    if ($key[0] != "_") {
-                        if ($this->__attribute($key)["Type"] == "json") {
-                            $this->$key = $rs[$key];
-                            continue;
-                        }
-
-                        if (is_array($rs[$key])) {
-                            $this->$key = implode(",", array_filter($rs[$key], function ($o) {
-                                return $o !== "";
-                            }));
-                        } else {
-                            $this->$key = $rs[$key];
-                        }
-                    }
+                    $this->$key = $rs[$key];
                 }
             }
         }
