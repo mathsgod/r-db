@@ -7,8 +7,12 @@ setlocale(LC_ALL, 'en_US.UTF-8'); //do not remove
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
+print_r(new Testing2(1));
+
+die();
 
 $table = User::_table();
+
 
 $q=User::Query()->where("username like :u or password like :u",["u"=>"a"]);
 

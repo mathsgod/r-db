@@ -92,22 +92,26 @@ abstract class Model
                 continue;
             $records[$name] = $value;
 
-            if ($attribue = self::__attribute($name)) {
-                if ($attribue["Type"] == "json") {
-                    $records[$name] = json_encode($records[$name], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                }
+            $attribue = self::__attribute($name);
+            if ($attribue["Type"] == "json") {
+                $records[$name] = json_encode($records[$name], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
 
-                if ($attribue["Null"] == "NO" && $records[$name] === null) {
-                    $records[$name] = "";
-                }
+            if ($attribue["Null"] == "NO" && $records[$name] === null) {
+                $records[$name] = "";
+            }
 
-                if ($records[$name] === "") {
-                    if ($attribue["Type"] == "date" || $attribue["Type"] == "datetime" || $attribue["Type"] == "time") {
-                        $records[$name] = null;
-                    }
+            if ($records[$name] === "") {
+                if ($attribue["Type"] == "date" || $attribue["Type"] == "datetime" || $attribue["Type"] == "time") {
+                    $records[$name] = null;
                 }
             }
+
+            if (is_array($records[$name])) {
+                $records[$name] = implode(",", $records[$name]);
+            }
         }
+
         if ($this->$key) { // update
             return $this->update($records);
         } else {
