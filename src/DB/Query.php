@@ -261,7 +261,11 @@ class Query implements IteratorAggregate
             foreach ($where as $k => $w) {
 
                 if (is_string($k)) {
-                    $this->where("`$k`=:$k", [":$k" => $w]);
+                    if ($w === null) {
+                        $this->where("`$k` is null");
+                    } else {
+                        $this->where("`$k`=:$k", [":$k" => $w]);
+                    }
                 } elseif (is_array($w)) {
                     $this->where($w[0], $w[1]);
                 } else {
