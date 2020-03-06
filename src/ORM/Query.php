@@ -13,6 +13,9 @@ class Query extends \R\DB\Query
         parent::__construct($class::__db(), $class::_table());
     }
 
+    /**
+     * @return R\RSList
+     */
     public function getIterator()
     {
         $iterator = parent::getIterator();
