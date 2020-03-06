@@ -5,6 +5,7 @@ namespace R\DB;
 use Exception;
 use IteratorAggregate;
 use PDOStatement;
+use R\DataList;
 
 class Query implements IteratorAggregate
 {
@@ -71,8 +72,20 @@ class Query implements IteratorAggregate
         return $this->sql();
     }
 
-    public function toArray(): array
+    public function toList(array $bindParam = []): DataList
     {
+        return new DataList($this->toArray($bindParam));
+    }
+
+    public function toArray(array $bindParam = []): array
+    {
+        $params = [];
+        foreach ($bindParam as $k => $v) {
+            $params[":$k"] = $v;
+        }
+
+        $this->execute($params);
+
         return (array) iterator_to_array($this->getIterator());
     }
 
@@ -246,6 +259,7 @@ class Query implements IteratorAggregate
         }
 
         $params = array_merge($this->params, $input_parameters);
+
         if (!$this->statement->execute($params)) {
             $error = $this->statement->errorInfo();
             throw new Exception("PDO SQLSTATE [" . $error[0] . "] " . $error[2] . " sql: $sql params:" . json_encode($params), $error[1]);
@@ -379,7 +393,7 @@ class Query implements IteratorAggregate
         return $this;
     }
 
-    public function count(string $query = " * "): int
+    public function count(string $query = "*"): int
     {
         $this->_dirty = true;
         $this->select = [];

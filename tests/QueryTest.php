@@ -11,6 +11,39 @@ use R\DB\Query;
 
 final class QueryTest extends TestCase
 {
+    public function test_toArray()
+    {
+        $q = $this->getQuery();
+        $q->truncate()->execute();
+        $q = $this->getQuery();
+        $q->set(["name" => 1]);
+        $q->insert()->execute();
+        $q = $this->getQuery();
+        $q->set(["name" => 2]);
+        $q->insert()->execute();
+        $q = $this->getQuery();
+        $q->set(["name" => 3]);
+        $q->insert()->execute();
+
+
+        $q = $this->getQuery();
+
+        $q->where("name = :name");
+        
+        $o = $q->toArray(["name" => 1])[0];
+        $this->assertEquals("1", $o["name"]);
+
+        $o = $q->toArray(["name" => 2])[0];
+        $this->assertEquals("2", $o["name"]);
+    }
+
+    public function test_toList()
+    {
+        $q = $this->getQuery();
+        $list = $q->toList();
+        $this->assertTrue($q->count() == $list->count());
+    }
+
     private function getQuery()
     {
         //Testing::Query
