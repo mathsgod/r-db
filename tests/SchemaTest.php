@@ -8,16 +8,18 @@ use PHPUnit\Framework\TestCase;
 use R\DB\Schema;
 use R\DB\Table;
 use R\DB\Query;
+use Exception;
 
 final class SchemaTest extends TestCase
 {
-
-
-
     public function testCreate()
     {
         $db = Testing::__db();
         $this->assertInstanceOf(Schema::class, $db);
+
+
+        $schema = new Schema("raymond", "127.0.0.1", "root", "111111");
+        $this->assertInstanceOf(Schema::class, $schema);
     }
 
     public function test_table()
