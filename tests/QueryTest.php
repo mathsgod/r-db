@@ -29,7 +29,7 @@ final class QueryTest extends TestCase
         $q = $this->getQuery();
 
         $q->where("name = :name");
-        
+
         $o = $q->toArray(["name" => 1])[0];
         $this->assertEquals("1", $o["name"]);
 
@@ -137,5 +137,28 @@ final class QueryTest extends TestCase
         $q->offset(2);
 
         $this->assertEquals($q->sql(), "SELECT * FROM `Testing`  LIMIT 1 OFFSET 2");
+    }
+
+    public function test_insert_array()
+    {
+        $q = $this->getQuery();
+        $q->truncate()->execute();
+
+        $q = $this->getQuery();
+        $q->set(["name" => [
+            "a" => 1,
+            "b" => 2
+        ]])->insert();
+        $q->execute();
+
+        $q = $this->getQuery();
+        $this->assertEquals($q->count(), 1);
+
+        $q = $this->getQuery();
+        $a = $q->first();
+        $name = json_decode($a["name"], true);
+
+        $this->assertEquals(1, $name["a"]);
+        $this->assertEquals(2, $name["b"]);
     }
 }

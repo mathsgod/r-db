@@ -160,7 +160,11 @@ class Query implements IteratorAggregate
                 $s = [];
                 foreach ($this->set as $k => $v) {
                     $s[] = "`$k`=:$k";
-                    $this->params[":$k"] = $v;
+                    if (is_array($v) || is_object($v)) {
+                        $this->params[":$k"] = json_encode($v);
+                    } else {
+                        $this->params[":$k"] = $v;
+                    }
                 }
                 $sql .= implode(",", $s);
             }
@@ -175,7 +179,11 @@ class Query implements IteratorAggregate
             $s = [];
             foreach ($this->set as $k => $v) {
                 $s[] = "`$k`=:$k";
-                $this->params[":$k"] = $v;
+                if (is_array($v) || is_object($v)) {
+                    $this->params[":$k"] = json_encode($v);
+                } else {
+                    $this->params[":$k"] = $v;
+                }
             }
 
             foreach ($this->set_raw as $set) {
