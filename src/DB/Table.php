@@ -1,8 +1,5 @@
 <?php
-
 namespace R\DB;
-
-use Exception;
 
 class Table
 {

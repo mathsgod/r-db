@@ -1,6 +1,8 @@
 <?
-declare (strict_types = 1);
+
+declare(strict_types=1);
 error_reporting(E_ALL && ~E_WARNING);
+
 use PHPUnit\Framework\TestCase;
 
 use R\DB\Schema;
@@ -9,6 +11,8 @@ use R\DB\Query;
 
 final class SchemaTest extends TestCase
 {
+
+
 
     public function testCreate()
     {
@@ -34,7 +38,7 @@ final class SchemaTest extends TestCase
         $table = $db->table("Testing");
         $this->assertInstanceOf(Table::class, $table);
 
-      /*  $table = $db->table("Testing_NOT_EXIST");
+        /*  $table = $db->table("Testing_NOT_EXIST");
         $this->assertNull($table);*/
 
         $table = $db->createTable("NEW_TABLE", [
@@ -58,7 +62,6 @@ final class SchemaTest extends TestCase
         $s = Testing::__db();
         $i = $s->exec("select * from User");
         $this->assertTrue($i === 0);
-
     }
 
     public function testQuery()
@@ -68,7 +71,5 @@ final class SchemaTest extends TestCase
         foreach ($r as $ss) {
             $this->assertTrue(is_array(($ss)));
         }
-
     }
-
 }

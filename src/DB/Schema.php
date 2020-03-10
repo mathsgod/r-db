@@ -3,32 +3,21 @@
 namespace R\DB;
 
 use PDO;
-use PDOException;
 use Exception;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
-use Psr\Log\LoggerInterface;
 
 class Schema extends PDO implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
-    public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8", LoggerInterface $logger = null)
+    public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8mb4")
     {
-        //PDO::ERRMODE_EXCEPTION;
-        $this->logger = $logger;
-
-        try {
-            parent::__construct("mysql:dbname={$database};host={$hostname};charset={$charset}", $username, $password, [
-                PDO::ATTR_PERSISTENT => true,
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false
-            ]);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
-            if ($this->logger) $logger->error("SQLSTATE[HY000] [1045] Access denied");
-            exit();
-        }
+        parent::__construct("mysql:dbname={$database};host={$hostname};charset={$charset}", $username, $password, [
+            PDO::ATTR_PERSISTENT => true,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]);
     }
 
     public function table(string $name)
