@@ -9,6 +9,8 @@ use R\DataList;
 
 abstract class Model
 {
+    const NUMERIC_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint", "float", "double", "decimal"];
+
     protected $_key;
 
     private static $_Keys = [];
@@ -92,19 +94,25 @@ abstract class Model
                 continue;
             $records[$name] = $value;
 
-            $attribue = self::__attribute($name);
-            if ($attribue["Type"] == "json") {
+            $attribute = self::__attribute($name);
+            $type = explode("(", $attribute["Type"])[0];
+
+            if ($attribute["Type"] == "json") {
                 $records[$name] = json_encode($records[$name], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
-            if ($attribue["Null"] == "NO" && $records[$name] === null) {
+            if ($attribute["Null"] == "NO" && $records[$name] === null) {
                 $records[$name] = "";
             }
 
             if ($records[$name] === "") {
-                if ($attribue["Type"] == "date" || $attribue["Type"] == "datetime" || $attribue["Type"] == "time") {
+                if ($attribute["Type"] == "date" || $attribute["Type"] == "datetime" || $attribute["Type"] == "time") {
                     $records[$name] = null;
                 }
+            }
+
+            if (in_array($type, self::NUMERIC_DATA_TYPE) && $attribute["Null"] == "YES" && $records[$name] === "") {
+                $records[$name] = null;
             }
 
             if (is_array($records[$name])) {
