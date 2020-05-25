@@ -10,9 +10,9 @@ use Psr\Log\LoggerAwareTrait;
 class Schema extends PDO implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
-    public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8mb4")
+    public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8mb4", int $port = 3306)
     {
-        parent::__construct("mysql:dbname={$database};host={$hostname};charset={$charset}", $username, $password, [
+        parent::__construct("mysql:dbname={$database};host={$hostname};charset={$charset};port={$port}", $username, $password, [
             PDO::ATTR_PERSISTENT => true,
             PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
