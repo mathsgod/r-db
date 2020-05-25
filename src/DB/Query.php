@@ -16,6 +16,7 @@ class Query implements IteratorAggregate
     protected $set = [];
     protected $into = [];
     protected $join = [];
+    protected $inner_join = [];
     protected $where = [];
     protected $orderby = [];
     protected $groupby = [];
@@ -108,6 +109,12 @@ class Query implements IteratorAggregate
             if ($this->join) {
                 foreach ($this->join as $j) {
                     $sql .= " LEFT JOIN " . $j;
+                }
+            }
+
+            if ($this->inner_join) {
+                foreach ($this->inner_join as $j) {
+                    $sql .= " INNER JOIN " . $j;
                 }
             }
 
@@ -368,6 +375,13 @@ class Query implements IteratorAggregate
     public function leftJoin(string $table, string $on)
     {
         $this->join[] = "$table on $on";
+        return $this;
+    }
+
+
+    public function innerJoin(string $table, string $on)
+    {
+        $this->inner_join[] = "$table on $on";
         return $this;
     }
 
