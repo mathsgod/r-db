@@ -1,9 +1,8 @@
-<?
+<?php
 
 namespace R\ORM;
 
 use R\RSList;
-use R\ObjectList;
 
 class Query extends \R\DB\Query
 {

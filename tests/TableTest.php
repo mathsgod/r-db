@@ -1,6 +1,8 @@
-<?
-declare (strict_types = 1);
+<?php
+
+declare(strict_types=1);
 error_reporting(E_ALL && ~E_WARNING);
+
 use PHPUnit\Framework\TestCase;
 
 use R\DB\Column;
@@ -147,6 +149,4 @@ final class TableTest extends TestCase
         $first = $table->orderBy("name desc")->first();
         $this->assertEquals($first["name"], '3');
     }
-    
-
 }

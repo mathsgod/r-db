@@ -1,4 +1,4 @@
-<?
+<?php
 
 class UserList extends R\ORM\Model
 {
@@ -6,5 +6,4 @@ class UserList extends R\ORM\Model
     {
         return new R\DB\Schema("raymond", "127.0.0.1", "root", "111111");
     }
-
 }

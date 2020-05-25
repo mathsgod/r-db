@@ -1,4 +1,4 @@
-<?
+<?php
 
 class User extends R\ORM\Model
 {
