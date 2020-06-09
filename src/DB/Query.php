@@ -228,8 +228,6 @@ class Query implements IteratorAggregate
 
             return $sql;
         }
-
-        return $sql;
     }
 
     public function setRaw(array $set_raw = [])
