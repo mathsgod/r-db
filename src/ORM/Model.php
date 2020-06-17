@@ -118,6 +118,12 @@ abstract class Model
             if (is_array($records[$name])) {
                 $records[$name] = implode(",", $records[$name]);
             }
+
+            if ($records[$name] === false) {
+                $records[$name] = 0;
+            } elseif ($records[$name] === true) {
+                $records[$name] = 1;
+            }
         }
 
         if ($this->$key) { // update
