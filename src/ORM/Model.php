@@ -106,7 +106,7 @@ abstract class Model
             }
 
             if ($records[$name] === "") {
-                if ($attribute["Type"] == "date" || $attribute["Type"] == "datetime" || $attribute["Type"] == "time") {
+                if ($type == "date" || $type == "datetime" || $type == "time" || $type == "enum") {
                     $records[$name] = null;
                 }
             }

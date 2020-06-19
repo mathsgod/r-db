@@ -8,6 +8,26 @@ use PHPUnit\Framework\TestCase;
 final class ModelTest extends TestCase
 {
 
+    public function test_save_false()
+    {
+        $table = Testing2::_table();
+        $table->truncate();
+        $o = new Testing2();
+        $o->b = true;
+        $o->save();
+
+        $o2 = new Testing2($o->testing2_id);
+        $this->assertEquals(1, $o2->b);
+
+        $o2->b=false;
+        $o2->save();
+
+        $o3 = new Testing2($o->testing2_id);
+        $this->assertEquals(0, $o3->b);
+
+    }
+
+
     public function test_save_int_not_null()
     {
 
