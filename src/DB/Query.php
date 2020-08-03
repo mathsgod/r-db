@@ -444,4 +444,24 @@ class Query implements IteratorAggregate
     {
         array_walk($this->getIterator(), $callback);
     }
+
+    public function filter(array $filter = [])
+    {
+        $this->_dirty = true;
+        foreach ($filter as $field => $f) {
+            if (is_array($f)) {
+
+                $i = 0;
+                foreach ($f as $operator => $value) {
+                    $this->where[] = "`$field` $operator :{$field}_{$i}";
+                    $this->params["{$field}_{$i}"] = $value;
+                    $i++;
+                }
+            } else {
+                $this->where[] = "`$field`=:$field";
+                $this->params[$field] = $f;
+            }
+        }
+        return $this;
+    }
 }

@@ -11,6 +11,29 @@ use R\DB\Query;
 
 final class QueryTest extends TestCase
 {
+
+    public function test_filter()
+    {
+        $q = $this->getQuery();
+        $q->truncate()->execute();
+        $q = $this->getQuery();
+        $q->set(["name" => 1]);
+        $q->insert()->execute();
+        $q = $this->getQuery();
+        $q->set(["name" => 2]);
+        $q->insert()->execute();
+        $q = $this->getQuery();
+        $q->set(["name" => 3]);
+        $q->insert()->execute();
+
+        $q = $this->getQuery();
+
+        $q->filter([
+            "name" => [">" => 1]
+        ]);
+        $this->assertEquals(2, $q->count());
+    }
+
     public function test_toArray()
     {
         $q = $this->getQuery();
