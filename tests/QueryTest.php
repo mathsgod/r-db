@@ -32,6 +32,8 @@ final class QueryTest extends TestCase
             "name" => [">" => 1]
         ]);
         $this->assertEquals(2, $q->count());
+
+        
     }
 
     public function test_toArray()
