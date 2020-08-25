@@ -1,4 +1,5 @@
 <?php
+
 namespace R\DB;
 
 class Table
@@ -83,7 +84,7 @@ class Table
         return $this->query;
     }
 
-    public function where($where = null, $bindParam = null)
+    public function where($where = null, array $bindParam = [])
     {
         $q = $this->query();
         $q->where($where, $bindParam);

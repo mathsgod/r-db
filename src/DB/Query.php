@@ -280,10 +280,9 @@ class Query implements IteratorAggregate
         return $this->statement;
     }
 
-    public function where($where, $bindParam = null)
+    public function where($where, $bindParam = [])
     {
         $this->_dirty = true;
-        if (is_null($where)) return $this;
         if (is_array($where)) {
             foreach ($where as $k => $w) {
 
@@ -291,7 +290,7 @@ class Query implements IteratorAggregate
                     if ($w === null) {
                         $this->where("`$k` is null");
                     } else {
-                        $this->where("`$k`=:$k", [":$k" => $w]);
+                        $this->where("`$k`=:$k", [$k => $w]);
                     }
                 } elseif (is_array($w)) {
                     $this->where($w[0], $w[1]);
@@ -301,22 +300,17 @@ class Query implements IteratorAggregate
             }
             return $this;
         }
-
-        $this->where[] = $where;
-        if (func_num_args() == 2) {
-            if (is_array($bindParam)) {
-                foreach ($bindParam as $k => $v) {
-                    if (is_string($k)) {
-                        $this->params[$k] = $v;
-                    } else {
-                        $this->params[] = $v;
-                    }
-                }
-            } else {
-                $this->params[] = $bindParam;
-            }
+        if (is_string($where)) {
+            $this->where[] = $where;
         }
 
+        foreach ($bindParam as $k => $v) {
+            if (is_string($k)) {
+                $this->params[$k] = $v;
+            } else {
+                $this->params[] = $v;
+            }
+        }
         return $this;
     }
 
@@ -456,8 +450,8 @@ class Query implements IteratorAggregate
 
                     if ($operator == "between") {
                         $this->where[] = "`$field` between :{$field}_{$i}_from and :{$field}_{$i}_to";
-                        $this->params[":{$field}_{$i}_from"] = $value[0];
-                        $this->params[":{$field}_{$i}_to"] = $value[1];
+                        $this->params["{$field}_{$i}_from"] = $value[0];
+                        $this->params["{$field}_{$i}_to"] = $value[1];
                     } else {
 
                         $this->where[] = "`$field` $operator :{$field}_{$i}";

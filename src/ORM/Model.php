@@ -234,7 +234,7 @@ abstract class Model
     public static function Query(array $filter = [])
     {
         $q = new Query(get_called_class());
-        $q->where($filter);
+        $q->filter($filter);
         return $q->select();
     }
 
@@ -275,9 +275,6 @@ abstract class Model
 
     public static function Count($where = null)
     {
-        if (is_string($where)) {
-            $where = [$where];
-        }
         return self::_table()->where($where)->count();
     }
 
