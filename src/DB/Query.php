@@ -461,8 +461,12 @@ class Query implements IteratorAggregate
                     $i++;
                 }
             } else {
-                $this->where[] = "`$field`=:$field";
-                $this->params[$field] = $f;
+                if ($f === null) {
+                    $this->where[] = "`$field` is null";
+                } else {
+                    $this->where[] = "`$field`=:$field";
+                    $this->params[$field] = $f;
+                }
             }
         }
         return $this;
