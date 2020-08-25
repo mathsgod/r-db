@@ -280,9 +280,10 @@ class Query implements IteratorAggregate
         return $this->statement;
     }
 
-    public function where($where, $bindParam = [])
+    public function where($where, $bindParam = null)
     {
         $this->_dirty = true;
+        if (is_null($where)) return $this;
         if (is_array($where)) {
             foreach ($where as $k => $w) {
 
@@ -300,17 +301,22 @@ class Query implements IteratorAggregate
             }
             return $this;
         }
-        if (is_string($where)) {
-            $this->where[] = $where;
-        }
 
-        foreach ($bindParam as $k => $v) {
-            if (is_string($k)) {
-                $this->params[$k] = $v;
+        $this->where[] = $where;
+        if (func_num_args() == 2) {
+            if (is_array($bindParam)) {
+                foreach ($bindParam as $k => $v) {
+                    if (is_string($k)) {
+                        $this->params[$k] = $v;
+                    } else {
+                        $this->params[] = $v;
+                    }
+                }
             } else {
-                $this->params[] = $v;
+                $this->params[] = $bindParam;
             }
         }
+
         return $this;
     }
 
