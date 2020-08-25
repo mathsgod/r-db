@@ -447,7 +447,6 @@ class Query implements IteratorAggregate
 
                 $i = 0;
                 foreach ($f as $operator => $value) {
-
                     if ($operator == "between") {
                         $this->where[] = "`$field` between :{$field}_{$i}_from and :{$field}_{$i}_to";
                         $this->params["{$field}_{$i}_from"] = $value[0];
