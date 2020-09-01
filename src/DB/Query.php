@@ -5,9 +5,10 @@ namespace R\DB;
 use Exception;
 use IteratorAggregate;
 use PDOStatement;
+use PHP\Util\QueryInterface;
 use R\DataList;
 
-class Query implements IteratorAggregate
+class Query implements IteratorAggregate, QueryInterface
 {
     protected $_type = "SELECT";
     protected $_dirty = true;
@@ -364,7 +365,7 @@ class Query implements IteratorAggregate
         return $this;
     }
 
-    public function offset(int $offset = 0)
+    public function offset(int $offset)
     {
         $this->offset = $offset;
         return $this;
@@ -445,7 +446,7 @@ class Query implements IteratorAggregate
         array_walk($this->getIterator(), $callback);
     }
 
-    public function filter(array $filter = [])
+    public function filter(array $filter)
     {
         $this->_dirty = true;
         foreach ($filter as $field => $f) {
