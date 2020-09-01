@@ -25,6 +25,10 @@ class Query extends \R\DB\Query
         }
     }
 
+    /**
+     * @deprecated
+     * Use Class::Query()->first()
+     */
     public function first()
     {
         $this->limit(1);
@@ -47,6 +51,9 @@ class Query extends \R\DB\Query
         return parent::update()->execute();
     }
 
+    /**
+     * Use Class::Query()->truncate()
+     */
     public function truncate()
     {
         return parent::truncate()->execute();

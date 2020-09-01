@@ -175,6 +175,10 @@ abstract class Model
         return $this;
     }
 
+    /**
+     * @deprecated
+     * User Class:Query($filter)->orderBy($order)->limit($limit)->offset($offset)
+     */
     public static function Find($where = null, $order = null, $limit = null)
     {
         $sth = static::_table()->find($where, $order, $limit);
@@ -183,6 +187,10 @@ abstract class Model
         return new RSList($sth, get_called_class());
     }
 
+    /**
+     * @deprecated
+     * Use Class::Query($filter)->first()
+     */
     public static function First($where = null, $order = null)
     {
         return self::Find($where, $order, 1)->first();
@@ -268,16 +276,28 @@ abstract class Model
     }
 
 
+    /**
+     * @deprecated
+     * use Class::Query($filter)->select(["$query"])->first()
+     */
     public static function Scalar($query, $where = null)
     {
         return self::_table()->where($where)->select([$query])->get()->fetchColumn(0);
     }
 
+    /**
+     * @deprecated
+     * use Class::Query($filter)->count()
+     */
     public static function Count($where = null)
     {
         return self::_table()->where($where)->count();
     }
 
+    /**
+     * @deprecated
+     * use Class:Query($filter)->select(["distinct $query"]);
+     */
     public static function Distinct($query, $where = null)
     {
         return self::_table()->where($where)->select(["distinct $query"])->get()->fetchAll();
