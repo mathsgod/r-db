@@ -79,7 +79,7 @@ class Query implements IteratorAggregate, QueryInterface
         return new DataList($this->toArray($bindParam));
     }
 
-    public function toArray(array $bindParam = []): array
+    public function toArray(array $bindParam = [])
     {
         $params = [];
         foreach ($bindParam as $k => $v) {
@@ -91,7 +91,7 @@ class Query implements IteratorAggregate, QueryInterface
         return (array) iterator_to_array($this->getIterator());
     }
 
-    public function sql(): string
+    public function sql()
     {
         if ($this->_type == "SELECT") {
             $sql = "SELECT";
@@ -229,6 +229,8 @@ class Query implements IteratorAggregate, QueryInterface
 
             return $sql;
         }
+
+        return "";
     }
 
     public function setRaw(array $set_raw = [])

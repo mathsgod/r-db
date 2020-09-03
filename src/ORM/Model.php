@@ -6,6 +6,7 @@ use PDO;
 use R\RSList;
 use Exception;
 use R\DataList;
+use ReflectionObject;
 
 abstract class Model
 {
@@ -43,7 +44,7 @@ abstract class Model
         }
     }
 
-    public static function __attribute($name = null)
+    public static function __attribute(string $name = null)
     {
         if ($name) {
             foreach (self::__attribute() as $attribute) {
@@ -148,13 +149,13 @@ abstract class Model
     public function update(array $records = [])
     {
         $key = static::_key();
-        return static::_table()->where([$key => $this->$key])->update($records);
+        return self::Query([$key => $this->$key])->set($records)->update()->execute();
     }
 
     public function delete()
     {
         $key = static::_key();
-        return static::_table()->where([$key => $this->$key])->delete();
+        return self::Query([$key => $this->$key])->delete()->execute();
     }
 
     public function bind($rs)
@@ -196,7 +197,7 @@ abstract class Model
 
     public function __call($class_name, $args)
     {
-        $ro = new \ReflectionObject($this);
+        $ro = new ReflectionObject($this);
 
         $namespace = $ro->getNamespaceName();
         if ($namespace == "") {
@@ -209,7 +210,7 @@ abstract class Model
         }
 
         if (!class_exists($class)) {
-            throw new \Exception($class . " class not found");
+            throw new Exception($class . " class not found");
         }
 
         $key = forward_static_call(array($class, "_key"));
@@ -220,21 +221,10 @@ abstract class Model
             return new $class($this->$key);
         }
 
-        if (!$this->_id()) {
-            return new DataList();
-        }
         $key = static::_key();
-        if (is_array($args[0])) {
-            $args[0][] = "{$key}={$this->_id()}";
-        } else {
-            if ($args[0] != "") {
-                $args[0] = "({$key}={$this->_id()}) AND ($args[0])";
-            } else {
-                $args[0] = "{$key}={$this->_id()}";
-            }
-        }
-
-        return forward_static_call_array(array($class, "find"), $args);
+        $q = $class::Query([$key => $this->$key]);
+        $q->where($args);
+        return $q->toList();
     }
 
     public static function Query(array $filter = [])
