@@ -176,8 +176,7 @@ abstract class Model
     }
 
     /**
-     * @deprecated
-     * User Class:Query($filter)->orderBy($order)->limit($limit)->offset($offset)
+     * @deprecated Use Class:Query($filter)->orderBy($order)->limit($limit)->offset($offset)
      */
     public static function Find($where = null, $order = null, $limit = null)
     {
@@ -188,8 +187,7 @@ abstract class Model
     }
 
     /**
-     * @deprecated
-     * Use Class::Query($filter)->first()
+     * @deprecated Use Class::Query($filter)->first()
      */
     public static function First($where = null, $order = null)
     {
@@ -277,8 +275,7 @@ abstract class Model
 
 
     /**
-     * @deprecated
-     * use Class::Query($filter)->select(["$query"])->first()
+     * @deprecated use Class::Query($filter)->select(["$query"])->first()
      */
     public static function Scalar($query, $where = null)
     {
@@ -286,17 +283,16 @@ abstract class Model
     }
 
     /**
-     * @deprecated
-     * use Class::Query($filter)->count()
+     * @deprecated use Class::Query($filter)->count()
      */
     public static function Count($where = null)
     {
+
         return self::_table()->where($where)->count();
     }
 
     /**
-     * @deprecated
-     * use Class:Query($filter)->select(["distinct $query"]);
+     * @deprecated use Class:Query($filter)->select(["distinct $query"]);
      */
     public static function Distinct($query, $where = null)
     {

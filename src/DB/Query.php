@@ -416,11 +416,9 @@ class Query implements IteratorAggregate, QueryInterface
 
     public function count(string $query = "*"): int
     {
-        $this->_dirty = true;
-        $this->select = [];
-        $this->select[] = "count($query)";
-        $statement = $this->execute();
-        return $statement->fetchColumn(0);
+        $new = clone $this;
+        $new->select(["count($query)"]);
+        return $new->execute()->fetchColumn(0);
     }
 
     public function truncate()
