@@ -25,10 +25,6 @@ class Query extends \R\DB\Query
         }
     }
 
-    /**
-     * @deprecated
-     * Use Class::Query()->first()
-     */
     public function first()
     {
         $this->limit(1);
