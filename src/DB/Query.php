@@ -27,7 +27,7 @@ class Query implements IteratorAggregate, QueryInterface
     protected $values = [];
 
     protected $db = null;
-    protected $select = ["*"];
+    protected $select = null;
 
     protected $params = [];
 
@@ -98,7 +98,13 @@ class Query implements IteratorAggregate, QueryInterface
             if ($this->select) {
                 $sql .= " " . implode(",", $this->select);
             } else {
-                $sql .= " *";
+                if (count($this->inner_join)) {
+                    foreach ($this->from as $f) {
+                        $sql .= " `" . $f[0] . "`.*";
+                    }
+                } else {
+                    $sql .= " *";
+                }
             }
 
             $from = [];
