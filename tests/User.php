@@ -6,5 +6,6 @@ class User extends R\ORM\Model
     {
         return new R\DB\Schema("raymond", "127.0.0.1", "root", "111111");
     }
+    
 
 }

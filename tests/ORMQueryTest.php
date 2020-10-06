@@ -8,6 +8,12 @@ use PHPUnit\Framework\TestCase;
 
 final class ORMQueryTest extends TestCase
 {
+    public function test_type()
+    {
+        $testing = new Testing();
+        $this->assertTrue(is_int($testing->cb_box1));
+    }
+
     public function test_filter()
     {
 

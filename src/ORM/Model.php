@@ -11,6 +11,8 @@ use ReflectionObject;
 abstract class Model
 {
     const NUMERIC_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint", "float", "double", "decimal"];
+    const INT_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint"];
+    const FLOAT_DATA_TYPE = ["float", "double", "decimal"];
 
     protected $_key;
 
@@ -66,7 +68,16 @@ abstract class Model
     {
         if (is_null($id)) {
             foreach (static::__attribute() as $attribute) {
-                $this->{$attribute["Field"]} = $attribute["Default"];
+                $type = explode("(", $attribute["Type"])[0];
+                if ($attribute["Type"] == "tinyint(1)") { //bool
+                    $this->{$attribute["Field"]} = (bool)$attribute["Default"];
+                } elseif (in_array($type, self::INT_DATA_TYPE)) {
+                    $this->{$attribute["Field"]} = (int)$attribute["Default"];
+                } elseif (in_array($type, self::FLOAT_DATA_TYPE)) {
+                    $this->{$attribute["Field"]} = (float)$attribute["Default"];
+                } else {
+                    $this->{$attribute["Field"]} = $attribute["Default"];
+                }
             }
         } else {
             $key = static::_key();
