@@ -68,15 +68,16 @@ abstract class Model
     {
         if (is_null($id)) {
             foreach (static::__attribute() as $attribute) {
-                $type = explode("(", $attribute["Type"])[0];
-                if ($attribute["Type"] == "tinyint(1)") { //bool
-                    $this->{$attribute["Field"]} = (bool)$attribute["Default"];
-                } elseif (in_array($type, self::INT_DATA_TYPE)) {
-                    $this->{$attribute["Field"]} = (int)$attribute["Default"];
-                } elseif (in_array($type, self::FLOAT_DATA_TYPE)) {
-                    $this->{$attribute["Field"]} = (float)$attribute["Default"];
-                } else {
-                    $this->{$attribute["Field"]} = $attribute["Default"];
+                $this->{$attribute["Field"]} = null;
+                if ($attribute["Default"] != null) {
+                    $type = explode("(", $attribute["Type"])[0];
+                    if ($attribute["Type"] == "tinyint(1)") { //bool
+                        $this->{$attribute["Field"]} = (bool)$attribute["Default"];
+                    } elseif (in_array($type, self::INT_DATA_TYPE)) {
+                        $this->{$attribute["Field"]} = (int)$attribute["Default"];
+                    } elseif (in_array($type, self::FLOAT_DATA_TYPE)) {
+                        $this->{$attribute["Field"]} = (float)$attribute["Default"];
+                    }
                 }
             }
         } else {
