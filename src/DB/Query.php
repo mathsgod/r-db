@@ -322,7 +322,9 @@ class Query implements IteratorAggregate, QueryInterface
                     }
                 }
             } else {
-                $this->params[] = $bindParam;
+                if($bindParam!==null){
+                    $this->params[] = $bindParam;    
+                }
             }
         }
 

@@ -7,6 +7,10 @@ setlocale(LC_ALL, 'en_US.UTF-8'); //do not remove
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
+
+$t = new Testing(3);
+print_R($t->Testing2());
+exit();
 $q = Testing::Query();
 //$list = $q->toList();
 
