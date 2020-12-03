@@ -21,6 +21,16 @@ abstract class Model
 
     abstract public static function __db();
 
+    /**
+     * Get this object by id, if not found return null.
+     * @return static 
+     */
+    public static function __(int $id)
+    {
+        $key = self::_key();
+        return self::Query([$key => $id])->first();
+    }
+
     public static function _table(): \R\DB\Table
     {
         $class = new \ReflectionClass(get_called_class());
