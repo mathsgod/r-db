@@ -4,11 +4,12 @@ namespace R\DB;
 
 use Exception;
 use IteratorAggregate;
+use JsonSerializable;
 use PDOStatement;
 use PHP\Util\QueryInterface;
 use R\DataList;
 
-class Query implements IteratorAggregate, QueryInterface
+class Query implements IteratorAggregate, QueryInterface, JsonSerializable
 {
     protected $_type = "SELECT";
     protected $_dirty = true;
@@ -322,8 +323,8 @@ class Query implements IteratorAggregate, QueryInterface
                     }
                 }
             } else {
-                if($bindParam!==null){
-                    $this->params[] = $bindParam;    
+                if ($bindParam !== null) {
+                    $this->params[] = $bindParam;
                 }
             }
         }
@@ -484,5 +485,10 @@ class Query implements IteratorAggregate, QueryInterface
             }
         }
         return $this;
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->toArray();
     }
 }
