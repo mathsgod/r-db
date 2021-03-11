@@ -131,7 +131,8 @@ abstract class Model
                 $records[$name] = "";
             }
 
-            if ($attribute["Null"] == "YES" && $records[$name] == "") {
+            //如果是uni 而value是"",直接set null, 因為uniqie key 不會check null value
+            if ($attribute["Key"] == "UNI" && $records[$name] === "") {
                 $records[$name] = null;
             }
 
