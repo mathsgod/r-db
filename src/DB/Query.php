@@ -428,6 +428,9 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
     public function count(string $query = "*"): int
     {
         $new = clone $this;
+        $new->_dirty = true;
+        $new->limit = null;
+        $new->offset = null;
         $new->select(["count($query)"]);
         return $new->execute()->fetchColumn(0);
     }
