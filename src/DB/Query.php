@@ -37,6 +37,8 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
 
     protected $set_raw = [];
 
+    protected $orderMap = [];
+
     public function __construct(Schema $db, string $table = null, string $ref = null)
     {
         $this->db = $db;
@@ -135,7 +137,24 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
             }
 
             if ($this->orderby) {
-                $sql .= " ORDER BY " . implode(",", $this->orderby);
+
+                $orderby = [];
+                foreach ($this->orderby as $o) {
+                    if (is_array($o)) {
+
+                        $order_field = $o[0];
+                        if ($this->orderMap[$order_field]) {
+                            $order_field = $this->orderMap[$order_field];
+                        }
+                        $orderby[] = $order_field . " " . $o[1];
+                        
+                    } else {
+                        $orderby[] = $o;
+                    }
+                }
+
+
+                $sql .= " ORDER BY " . implode(",", $orderby);
             }
 
             if ($this->limit) {
@@ -332,13 +351,19 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
         return $this;
     }
 
+    public function setOrderMap(string $name, string $value)
+    {
+        $this->orderMap[$name] = $value;
+        return $this;
+    }
+
     public function orderBy($order)
     {
         $this->_dirty = true;
         if (!$order) return $this;
         if (is_array($order)) {
             foreach ($order as $k => $v) {
-                $this->orderby[] = "$k $v";
+                $this->orderby[] = [$k, $v];
             }
             return $this;
         } else {
