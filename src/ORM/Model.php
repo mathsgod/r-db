@@ -227,7 +227,7 @@ abstract class Model
      */
     public static function First($where = null, $order = null)
     {
-        return self::Find($where, $order, 1)->first();
+        return self::Query()->where($where)->orderBy($order)->first();
     }
 
     public function __call($class_name, $args)
