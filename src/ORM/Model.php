@@ -111,6 +111,8 @@ abstract class Model
     {
         $key = static::_key();
         $records = [];
+        $generated = [];
+
 
         foreach (get_object_vars($this) as $name => $value) {
             if ($name[0] == "_" || $name == $key)
@@ -121,6 +123,7 @@ abstract class Model
             $extra = $attribute["Extra"];
 
             if ($extra == "STORED GENERATED" || $extra == "VIRTUAL GENERATED") {
+                $generated[] = $name;
                 continue;
             }
 
@@ -166,13 +169,22 @@ abstract class Model
         }
 
         if ($this->$key) { // update
-            return $this->update($records);
+            $ret = $this->update($records);
         } else {
             $table = static::_table();
             $ret = $table->insert($records);
             $this->$key = $table->db()->lastInsertId();
-            return $ret;
         }
+
+        if (count($generated)) {
+            $table = static::_table();
+            $s = $table->select($generated)->where([$key => $this->$key])->get();
+            foreach ($s->fetch() as $name => $value) {
+                $this->$name = $value;
+            }
+        }
+
+        return $ret;
     }
 
     public function _id()
