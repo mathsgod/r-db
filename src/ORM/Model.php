@@ -115,9 +115,17 @@ abstract class Model
         foreach (get_object_vars($this) as $name => $value) {
             if ($name[0] == "_" || $name == $key)
                 continue;
-            $records[$name] = $value;
 
             $attribute = self::__attribute($name);
+
+            $extra = $attribute["Extra"];
+
+            if ($extra == "STORED GENERATED" || $extra == "VIRTUAL GENERATED") {
+                continue;
+            }
+
+            $records[$name] = $value;
+
             $type = explode("(", $attribute["Type"])[0];
 
             if ($attribute["Type"] == "json") {
