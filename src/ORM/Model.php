@@ -96,7 +96,7 @@ abstract class Model
             $s = $table->where([$key => $id])->get();
             $s->setFetchMode(PDO::FETCH_INTO, $this);
             if ($s->fetch() === false) {
-                throw new \Exception("$table:$id not found", 404);
+                throw new \Exception("$table:$id", 404);
             }
             foreach ($this->__attribute() as $a) {
                 if ($a["Type"] == "json") {
