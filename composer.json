@@ -1,0 +1,27 @@
+{
+    "name": "mathsgod/r-db",
+    "description": "raymond framework db",
+    "autoload": {
+        "psr-4": {
+            "R\\": "src"
+        }
+    },
+    "require": {
+        "php": ">=7.3",
+        "ext-pdo": "*",
+        "mathsgod/data-structure": "^1.3",
+        "psr/log": "^1.1",
+        "mathsgod/php-util": "^1.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "type": "library",
+    "license": "proprietary",
+    "minimum-stability": "stable",
+    "authors": [
+        {
+            "name": "Raymond Chong"
+        }
+    ]
+}
