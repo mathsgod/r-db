@@ -99,9 +99,12 @@ abstract class Model
                 throw new \Exception("$table:$id", 404);
             }
             foreach ($this->__attribute() as $a) {
+                $n = $a["Field"];
                 if ($a["Type"] == "json") {
-                    $n = $a["Field"];
                     $this->$n = json_decode($this->$n, true);
+                }
+                if ($a["Type"] == "tinyint(1)") {
+                    $this->$n = (bool)$this->$n;
                 }
             }
         }
