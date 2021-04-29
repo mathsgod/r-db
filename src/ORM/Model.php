@@ -6,6 +6,8 @@ use PDO;
 use R\RSList;
 use Exception;
 use R\DataList;
+use ReflectionClass;
+use ReflectionMethod;
 use ReflectionObject;
 
 abstract class Model
@@ -113,6 +115,9 @@ abstract class Model
     public function save()
     {
         $key = static::_key();
+
+
+
         $records = [];
         $generated = [];
 
@@ -171,12 +176,46 @@ abstract class Model
             }
         }
 
+
+        //exists before insert
+        $class = new ReflectionClass(get_called_class());
+        $methods = $class->getMethods(ReflectionMethod::IS_STATIC);
+        $methods = array_column($methods, "name");
+
         if ($this->$key) { // update
+
+            if (in_array("BeforeUpdate", $methods)) {
+                $method = $class->getMethod("BeforeUpdate");
+                $old = new static($this->$key);
+                $method->invoke(null, $this, $old);
+            }
+
+            if (in_array("AfterUpdate", $methods)) {
+                $old = new static($this->$key);
+            }
+
             $ret = $this->update($records);
+
+            if (in_array("AfterUpdate", $methods)) {
+                $method = $class->getMethod("AfterUpdate");
+                $method->invoke(null, new static($this->$key), $old);
+            }
         } else {
+
+            if (in_array("BeforeInsert", $methods)) {
+                $method = $class->getMethod("BeforeInsert");
+                $method->invoke(null, $this);
+            }
+
             $table = static::_table();
             $ret = $table->insert($records);
             $this->$key = $table->db()->lastInsertId();
+
+
+            if (in_array("AfterInsert", $methods)) {
+                $method = $class->getMethod("AfterInsert");
+                $method->invoke(null, new static($this->$key));
+            }
         }
 
         if (count($generated)) {
