@@ -75,22 +75,16 @@ class Schema extends PDO implements LoggerAwareInterface
         return $this->exec("DROP TABLE `$name`");
     }
 
-    public function query($statement, $mode = PDO::ATTR_DEFAULT_FETCH_MODE, $arg3 = null, array $ctorargs = array())
+    public function query($statement, $mode = PDO::ATTR_DEFAULT_FETCH_MODE, $arg3 = null, array $ctorargs = [])
     {
         if ($this->logger) $this->logger->debug("PDO::query", func_get_args());
-        $reflector = new \ReflectionClass(get_class($this));
-        $parent = $reflector->getParentClass();
-        $method = $parent->getMethod('query');
-        return $method->invokeArgs($this, func_get_args());
+        return parent::query($statement, $mode, $arg3, $ctorargs);
     }
 
-    public function prepare($statement, array $driver_options = array())
+    public function prepare($query, array $options = [])
     {
         if ($this->logger) $this->logger->debug("PDO::prepare", func_get_args());
-        $reflector = new \ReflectionClass(get_class($this));
-        $parent = $reflector->getParentClass();
-        $method = $parent->getMethod('prepare');
-        return $method->invokeArgs($this, func_get_args());
+        return parent::prepare($query, $options);
     }
 
     public function from(string $table)
@@ -101,10 +95,7 @@ class Schema extends PDO implements LoggerAwareInterface
     public function exec($statement)
     {
         if ($this->logger) $this->logger->debug("PDO::exec", func_get_args());
-        $reflector = new \ReflectionClass(get_class($this));
-        $parent = $reflector->getParentClass();
-        $method = $parent->getMethod('exec');
-        $ret = $method->invokeArgs($this, func_get_args());
+        $ret = parent::exec($statement);
         if ($ret === false) {
             $error = $this->errorInfo();
             throw new Exception($error[2], $error[1]);
