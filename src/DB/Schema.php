@@ -84,7 +84,7 @@ class Schema extends PDO implements LoggerAwareInterface
         return $method->invokeArgs($this, func_get_args());
     }
 
-    public function prepare($statement, array $options = null)
+    public function prepare($statement, $options = null)
     {
         if ($this->logger) $this->logger->debug("PDO::prepare", func_get_args());
         $reflector = new \ReflectionClass(get_class($this));
