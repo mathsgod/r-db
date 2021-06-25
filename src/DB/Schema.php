@@ -75,7 +75,7 @@ class Schema extends PDO implements LoggerAwareInterface
         return $this->exec("DROP TABLE `$name`");
     }
 
-    public function query($statement, $mode = PDO::ATTR_DEFAULT_FETCH_MODE, $arg3 = null, array $ctorargs = array())
+    public function query($statement, $mode = PDO::ATTR_DEFAULT_FETCH_MODE, ...$fetch_mode_args)
     {
         if ($this->logger) $this->logger->debug("PDO::query", func_get_args());
         $reflector = new \ReflectionClass(get_class($this));
@@ -83,7 +83,7 @@ class Schema extends PDO implements LoggerAwareInterface
         $method = $parent->getMethod('query');
         return $method->invokeArgs($this, func_get_args());
     }
-
+    
     public function prepare($statement, $options = null)
     {
         if ($this->logger) $this->logger->debug("PDO::prepare", func_get_args());
