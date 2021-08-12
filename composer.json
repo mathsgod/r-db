@@ -1,4 +1,5 @@
 {
+    "name": "mathsgod/r-db",
     "require": {
         "laminas/laminas-db": "^2.12",
         "laminas/laminas-hydrator": "^4.2",
