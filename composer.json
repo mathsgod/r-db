@@ -1,0 +1,16 @@
+{
+    "require": {
+        "laminas/laminas-db": "^2.12",
+        "laminas/laminas-hydrator": "^4.2",
+        "laminas/laminas-serializer": "^2.10",
+        "laminas/laminas-eventmanager": "^3.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "R\\": "src/"
+        }
+    },
+    "require-dev": {
+        "mathsgod/php-util": "^1.3"
+    }
+}
