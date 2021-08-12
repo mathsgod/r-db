@@ -30,6 +30,26 @@ abstract class Model implements AdapterAwareInterface
         self::$_adapter = $adapter;
     }
 
+    public function __construct($id = null)
+    {
+        if (!self::$_adapter) {
+            return;
+        }
+        if (is_null($id)) {
+            $set = [];
+            foreach (self::__columns() as $column) {
+                $set[$column->getName()] = $column->getColumnDefault();
+            }
+
+            $hydrator = self::__hydrator();
+            $hydrator->hydrate($set, $this);
+        } else {
+            $gateway = new TableGateway(self::__table_name(), self::$_adapter, null);;
+            $hydrator = self::__hydrator();
+            $hydrator->hydrate($gateway->select([self::__key() => $id])->current()->getArrayCopy(), $this);
+        }
+    }
+
     public function __get(string $name)
     {
         $ro = new ReflectionObject($this);
@@ -87,13 +107,7 @@ abstract class Model implements AdapterAwareInterface
 
     public static function Create(): static
     {
-        $set = [];
-        foreach (self::__columns() as $column) {
-            $set[$column->getName()] = $column->getColumnDefault();
-        }
-
-        $hydrator = self::__hydrator();
-        return $hydrator->hydrate($set, new static);
+        return new static;
     }
 
     public static function Load(int $id): ?static
