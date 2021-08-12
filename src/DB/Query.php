@@ -56,4 +56,15 @@ class Query extends Select implements IteratorAggregate, AdapterAwareInterface, 
         unset($a["adapter"]);
         return $a;
     }
+
+    public function first()
+    {
+        $c = clone $this;
+        $c->limit(1);
+        $rs = new HydratingResultSet($this->hydrator, $this->objectPrototype);
+        //table columns
+        $gateway = new TableGateway($this->table, $this->adapter, null, $rs);
+
+        return $gateway->selectWith($this)->current();
+    }
 }
