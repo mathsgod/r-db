@@ -19,9 +19,9 @@ use ReflectionObject;
 
 abstract class Model implements AdapterAwareInterface
 {
-    private static $_hydrator;
-    private static $_columns;
-    private static $_key;
+    private static $_hydrator = [];
+    private static $_columns = [];
+    private static $_key = [];
     protected static $_adapter = null;
 
     public function setDbAdapter(Adapter $adapter)
@@ -144,8 +144,8 @@ abstract class Model implements AdapterAwareInterface
 
     public static function __hydrator(): AbstractHydrator
     {
-        if (self::$_hydrator) {
-            return self::$_hydrator;
+        if (self::$_hydrator[static::class]) {
+            return self::$_hydrator[static::class];
         }
         $columns = self::__columns();
         $hydrator = new ObjectPropertyHydrator();
@@ -165,18 +165,18 @@ abstract class Model implements AdapterAwareInterface
             }
         }
 
-        return self::$_hydrator = $hydrator;
+        return self::$_hydrator[static::class] = $hydrator;
     }
 
     public static function __key(): ?string
     {
 
-        if (self::$_key) return self::$_key;
+        if (self::$_key[static::class]) return self::$_key[static::class];
         $constraints = \Laminas\Db\Metadata\Source\Factory::createSourceFromAdapter(self::$_adapter)->getConstraints(self::__table_name());
 
         foreach ($constraints as $constraint) {
             if ($constraint->getType() == "PRIMARY KEY") {
-                return self::$_key = $constraint->getColumns()[0];
+                return self::$_key[static::class] = $constraint->getColumns()[0];
             }
         }
         return null;
@@ -187,9 +187,9 @@ abstract class Model implements AdapterAwareInterface
      */
     public static function __columns()
     {
-        if (self::$_columns) return self::$_columns;
+        if (self::$_columns[static::class]) return self::$_columns[static::class];
         $metadata = \Laminas\Db\Metadata\Source\Factory::createSourceFromAdapter(self::$_adapter);
-        return self::$_columns = $metadata->getColumns(self::__table_name());
+        return self::$_columns[static::class] = $metadata->getColumns(self::__table_name());
     }
 
     public static function __table_name()
