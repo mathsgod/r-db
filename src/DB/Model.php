@@ -200,4 +200,36 @@ abstract class Model implements AdapterAwareInterface
 
         return new TableGateway(self::__table_name(), self::$_adapter, $features);
     }
+
+    public function __call($name, $arguments)
+    {
+        $ro = new ReflectionObject($this);
+
+        $namespace = $ro->getNamespaceName();
+        if ($namespace == "") {
+            $class = $name;
+        } else {
+            $class = $namespace . "\\" . $name;
+            if (!class_exists($class)) {
+                $class = $name;
+            }
+        }
+
+        if (!class_exists($class)) {
+            return null;
+        }
+
+        $key = forward_static_call(array($class, "_key"));
+
+        if (in_array($key, array_keys(get_object_vars($this)))) {
+            $id = $this->$key;
+            if (!$id) return null;
+            return new $class($this->$key);
+        }
+
+        $key = static::__key();
+        $q = $class::Query([$key => $this->$key]);
+        $q->where($arguments);
+        return iterator_to_array($q);
+    }
 }
