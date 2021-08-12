@@ -11,7 +11,7 @@ use Laminas\Db\Sql\Expression;
 use Laminas\Db\Sql\Select;
 use Laminas\Db\TableGateway\TableGateway;
 use Laminas\Hydrator\AbstractHydrator;
-
+use Laminas\Hydrator\ReflectionHydrator;
 use Traversable;
 
 class Query extends Select implements IteratorAggregate, AdapterAwareInterface, Traversable
@@ -47,5 +47,13 @@ class Query extends Select implements IteratorAggregate, AdapterAwareInterface, 
         $gateway = new TableGateway($this->table, $this->adapter, null, $rs);
 
         return $gateway->selectWith($this);
+    }
+
+    public function __debugInfo()
+    {
+        $hydrator = new ReflectionHydrator();
+        $a = $hydrator->extract($this);
+        unset($a["adapter"]);
+        return $a;
     }
 }
