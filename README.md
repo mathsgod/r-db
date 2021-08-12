@@ -25,7 +25,9 @@ class User extends Model{
 
 }
 
-User::Query();
+foreacH(User::Query() as $user){
+    print_r($user);
+}
 ```
 
 
