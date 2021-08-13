@@ -46,7 +46,7 @@ class Query extends Select implements IteratorAggregate
         $c->limit(1);
         $result = $c->execute();
         if ($result->count()) {
-            return $c->execute()->offsetGet(0);
+            return $result->toArray()[0];
         }
         return null;
     }
