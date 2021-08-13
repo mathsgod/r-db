@@ -13,6 +13,8 @@ setlocale(LC_ALL, 'en_US.UTF-8'); //do not remove
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
+echo User::Load(1)->UserList->count();
+die();
 print_r(get_class(User::Load(1)->UserList()));
 die();
 print_r(new Testing2(2));

@@ -2,7 +2,6 @@
 
 namespace R\DB;
 
-use ArrayObject;
 use Laminas\Db\Sql\Select;
 use Exception;
 use IteratorAggregate;

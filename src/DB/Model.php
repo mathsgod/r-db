@@ -28,6 +28,11 @@ abstract class Model
      */
     abstract public static function __db();
 
+    public static function Create(): static
+    {
+        return new static;
+    }
+
     public static function Load(int $id): static
     {
         $key = self::_key();
