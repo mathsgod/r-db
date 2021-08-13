@@ -1,13 +1,77 @@
 <?php
-date_default_timezone_set('Asia/Hong_Kong');
-ini_set("display_errors", "On");
-error_reporting(E_ALL && ~E_WARNING);
+
+use Laminas\Db\Sql\Select;
+use Laminas\Db\Sql\Where;
+use R\ORM\Model;
+
+//date_default_timezone_set('Asia/Hong_Kong');
+//ini_set("display_errors", "On");
+//error_reporting(E_ALL && ~E_WARNING);
 setlocale(LC_ALL, 'en_US.UTF-8'); //do not remove
 
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
-print_r(Testing::Query()->setOrderMap("a","(select count(*) from Testing)")->orderBy(["a"=>"desc"])->sql());
+print_r(new User(1));
+die();
+
+print_r(User::_table()->describe());
+die();
+
+print_r(User::Query(["user_id" => 1])->toArray());
+
+die();
+$adatper = User::__db()->adatper;
+
+$statmemt = $adatper->createStatement("Select * from User");
+$statmemt->prepare();
+$s = $statmemt->getResource();
+
+$s->execute();
+$s->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, "UserA", []);
+print_r($s->fetchAll());
+
+die();
+
+print_r(User::Query(["user_id" => 1])->first());
+
+
+return;
+// Script start
+$rustart = getrusage();
+
+foreach (range(1, 100000) as $i) {
+    UserList::Query()->toArray();
+}
+
+
+// Script end
+function rutime($ru, $rus, $index)
+{
+    return ($ru["ru_$index.tv_sec"] * 1000 + intval($ru["ru_$index.tv_usec"] / 1000))
+        -  ($rus["ru_$index.tv_sec"] * 1000 + intval($rus["ru_$index.tv_usec"] / 1000));
+}
+
+
+$ru = getrusage();
+echo "This process used " . rutime($ru, $rustart, "utime") .
+    " ms for its computations\n";
+echo "It spent " . rutime($ru, $rustart, "stime") .
+    " ms in system calls\n";
+die();
+
+
+print_r(User::Query()->where(function (Where $where) {
+    $where->equalTo("user_id", 1);
+})->toArray());
+
+//print_r(User::Query()->toArray());
+
+die();
+
+
+
+print_r(Testing::Query()->setOrderMap("a", "(select count(*) from Testing)")->orderBy(["a" => "desc"])->sql());
 die();
 
 

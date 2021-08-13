@@ -9,6 +9,7 @@ use R\DataList;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionObject;
+use Laminas\Db\Sql\Predicate;
 
 abstract class Model
 {
@@ -39,7 +40,7 @@ abstract class Model
         $props = $class->getStaticProperties();
 
         $table = $class->getShortName();
-        if ($props["_table"])
+        if (isset($props["_table"]))
             $table = $props["_table"];
 
         return static::__db()->table($table);
@@ -48,12 +49,10 @@ abstract class Model
     public static function _key()
     {
         $class = get_called_class();
-        if (self::$_Keys[$class])
-            return self::$_Keys[$class];
+        if (isset(self::$_Keys[$class])) return self::$_Keys[$class];
         foreach (static::__attribute() as $attribute) {
             if ($attribute["Key"] == "PRI") {
-                self::$_Keys[$class] = $attribute["Field"];
-                return $attribute["Field"];
+                return self::$_Keys[$class] = $attribute["Field"];
             }
         }
     }
@@ -69,11 +68,9 @@ abstract class Model
             return null;
         }
         $class = get_called_class();
-        if (self::$_Attributes[$class])
-            return self::$_Attributes[$class];
+        if (isset(self::$_Attributes[$class])) return self::$_Attributes[$class];
 
-        self::$_Attributes[$class] = static::_table()->describe();
-        return self::$_Attributes[$class];
+        return self::$_Attributes[$class] = static::_table()->describe();
     }
 
     public function __construct($id = null)
@@ -115,8 +112,6 @@ abstract class Model
     public function save()
     {
         $key = static::_key();
-
-
 
         $records = [];
         $generated = [];
@@ -208,6 +203,8 @@ abstract class Model
             }
 
             $table = static::_table();
+            
+            //$table->db()->
             $ret = $table->insert($records);
             $this->$key = $table->db()->lastInsertId();
 
@@ -316,11 +313,21 @@ abstract class Model
         return $q->toList();
     }
 
-    public static function Query(array $filter = [])
+    /**
+     * Create where clause
+     *
+     * @param  Where|\Closure|string|array|Predicate\PredicateInterface $predicate
+     * @param  string $combination One of the OP_* constants from Predicate\PredicateSet
+     * @return self Provides a fluent interface
+     * @throws Exception\InvalidArgumentException
+     */
+    public static function Query($predicate = null, $combination = Predicate\PredicateSet::OP_AND)
     {
-        $q = new Query(get_called_class());
-        $q->filter($filter);
-        return $q->select();
+        $query = new Query(get_called_class());
+        if ($predicate) {
+            $query->where($predicate, $combination);
+        }
+        return $query;
     }
 
     public function __get(string $name)

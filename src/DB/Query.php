@@ -5,9 +5,16 @@ namespace R\DB;
 use Exception;
 use IteratorAggregate;
 use JsonSerializable;
+use Laminas\Db\Adapter\Adapter;
+use Laminas\Db\Adapter\Driver\Pdo\Pdo;
+use Laminas\Db\Adapter\ParameterContainer;
+use Laminas\Db\Adapter\Platform\Mysql;
+use Laminas\Db\Sql\Platform\Platform;
+use Laminas\Db\Sql\Select;
 use PDOStatement;
 use PHP\Util\QueryInterface;
 use R\DataList;
+use Laminas\Db\Sql\Predicate;
 
 class Query implements IteratorAggregate, QueryInterface, JsonSerializable
 {
@@ -38,6 +45,7 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
     protected $set_raw = [];
 
     protected $orderMap = [];
+    protected $columns;
 
     public function __construct(Schema $db, string $table = null, string $ref = null)
     {
@@ -46,6 +54,13 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
             $this->from[] = [$table, $ref];
             $this->table = $table;
         }
+        $this->select = new Select($table);
+
+        //   parent::__construct($table);
+    }
+
+    public function columns()
+    {
     }
 
     public function setFetchMode(int $mode, string $classname, array $ctorargs): bool
@@ -74,7 +89,7 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
 
     public function __toString()
     {
-        return $this->sql();
+        return $this->select->getSqlString();
     }
 
     public function toList(array $bindParam = []): DataList
@@ -94,260 +109,49 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
         return (array) iterator_to_array($this->getIterator());
     }
 
-    public function sql()
-    {
-        if ($this->_type == "SELECT") {
-            $sql = "SELECT";
-            if ($this->select) {
-                $sql .= " " . implode(",", $this->select);
-            } else {
-                if (count($this->inner_join)) {
-                    foreach ($this->from as $f) {
-                        $sql .= " `" . $f[0] . "`.*";
-                    }
-                } else {
-                    $sql .= " *";
-                }
-            }
-
-            $from = [];
-            foreach ($this->from as $f) {
-                $from[] = "`" . $f[0] . "` " . $f[1];
-            }
-            $sql .= " FROM " . implode(",", $from);
-
-            if ($this->join) {
-                foreach ($this->join as $j) {
-                    $sql .= " LEFT JOIN " . $j;
-                }
-            }
-
-            if ($this->inner_join) {
-                foreach ($this->inner_join as $j) {
-                    $sql .= " INNER JOIN " . $j;
-                }
-            }
-
-            if ($this->where) {
-                $sql .= " WHERE (" . implode(") AND (", $this->where) . ")";
-            }
-
-            if ($this->groupby) {
-                $sql .= " GROUP BY " . implode(",", $this->groupby);
-            }
-
-            if ($this->orderby) {
-
-                $orderby = [];
-                foreach ($this->orderby as $o) {
-                    if (is_array($o)) {
-
-                        $order_field = $o[0];
-                        if ($this->orderMap[$order_field]) {
-                            $order_field = $this->orderMap[$order_field];
-                        }
-                        $orderby[] = $order_field . " " . $o[1];
-                        
-                    } else {
-                        $orderby[] = $o;
-                    }
-                }
-
-
-                $sql .= " ORDER BY " . implode(",", $orderby);
-            }
-
-            if ($this->limit) {
-                $sql .= " LIMIT " . $this->limit;
-            }
-
-            if ($this->offset) {
-                $sql .= " OFFSET " . $this->offset;
-            }
-            //
-            return $sql;
-        }
-
-
-        if ($this->_type == "INSERT") {
-            $sql = "INSERT INTO";
-            $sql .= " `" . $this->table . "`";
-
-            if ($this->into) {
-
-                $names = implode(",", array_map(function ($name) {
-                    return "`" . $name . "`";
-                }, $this->into));
-
-                $sql .= " ($names)";
-
-                $values = implode(",", array_map(function ($name) {
-                    return ":$name";
-                }, $this->into));
-
-                $sql .= " VALUES ($values)";
-            }
-
-            if ($this->set) {
-                $this->params = [];
-                $sql .= " SET ";
-                $s = [];
-                foreach ($this->set as $k => $v) {
-                    $s[] = "`$k`=:$k";
-                    if (is_array($v) || is_object($v)) {
-                        $this->params[":$k"] = json_encode($v);
-                    } else {
-                        $this->params[":$k"] = $v;
-                    }
-                }
-                $sql .= implode(",", $s);
-            }
-
-            return $sql;
-        }
-
-        if ($this->_type == "UPDATE") {
-            $sql = "UPDATE `$this->table`";
-
-            $sql .= " SET ";
-            $s = [];
-            foreach ($this->set as $k => $v) {
-                $s[] = "`$k`=:$k";
-                if (is_array($v) || is_object($v)) {
-                    $this->params[":$k"] = json_encode($v);
-                } else {
-                    $this->params[":$k"] = $v;
-                }
-            }
-
-            foreach ($this->set_raw as $set) {
-                $s[] = $set;
-            }
-
-            $sql .= implode(",", $s);
-
-            if ($this->where) {
-                $sql .= " WHERE (" . implode(") AND (", $this->where) . ")";
-            }
-
-            return $sql;
-        }
-
-        if ($this->_type == "DELETE") {
-            $sql = "DELETE";
-
-            $from = [];
-            foreach ($this->from as $f) {
-                $from[] = "`$f[0]`";
-            }
-            $sql .= " FROM " . implode(",", $from);
-
-
-            if ($this->where) {
-                $sql .= " WHERE (" . implode(") AND (", $this->where) . ")";
-            }
-
-            return $sql;
-        }
-
-        if ($this->_type == "TRUNCATE") {
-            $sql = "TRUNCATE `$this->table`";
-
-            return $sql;
-        }
-
-        return "";
-    }
-
-    public function setRaw(array $set_raw = [])
-    {
-        $this->set_raw = $set_raw;
-        return $this;
-    }
-
-    public function set(array $set = [])
-    {
-        $this->set = $set;
-        return $this;
-    }
-
-    public function into($into)
-    {
-        $this->into[] = $into;
-        return $this;
-    }
-
-    public function update()
-    {
-        $this->_dirty = true;
-        $this->_type = "UPDATE";
-        return $this;
-    }
 
     public function errorInfo(): array
     {
         return $this->statement->errorInfo();
     }
 
-    public function execute(array $input_parameters = []): PDOStatement
+    public function execute(array $input_parameters = [])
     {
+
+
         if ($this->_dirty) {
-            $sql = $this->sql();
-            if (!$this->statement = $this->db->prepare($sql)) {
+
+            $sql = $this->select->getSqlString($this->db->adatper->getPlatform());
+            $statement = $this->db->adatper->createStatement($sql);
+            $statement->prepare();
+
+            $this->statement = $statement->getResource();
+
+            /*     if (!$this->statement = $this->db->prepare($sql)) {
                 $error = $this->db->errorInfo();
                 throw new Exception("PDO SQLSTATE [" . $error[0] . "] " . $error[2] . " sql: $sql", $error[1]);
-            }
+            } */
             $this->_dirty = false;
         }
 
-        $params = array_merge($this->params, $input_parameters);
-
-        if (!$this->statement->execute($params)) {
+        if (!$this->statement->execute($input_parameters)) {
             $error = $this->statement->errorInfo();
-            throw new Exception("PDO SQLSTATE [" . $error[0] . "] " . $error[2] . " sql: $sql params:" . json_encode($params), $error[1]);
+            throw new Exception("PDO SQLSTATE [" . $error[0] . "] " . $error[2] . " sql: $sql ", $error[1]);
         }
         return $this->statement;
     }
 
-    public function where($where, $bindParam = null)
+    /**
+     * Create where clause
+     *
+     * @param  Where|\Closure|string|array|Predicate\PredicateInterface $predicate
+     * @param  string $combination One of the OP_* constants from Predicate\PredicateSet
+     * @return self Provides a fluent interface
+     * @throws Exception\InvalidArgumentException
+     */
+    public function where($predicate, $combination = Predicate\PredicateSet::OP_AND)
     {
-        $this->_dirty = true;
-        if (is_null($where)) return $this;
-        if (is_array($where)) {
-            foreach ($where as $k => $w) {
-
-                if (is_string($k)) {
-                    if ($w === null) {
-                        $this->where("`$k` is null");
-                    } else {
-                        $this->where("`$k`=:$k", [$k => $w]);
-                    }
-                } elseif (is_array($w)) {
-                    $this->where($w[0], $w[1]);
-                } else {
-                    $this->where($w);
-                }
-            }
-            return $this;
-        }
-
-        $this->where[] = $where;
-        if (func_num_args() == 2) {
-            if (is_array($bindParam)) {
-                foreach ($bindParam as $k => $v) {
-                    if (is_string($k)) {
-                        $this->params[$k] = $v;
-                    } else {
-                        $this->params[] = $v;
-                    }
-                }
-            } else {
-                if ($bindParam !== null) {
-                    $this->params[] = $bindParam;
-                }
-            }
-        }
-
+        $this->select->where($predicate, $combination);
         return $this;
     }
 
@@ -401,7 +205,7 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
         return $this;
     }
 
-    public function offset(int $offset)
+    public function offset($offset)
     {
         $this->offset = $offset;
         return $this;
@@ -423,6 +227,8 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
 
     public function select($query = null)
     {
+
+        return $this;
         $this->_dirty = true;
         $this->_type = "SELECT";
         $this->select = $query;
@@ -483,7 +289,7 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
         array_walk($this->getIterator(), $callback);
     }
 
-    
+
     public function filter(array $filter)
     {
         $this->_dirty = true;
@@ -493,7 +299,7 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
                 if (array_keys($f) === range(0, count($f) - 1)) {
                     //sequential array
 
-    
+
                     $i = 0;
                     $or = [];
                     foreach ($f as $v) {

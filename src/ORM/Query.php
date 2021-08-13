@@ -17,8 +17,10 @@ class Query extends \R\DB\Query
      */
     public function getIterator()
     {
+        
         $iterator = parent::getIterator();
-        if ($this->select) {
+        
+        if ($this->columns) {
             return new RSList($iterator);
         } else {
             return new RSList($iterator, $this->class);

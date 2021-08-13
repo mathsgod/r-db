@@ -3,21 +3,35 @@
 namespace R\DB;
 
 use PDO;
+use PDOStatement;
 use Exception;
+use Laminas\Db\Adapter\Adapter;
+use Laminas\Db\Adapter\Platform\Mysql;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 
-class Schema extends PDO implements LoggerAwareInterface
+class Schema implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
+    public $adatper;
+
     public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8mb4", int $port = 3306)
     {
-        parent::__construct("mysql:dbname={$database};host={$hostname};charset={$charset};port={$port}", $username, $password, [
-            PDO::ATTR_PERSISTENT => true,
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false
+        $adatper = new Adapter([
+            "database" => $database,
+            "hostname" => $hostname,
+            "username" => $username,
+            "password" => $password,
+            "charset" => $charset,
+            "driver" => "Pdo_Mysql",
+            "driver_options" => [
+                PDO::ATTR_PERSISTENT => true,
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ]
         ]);
+        $this->adatper = $adatper;
     }
 
     public function table(string $name)
@@ -75,22 +89,25 @@ class Schema extends PDO implements LoggerAwareInterface
         return $this->exec("DROP TABLE `$name`");
     }
 
+    /**
+     * @return PDOStatement 
+     */
     public function query($statement, $mode = PDO::ATTR_DEFAULT_FETCH_MODE, ...$fetch_mode_args)
     {
-        if ($this->logger) $this->logger->debug("PDO::query", func_get_args());
-        $reflector = new \ReflectionClass(get_class($this));
-        $parent = $reflector->getParentClass();
-        $method = $parent->getMethod('query');
-        return $method->invokeArgs($this, func_get_args());
+        $statement = $this->adatper->query($statement);
+        $statement->execute();
+        return $statement->getResource();
     }
-    
+
+    /**
+     * @return PDOStatement 
+     */
     public function prepare($statement, $options = null)
     {
         if ($this->logger) $this->logger->debug("PDO::prepare", func_get_args());
-        $reflector = new \ReflectionClass(get_class($this));
-        $parent = $reflector->getParentClass();
-        $method = $parent->getMethod('prepare');
-        return $method->invokeArgs($this, func_get_args());
+        $statement = $this->adatper->createStatement($statement);
+        $statement->prepare();
+        return $statement->getResource();
     }
 
     public function from(string $table)
@@ -100,15 +117,8 @@ class Schema extends PDO implements LoggerAwareInterface
 
     public function exec($statement)
     {
-        if ($this->logger) $this->logger->debug("PDO::exec", func_get_args());
-        $reflector = new \ReflectionClass(get_class($this));
-        $parent = $reflector->getParentClass();
-        $method = $parent->getMethod('exec');
-        $ret = $method->invokeArgs($this, func_get_args());
-        if ($ret === false) {
-            $error = $this->errorInfo();
-            throw new Exception($error[2], $error[1]);
-        }
-        return $ret;
+        $statement = $this->adatper->createStatement($statement);
+        $result = $statement->execute();
+        return $result->getAffectedRows();
     }
 }

@@ -2,8 +2,13 @@
 
 class UserList extends R\ORM\Model
 {
+    protected static $_db;
     public static function __db()
     {
-        return new R\DB\Schema("raymond", "127.0.0.1", "root", "111111");
+
+        if (self::$_db) return self::$_db;
+
+
+        return self::$_db = new R\DB\Schema("raymond", "127.0.0.1", "root", "111111");
     }
 }
