@@ -1,15 +1,16 @@
 <?php
 
-namespace R\ORM;
+namespace R\DB;
 
+use ArrayObject;
 use PDO;
-use R\RSList;
 use Exception;
-use R\DataList;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionObject;
 use Laminas\Db\Sql\Predicate;
+use Laminas\Db\Sql\Select;
+use Laminas\Db\TableGateway\TableGateway;
 
 abstract class Model
 {
@@ -22,13 +23,12 @@ abstract class Model
     private static $_Keys = [];
     private static $_Attributes = [];
 
+    /**
+     * @return \R\DB\Schema
+     */
     abstract public static function __db();
 
-    /**
-     * Get this object by id, if not found return null.
-     * @return static 
-     */
-    public static function __(int $id)
+    public static function Load(int $id): static
     {
         $key = self::_key();
         return self::Query([$key => $id])->first();
@@ -90,10 +90,17 @@ abstract class Model
                 }
             }
         } else {
+
+
+            $table = static::_table()->name;
             $key = static::_key();
-            $table = static::_table();
-            $s = $table->where([$key => $id])->get();
+            $select = new Select($table);
+            $select->where([$key => $id]);
+            $sql = $select->getSqlString(static::__db()->getPlatform());
+            $s = static::__db()->prepare($sql);
+            $s->execute();
             $s->setFetchMode(PDO::FETCH_INTO, $this);
+
             if ($s->fetch() === false) {
                 throw new \Exception("$table:$id", 404);
             }
@@ -189,7 +196,8 @@ abstract class Model
                 $old = new static($this->$key);
             }
 
-            $ret = $this->update($records);
+            $gateway = static::__table_gateway();
+            $ret = $gateway->update($records, [$key => $this->$key]);
 
             if (in_array("AfterUpdate", $methods)) {
                 $method = $class->getMethod("AfterUpdate");
@@ -197,17 +205,16 @@ abstract class Model
             }
         } else {
 
+
             if (in_array("BeforeInsert", $methods)) {
                 $method = $class->getMethod("BeforeInsert");
                 $method->invoke(null, $this);
             }
 
-            $table = static::_table();
-            
-            //$table->db()->
-            $ret = $table->insert($records);
-            $this->$key = $table->db()->lastInsertId();
+            $gateway = static::__table_gateway();
+            $ret = $gateway->insert($records);
 
+            $this->$key = $gateway->getLastInsertValue();
 
             if (in_array("AfterInsert", $methods)) {
                 $method = $class->getMethod("AfterInsert");
@@ -216,14 +223,20 @@ abstract class Model
         }
 
         if (count($generated)) {
-            $table = static::_table();
+            /*             $table = static::_table();
             $s = $table->select($generated)->where([$key => $this->$key])->get();
             foreach ($s->fetch() as $name => $value) {
                 $this->$name = $value;
             }
+ */
         }
 
         return $ret;
+    }
+
+    public static function __table_gateway()
+    {
+        return new TableGateway(self::_table()->name, static::__db()->getDbAdatpter());
     }
 
     public function _id()
@@ -232,16 +245,11 @@ abstract class Model
         return $this->$key;
     }
 
-    public function update(array $records = [])
-    {
-        $key = static::_key();
-        return self::Query([$key => $this->$key])->set($records)->update()->execute();
-    }
-
     public function delete()
     {
         $key = static::_key();
-        return self::Query([$key => $this->$key])->delete()->execute();
+        $gateway = new TableGateway(self::_table()->name, static::__db()->getDbAdatpter());
+        return $gateway->delete([$key => $this->$key]);
     }
 
     public function bind($rs)
@@ -260,25 +268,6 @@ abstract class Model
             }
         }
         return $this;
-    }
-
-    /**
-     * @deprecated Use Class:Query($filter)->orderBy($order)->limit($limit)->offset($offset)
-     */
-    public static function Find($where = null, $order = null, $limit = null)
-    {
-        $sth = static::_table()->find($where, $order, $limit);
-        $sth->execute();
-        $sth->setFetchMode(PDO::FETCH_CLASS | PDO::FETCH_PROPS_LATE, get_called_class(), []);
-        return new RSList($sth, get_called_class());
-    }
-
-    /**
-     * @deprecated Use Class::Query($filter)->first()
-     */
-    public static function First($where = null, $order = null)
-    {
-        return self::Query()->where($where)->orderBy($order)->first();
     }
 
     public function __call($class_name, $args)
@@ -310,7 +299,7 @@ abstract class Model
         $key = static::_key();
         $q = $class::Query([$key => $this->$key]);
         $q->where($args);
-        return $q->toList();
+        return new ArrayObject($q->toArray());
     }
 
     /**
@@ -318,17 +307,17 @@ abstract class Model
      *
      * @param  Where|\Closure|string|array|Predicate\PredicateInterface $predicate
      * @param  string $combination One of the OP_* constants from Predicate\PredicateSet
-     * @return self Provides a fluent interface
      * @throws Exception\InvalidArgumentException
      */
     public static function Query($predicate = null, $combination = Predicate\PredicateSet::OP_AND)
     {
-        $query = new Query(get_called_class());
+        $query = new Query(static::class);
         if ($predicate) {
             $query->where($predicate, $combination);
         }
         return $query;
     }
+
 
     public function __get(string $name)
     {
@@ -357,31 +346,5 @@ abstract class Model
 
         $key = static::_key();
         return $class::Query([$key => $this->$key]);
-    }
-
-
-    /**
-     * @deprecated use Class::Query($filter)->select(["$query"])->first()
-     */
-    public static function Scalar($query, $where = null)
-    {
-        return self::_table()->where($where)->select([$query])->get()->fetchColumn(0);
-    }
-
-    /**
-     * @deprecated use Class::Query($filter)->count()
-     */
-    public static function Count($where = null)
-    {
-
-        return self::_table()->where($where)->count();
-    }
-
-    /**
-     * @deprecated use Class:Query($filter)->select(["distinct $query"]);
-     */
-    public static function Distinct($query, $where = null)
-    {
-        return self::_table()->where($where)->select(["distinct $query"])->get()->fetchAll();
     }
 }

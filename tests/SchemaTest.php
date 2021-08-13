@@ -28,12 +28,6 @@ final class SchemaTest extends TestCase
         $this->assertInstanceOf(Table::class, $db->table("Testing"));
     }
 
-    public function test_from()
-    {
-        $db = Testing::__db();
-        $this->assertInstanceOf(Query::class, $db->from("Testing"));
-    }
-
     public function testTable()
     {
         $db = Testing::__db();
@@ -57,21 +51,5 @@ final class SchemaTest extends TestCase
         $s = Testing::__db();
         $sth = $s->prepare("select * from User");
         $this->assertInstanceOf(\PDOStatement::class, $sth);
-    }
-
-    public function testExec()
-    {
-        $s = Testing::__db();
-        $i = $s->exec("select * from User");
-        $this->assertTrue($i === 0);
-    }
-
-    public function testQuery()
-    {
-        $s = Testing::__db();
-        $r = $s->query("select * from Testing");
-        foreach ($r as $ss) {
-            $this->assertTrue(is_array(($ss)));
-        }
     }
 }

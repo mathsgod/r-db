@@ -2,6 +2,7 @@
 
 use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
+use R\DB\Schema;
 use R\ORM\Model;
 
 //date_default_timezone_set('Asia/Hong_Kong');
@@ -12,6 +13,34 @@ setlocale(LC_ALL, 'en_US.UTF-8'); //do not remove
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
+print_r(get_class(User::Load(1)->UserList()));
+die();
+print_r(new Testing2(2));
+
+die();
+print_r(Testing::Query()->count());
+die();
+
+$t = new Testing();
+$t->name = "abc";
+$t->save();
+
+die();
+
+
+$s = Testing::__db();
+echo $i = $s->exec("select * from User");
+die();
+$t = $schema->table("Testing");
+$t->column("name")->rename("name1");
+
+die();
+
+
+
+
+
+return;
 print_r(new User(1));
 die();
 

@@ -10,7 +10,9 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "command": "vendor\\bin\\phpunit --bootstrap tests\\Testing.php tests"
+            "command": "vendor\\bin\\phpunit --bootstrap tests\\Testing.php tests",
+            "problemMatcher": []
+            
         }
     ]
 }

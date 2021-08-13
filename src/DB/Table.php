@@ -2,11 +2,16 @@
 
 namespace R\DB;
 
+use Laminas\Db\Sql\Expression;
+use Laminas\Db\Sql\Select;
+use Laminas\Db\Sql\Where;
+use Laminas\Db\TableGateway\TableGateway;
+use Laminas\Db\Sql\Predicate;
+
 class Table
 {
     private $db;
     public $name;
-    private $query;
 
     public function __construct(Schema $db, string $name)
     {
@@ -39,7 +44,7 @@ class Table
         return $sth->fetchAll();
     }
 
-    public function column(string $field)
+    public function column(string $field): ?Column
     {
         $sth = $this->db->query("SHOW COLUMNS FROM `{$this->name}` WHERE Field='$field'");
         $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this]);
@@ -75,52 +80,22 @@ class Table
         }, $ret);
     }
 
-    public function query()
+    public function select(Where|\Closure|string|array $where = null)
     {
-        if ($this->query) {
-            return $this->query;
-        }
-        $this->query = new Query($this->db, $this->name);
-        return $this->query;
+        $gateway = new TableGateway($this->name, $this->db->getDbAdatpter());
+        return $gateway->select($where);
     }
 
-    public function where($where = null, array $bindParam = [])
+    public function insert(array $set = [])
     {
-        $q = $this->query();
-        $q->where($where, $bindParam);
-        return $this;
+        $gateway = new TableGateway($this->name, $this->db->getDbAdatpter());
+        return $gateway->insert($set);
     }
 
-    public function update(array $records = [])
+    public function delete(Where|\Closure|string|array $where)
     {
-        $q = $this->query();
-        $q->set($records);
-        $q->update();
-        return $q->execute();
-    }
-
-    public function select(array $field = [])
-    {
-        $q = $this->query();
-        $q->select($field);
-        return $this;
-    }
-
-    public function insert(array $records = [])
-    {
-        $q = $this->query();
-        $q->set($records);
-        $q->insert();
-        $this->query = null;
-        return $q->execute();
-    }
-
-    public function delete()
-    {
-        $q = $this->query();
-        $q->delete();
-        $this->query = null;
-        return $q->execute();
+        $gateway = new TableGateway($this->name, $this->db->getDbAdatpter());
+        return $gateway->delete($where);
     }
 
     public function replace(array $records = [])
@@ -165,79 +140,73 @@ class Table
         return $this->db->from($this->name);
     }
 
-    public function find($where = null, $orderby = null, $limit = null)
-    {
-        $q = new Query($this->db, $this->name);
-        $q->select();
-        $q->where($where);
-        $q->orderby($orderby);
-        $q->limit($limit);
-        return $q;
-    }
 
-    public function first()
+    public function first(Where|\Closure|string|array $where = null, $combination = Predicate\PredicateSet::OP_AND)
     {
-        $q = $this->query();
-        $q->select();
-        $q->limit(1);
-        return $q->execute()->fetch();
-    }
-
-    public function top(int $count = null)
-    {
-        $q = $this->query();
-        $q->limit($count);
-        return $q->execute()->fetchAll();
-    }
-
-    public function __get($name)
-    {
-        if ($name == "columns") {
-            return $this->columns();
+        $select = new Select($this->name);
+        if (isset($where)) {
+            $select->where($where, $combination);
         }
 
-        if ($name == "index") {
-            return $this->_index();
-        }
+        $select->limit(1);
+        $gateway = $this->getGateway();
+        $result = $gateway->selectWith($select);
+        return $result->current();
+    }
+
+    protected function getGateway()
+    {
+        return new TableGateway($this->name, $this->db->getDbAdatpter());
     }
 
     public function max($column)
     {
-        return $this->select(["max(`$column`)"])->get()->fetchColumn(0);
+        $result = $this->select(function (Select $select) use ($column) {
+            $select->columns([
+                "m" => new Expression("max(`$column`)")
+            ]);
+        });
+        return $result->current()["m"];
     }
 
     public function count(): int
     {
-        return $this->select(["count(*)"])->get()->fetchColumn(0);
+        $select = new Select($this->name);
+        $select->columns([
+            "c" => new Expression("count(*)")
+        ]);
+
+        $result = $this->getGateway()->selectWith($select);
+        return $result->current()["c"];
     }
 
     public function min(string $column)
     {
-        return $this->select(["min(`$column`)"])->get()->fetchColumn(0);
+        $select = new Select($this->name);
+        $select->columns([
+            "c" => new Expression("min(`$column`)")
+        ]);
+
+        $result = $this->getGateway()->selectWith($select);
+        return $result->current()["c"];
     }
 
     public function avg(string $column)
     {
-        return $this->select(["avg(`$column`)"])->get()->fetchColumn(0);
+        $select = new Select($this->name);
+        $select->columns([
+            "c" => new Expression("avg(`$column`)")
+        ]);
+
+        $result = $this->getGateway()->selectWith($select);
+        return $result->current()["c"];
     }
 
-    private function _index()
+    public function top(int $top)
     {
-        $sql = "SHOW INDEX FROM `{$this->name}`";
-        if ($sth = $this->db->query($sql)) {
-            return $sth->fetchAll();
-        }
-    }
-
-    public function orderBy($orderBy)
-    {
-        $q = $this->query();
-        $q->orderBy($orderBy);
-        return $this;
-    }
-
-    public function get()
-    {
-        return $this->query()->execute();
+        $select = new Select($this->name);
+        $select->limit($top);
+        $result = $this->getGateway()->selectWith($select);
+        return $result;
     }
 }

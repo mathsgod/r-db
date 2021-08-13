@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-error_reporting(E_ALL & ~E_WARNING);
+error_reporting(E_ALL & ~E_WARNING & ~E_NOTICE);
 
 use PHPUnit\Framework\TestCase;
 
@@ -62,17 +62,10 @@ final class TableTest extends TestCase
         $this->assertEquals($table->count(), 1);
 
         $table = $this->getTable();
-        $table->where(["name" => "test1"]);
-        $table->delete();
+        $table->delete(["name" => "test1"]);
         $this->assertEquals($table->count(), 0);
     }
 
-    public function testFind()
-    {
-        $table = $this->getTable();
-        $query = $table->find();
-        $this->assertInstanceOf(Query::class, $query);
-    }
 
     public function testFirst()
     {
@@ -136,17 +129,5 @@ final class TableTest extends TestCase
         $this->assertEquals($table->avg('name'), '2');
     }
 
-    public function testOrderby()
-    {
-        $table = $this->getTable();
-        $table->truncate();
-
-        $table->insert(["name" => '1']);
-        $table->insert(["name" => '2']);
-        $table->insert(["name" => '3']);
-
-        $table = $this->getTable();
-        $first = $table->orderBy("name desc")->first();
-        $this->assertEquals($first["name"], '3');
-    }
+  
 }

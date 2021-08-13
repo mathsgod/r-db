@@ -3,6 +3,7 @@
 declare(strict_types=1);
 error_reporting(E_ALL & ~E_WARNING);
 
+use PHPUnit\Framework\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ModelTest extends TestCase
@@ -17,14 +18,13 @@ final class ModelTest extends TestCase
         $o->save();
 
         $o2 = new Testing2($o->testing2_id);
-        $this->assertEquals(1, $o2->b);
+        $this->assertEquals(true, $o2->b);
 
-        $o2->b=false;
+        $o2->b = false;
         $o2->save();
 
         $o3 = new Testing2($o->testing2_id);
-        $this->assertEquals(0, $o3->b);
-
+        $this->assertEquals(false, $o3->b);
     }
 
 
@@ -73,16 +73,6 @@ final class ModelTest extends TestCase
         $this->assertTrue(sizeof($attr) > 0);
     }
 
-    public function test_first()
-    {
-        Testing::_table()->truncate();
-
-        $f = new Testing();
-        $f->save();
-
-        $f = Testing::First();
-        $this->assertEquals($f, new Testing($f->testing_id));
-    }
 
     public function test_save()
     {
@@ -119,11 +109,6 @@ final class ModelTest extends TestCase
         $this->assertEquals(Testing::Query(["name" => "abc"])->count(), 0);
     }
 
-    public function testFind()
-    {
-        $testing = Testing::Find();
-        $this->assertInstanceOf(R\RSList::class, $testing);
-    }
 
     public function testUpdate()
     {
@@ -145,7 +130,7 @@ final class ModelTest extends TestCase
 
         $a = $u->first_name;
         $this->assertInstanceOf(User::class, $u);
-        $this->assertInstanceOf(R\ORM\Query::class, $u->UserList);
+        $this->assertInstanceOf(R\DB\Query::class, $u->UserList);
 
 
         $ul = $u->UserList->first();
@@ -161,33 +146,11 @@ final class ModelTest extends TestCase
         $this->assertEquals($a, $b);
     }
 
-    public function testScalar()
-    {
-        $table = Testing::_table();
-        $table->truncate();
-        $table->insert(["name" => '1']);
-        $table->insert(["name" => '2']);
-        $table->insert(["name" => '3']);
-
-        $this->assertEquals(Testing::Scalar("max(name)"), "3");
-    }
-
-    public function testCount()
-    {
-        $table = Testing::_table();
-        $table->truncate();
-        $table->insert(["name" => '1']);
-        $table->insert(["name" => '2']);
-        $table->insert(["name" => '3']);
-
-        $this->assertEquals(Testing::Count(), 3);
-        $this->assertEquals(Testing::Count("name=1"), 1);
-    }
 
     public function testCall()
     {
         $u = new User(1);
-        $this->assertInstanceOf(R\ORM\Query::class, $u->UserList);
+        $this->assertInstanceOf(R\DB\Query::class, $u->UserList);
 
         $ul = $u->UserList->First();
         $this->assertInstanceOf(UserList::class, $ul);
@@ -198,9 +161,9 @@ final class ModelTest extends TestCase
 
 
         $ul = $u->UserList();
-        $this->assertInstanceOf(R\DataList::class, $ul);
+        $this->assertInstanceOf(ArrayObject::class, $ul);
 
-        $ul = $ul->First();
+        $ul = $ul[0];
         $this->assertInstanceOf(UserList::class, $ul);
         $user = $ul->User();
         $this->assertInstanceOf(User::class, $user);
@@ -218,9 +181,11 @@ final class ModelTest extends TestCase
         $this->assertEquals($query->count(), 3);
 
         $query = Testing::Query(["name" => 1]);
-        $this->assertInstanceOf(R\ORM\Query::class, $query);
+        $this->assertInstanceOf(R\DB\Query::class, $query);
         $this->assertEquals($query->count(), 1);
-        $query->delete();
+
+        Testing::_table()->delete(["name" => 1]);
+
         $this->assertEquals($query->count(), 0);
 
         $query = Testing::Query();
