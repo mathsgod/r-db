@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bbf6a57f2f516285829202cd19ce3194",
+    "content-hash": "713f21e50dad237e9b84eaa6aaf1a3a2",
     "packages": [
         {
             "name": "laminas/laminas-db",
@@ -322,20 +322,20 @@
         },
         {
             "name": "mathsgod/php-util",
-            "version": "1.3.0",
+            "version": "1.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mathsgod/php-util.git",
-                "reference": "bb878bf9b0c5dbf5154ad71c899cdbd1a05b4df4"
+                "reference": "e140529782ccc922fa0ffca73603ea436907f3c7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mathsgod/php-util/zipball/bb878bf9b0c5dbf5154ad71c899cdbd1a05b4df4",
-                "reference": "bb878bf9b0c5dbf5154ad71c899cdbd1a05b4df4",
+                "url": "https://api.github.com/repos/mathsgod/php-util/zipball/e140529782ccc922fa0ffca73603ea436907f3c7",
+                "reference": "e140529782ccc922fa0ffca73603ea436907f3c7",
                 "shasum": ""
             },
             "require": {
-                "php": ">=7.3"
+                "php": ">=8.0"
             },
             "require-dev": {
                 "phpunit/phpunit": "^9.5"
@@ -362,9 +362,9 @@
             "description": "a simple php util for data structure",
             "support": {
                 "issues": "https://github.com/mathsgod/php-util/issues",
-                "source": "https://github.com/mathsgod/php-util/tree/1.3.0"
+                "source": "https://github.com/mathsgod/php-util/tree/1.3.1"
             },
-            "time": "2021-04-12T04:37:52+00:00"
+            "time": "2021-08-06T03:27:22+00:00"
         },
         {
             "name": "psr/log",

@@ -114,7 +114,7 @@ class Query extends Select implements IteratorAggregate
         $bool_fields = array_column($bool_fields, "Field");
 
 
-        $a = new ArrayObject();
+        $a = collect([]);
         foreach ($this->statement as $obj) {
 
             foreach ($json_fields as $field) {
@@ -125,7 +125,7 @@ class Query extends Select implements IteratorAggregate
                 $obj->$field = (bool)$obj->$field;
             }
 
-            $a->append($obj);
+            $a->add($obj);
         }
 
         return $a;
