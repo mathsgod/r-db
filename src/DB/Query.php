@@ -26,7 +26,6 @@ class Query extends Select implements IteratorAggregate
      */
     protected $schema;
 
-
     public function __construct(string $class)
     {
         $this->class = $class;
@@ -34,7 +33,7 @@ class Query extends Select implements IteratorAggregate
         $this->schema = $class::GetSchema();
     }
 
-    public function count()
+    public function count(): int
     {
         $c = clone $this;
         $c->columns([
