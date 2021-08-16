@@ -10,6 +10,7 @@ use ReflectionMethod;
 use ReflectionObject;
 use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Select;
+use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
 
 abstract class Model
@@ -23,10 +24,17 @@ abstract class Model
     private static $_Keys = [];
     private static $_Attributes = [];
 
-    /**
-     * @return \R\DB\Schema
-     */
-    abstract public static function __db();
+
+    static $schema;
+    public static function SetSchema(Schema $schema)
+    {
+        self::$schema = $schema;
+    }
+
+    public static function GetSchema()
+    {
+        return self::$schema;
+    }
 
     public static function Create(): static
     {
@@ -48,7 +56,7 @@ abstract class Model
         if (isset($props["_table"]))
             $table = $props["_table"];
 
-        return static::__db()->table($table);
+        return static::$schema->table($table);
     }
 
     public static function _key()
@@ -101,8 +109,8 @@ abstract class Model
             $key = static::_key();
             $select = new Select($table);
             $select->where([$key => $id]);
-            $sql = $select->getSqlString(static::__db()->getPlatform());
-            $s = static::__db()->prepare($sql);
+            $sql = $select->getSqlString(static::$schema->getPlatform());
+            $s = static::$schema->prepare($sql);
             $s->execute();
             $s->setFetchMode(PDO::FETCH_INTO, $this);
 
@@ -241,7 +249,7 @@ abstract class Model
 
     public static function __table_gateway()
     {
-        return new TableGateway(self::_table()->name, static::__db()->getDbAdatpter());
+        return new TableGateway(self::_table()->name, static::$schema->getDbAdatpter());
     }
 
     public function _id()
@@ -253,7 +261,7 @@ abstract class Model
     public function delete()
     {
         $key = static::_key();
-        $gateway = new TableGateway(self::_table()->name, static::__db()->getDbAdatpter());
+        $gateway = new TableGateway(self::_table()->name, static::$schema->getDbAdatpter());
         return $gateway->delete([$key => $this->$key]);
     }
 
@@ -307,14 +315,11 @@ abstract class Model
         return new ArrayObject($q->toArray());
     }
 
+
     /**
-     * Create where clause
-     *
-     * @param  Where|\Closure|string|array|Predicate\PredicateInterface $predicate
-     * @param  string $combination One of the OP_* constants from Predicate\PredicateSet
-     * @throws Exception\InvalidArgumentException
+     * @return Query|static[]
      */
-    public static function Query($predicate = null, $combination = Predicate\PredicateSet::OP_AND)
+    public static function Query(Where|\Closure|string|array|Predicate\PredicateInterface $predicate = null, $combination = Predicate\PredicateSet::OP_AND)
     {
         $query = new Query(static::class);
         if ($predicate) {

@@ -4,12 +4,13 @@ namespace R\DB;
 
 use PDO;
 use PDOStatement;
-use Exception;
 use Laminas\Db\Adapter\Adapter;
 use Laminas\Db\Adapter\AdapterAwareInterface;
 use Laminas\Db\Adapter\AdapterAwareTrait;
-use Laminas\Db\Adapter\Platform\Mysql;
-use Laminas\Db\TableGateway\TableGateway;
+use Laminas\Db\Sql\Ddl\AlterTable;
+use Laminas\Db\Sql\Ddl\CreateTable;
+use Laminas\Db\Sql\Ddl\DropTable;
+use Laminas\Db\Sql\Sql;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 
@@ -52,45 +53,48 @@ class Schema implements LoggerAwareInterface, AdapterAwareInterface
      *
      * @param  string $initialSql
      * @param  ParameterContainer $initialParameters
+     * @return PDOStatement
      */
-    public function createStatement($initialSql = null, $initialParameters = null): PDOStatement
+    public function createStatement($initialSql = null, $initialParameters = null)
     {
         $statement = $this->adapter->createStatement($initialSql, $initialParameters);
         $statement->prepare();
         return $statement->getResource();
     }
 
-
     public function getPlatform()
     {
         return $this->adapter->getPlatform();
     }
 
-    public function hasTable($name): bool
+    public function hasTable(string $name): bool
     {
-        $data = [];
-        $s = $this->query("SHOW TABLES");
-        while ($r = $s->fetchColumn(0)) {
-            $data[] = $r;
-        }
-        return in_array($name, $data);
+        $tables = $this->getMetadata()->getTableNames();
+        return in_array($name, $tables);
     }
 
-    private function tables(): array
+    public function getTable(string $name): ?Table
+    {
+        if ($this->hasTable($name)) {
+            return new Table($this, $name);
+        }
+        return null;
+    }
+
+    /**
+     * @return Table[]
+     */
+    public function getTables(): array
     {
         $data = [];
-        $s = $this->query("SHOW TABLES");
-        while ($r = $s->fetchColumn(0)) {
-            $data[] = $this->table($r);
+        foreach ($this->getMetadata()->getTableNames() as $name) {
+            $data[] = $this->table($name);
         }
         return $data;
     }
 
     public function __get(string $name)
     {
-        if ($name == "tables") {
-            return $this->tables();
-        }
         if ($name == "function") {
             return $this->query("SHOW FUNCTION STATUS")->fetchAll();
         }
@@ -100,30 +104,28 @@ class Schema implements LoggerAwareInterface, AdapterAwareInterface
         return $this->$name;
     }
 
-    public function createTable(string $name, array $columns = [])
+    public function getMetadata()
     {
-        $sql = [];
-        foreach ($columns as $column) {
-            $sql[] = "`{$column['name']}` {$column['type']} {$column['constrain']}";
-        }
-        $s = implode(",", $sql);
-
-        return $this->exec("CREATE TABLE `$name` ( $s )");
+        return \Laminas\Db\Metadata\Source\Factory::createSourceFromAdapter($this->adapter);
     }
 
     public function dropTable(string $name)
     {
-        return $this->exec("DROP TABLE `$name`");
+        $drop = new DropTable($name);
+        $sql = new Sql($this->adapter);
+        return $this->adapter->query($sql->buildSqlString($drop), Adapter::QUERY_MODE_EXECUTE);
     }
 
     /**
      * @return PDOStatement 
      */
-    public function query($statement, $mode = PDO::ATTR_DEFAULT_FETCH_MODE, ...$fetch_mode_args)
+    public function query(string $statement)
     {
-        $statement = $this->adapter->query($statement);
+        $statement = $this->adapter->getDriver()->createStatement($statement);
+        $statement->prepare();
         $statement->execute();
-        return $statement->getResource();
+        $pdo_statement = $statement->getResource();
+        return $pdo_statement;
     }
 
     /**
@@ -137,11 +139,29 @@ class Schema implements LoggerAwareInterface, AdapterAwareInterface
         return $statement->getResource();
     }
 
-    
+
     public function exec($statement)
     {
         $statement = $this->adapter->createStatement($statement);
         $result = $statement->execute();
         return $result->getAffectedRows();
+    }
+
+    public function alterTable(string $name, callable $call)
+    {
+        $alter = new AlterTable($name);
+        $call($alter);
+
+        $sql = new Sql($this->adapter);
+        return $this->adapter->query($sql->buildSqlString($alter), Adapter::QUERY_MODE_EXECUTE);
+    }
+
+
+    public function createTable(string $name, callable $call)
+    {
+        $create = new CreateTable($name);
+        $call($create);
+        $sql = new Sql($this->adapter);
+        return $this->adapter->query($sql->buildSqlString($create), Adapter::QUERY_MODE_EXECUTE);
     }
 }

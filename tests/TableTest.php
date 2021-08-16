@@ -18,7 +18,7 @@ final class TableTest extends TestCase
 
     public function testCreate()
     {
-        $db = Testing::__db();
+        $db = Testing::GetSchema();
         $table = $db->table("Testing");
         $this->assertInstanceOf(R\DB\Table::class, $table);
     }
@@ -26,7 +26,7 @@ final class TableTest extends TestCase
 
     public function testColumn()
     {
-        $db = Testing::__db();
+        $db = Testing::GetSchema();
         $table = $db->table("Testing");
         $testing_id_column = $table->column("testing_id");
 
@@ -38,7 +38,7 @@ final class TableTest extends TestCase
 
     public function testAddDropColumn()
     {
-        $db = Testing::__db();
+        $db = Testing::GetSchema();
         $table = $db->table("Testing");
         $table->addColumn("new_column", "int");
         $new_column = $table->column("new_column");

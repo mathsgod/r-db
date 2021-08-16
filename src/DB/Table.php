@@ -2,11 +2,16 @@
 
 namespace R\DB;
 
+use Laminas\Db\ResultSet\HydratingResultSet;
+use Laminas\Db\ResultSet\ResultSet;
 use Laminas\Db\Sql\Expression;
 use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
 use Laminas\Db\Sql\Predicate;
+use Laminas\Db\Sql\Sql;
+use Laminas\Db\TableGateway\Feature\RowGatewayFeature;
+use Laminas\Hydrator\ObjectPropertyHydrator;
 
 class Table
 {
@@ -17,6 +22,25 @@ class Table
     {
         $this->db = $db;
         $this->name = $name;
+    }
+
+    /**
+     * @return \R\DB\Rows|\R\DB\Row[]
+     */
+    public function getRows(Where|\Closure|string|array|Predicate\PredicateInterface $predicate = null, string $combination = Predicate\PredicateSet::OP_AND)
+    {
+        $select = new Select($this->name);
+        if ($predicate) {
+            $select->where($predicate, $combination);
+        }
+
+
+        $row = new Row($this);
+        $row->setDbAdapter($this->db->getDbAdatpter());
+        $resultSet = new  Rows(new ObjectPropertyHydrator, $row);
+        $gateway = new  TableGateway($this->name, $this->db->getDbAdatpter(), null, $resultSet);
+
+        return $gateway->selectWith($select);
     }
 
     public function dropColumn(string $name)
@@ -67,6 +91,11 @@ class Table
             return $sth->fetchAll();
         }
         return [];
+    }
+
+    public function getPrimaryKey()
+    {
+        return $this->keys()[0];
     }
 
     public function keys()

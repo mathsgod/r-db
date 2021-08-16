@@ -11,7 +11,7 @@ final class ColumnTest extends TestCase
 {
     public function testRename()
     {
-        $db = Testing::__db();
+        $db = Testing::GetSchema();
         $table = $db->table("Testing");
 
         $col_name = $table->column("name");

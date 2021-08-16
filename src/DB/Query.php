@@ -25,7 +25,7 @@ class Query extends Select implements IteratorAggregate
     {
         $this->class = $class;
         parent::__construct((string)$class::_table());
-        $this->schema = $class::__db();
+        $this->schema = $class::GetSchema();
     }
 
     public function count()
