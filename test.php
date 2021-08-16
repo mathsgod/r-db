@@ -1,9 +1,12 @@
 <?php
 
+use Laminas\Db\Sql\Ddl\AlterTable;
+use Laminas\Db\Sql\Ddl\Column\Column;
 use Laminas\Db\Sql\Select;
+use Laminas\Db\Sql\Sql;
 use Laminas\Db\Sql\Where;
+use R\DB\Rows;
 use R\DB\Schema;
-use R\ORM\Model;
 
 //date_default_timezone_set('Asia/Hong_Kong');
 //ini_set("display_errors", "On");
@@ -13,6 +16,51 @@ setlocale(LC_ALL, 'en_US.UTF-8'); //do not remove
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
+$rows = Testing::Query()->first();
+
+
+foreach ($rows as $row) {
+    $row->delete();
+    die();
+}
+
+
+die();
+$db = Model::GetSchema();
+foreach ($db->getTables() as $t) {
+    echo $t->name;
+}
+
+die();
+$res = $db->alterTable("Testing", function (AlterTable $table) {
+    $column = new Column("test_abc");
+
+
+    $table->addColumn($column);
+});
+
+print_R($res);
+
+die();
+
+
+
+
+
+$db = Model::GetSchema();
+
+$sql    = new  Sql($db->getDbAdatpter());
+$select = $sql->select();
+$select->from('foo');
+$select->where(['id' => 2]);
+$sql->prepareStatementForSqlObject($select);
+
+
+
+
+print_R($db->query("Select * from User")->fetchAll());
+
+die();
 echo User::Load(1)->UserList->count();
 die();
 print_r(get_class(User::Load(1)->UserList()));
@@ -30,7 +78,7 @@ $t->save();
 die();
 
 
-$s = Testing::__db();
+$s = Testing::GetSchema();
 echo $i = $s->exec("select * from User");
 die();
 $t = $schema->table("Testing");
@@ -52,7 +100,7 @@ die();
 print_r(User::Query(["user_id" => 1])->toArray());
 
 die();
-$adatper = User::__db()->adatper;
+$adatper = User::GetSchema()->adatper;
 
 $statmemt = $adatper->createStatement("Select * from User");
 $statmemt->prepare();
@@ -176,7 +224,7 @@ $t->delete();
 
 
 return;
-$q = new R\DB\Query(Testing::__db(), "Testing");
+$q = new R\DB\Query(Testing::GetSchema(), "Testing");
 $q->where(["name" => 1]);
 
 print_r($q);
