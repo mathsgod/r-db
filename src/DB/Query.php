@@ -10,6 +10,12 @@ use Laminas\Db\Adapter\ParameterContainer;
 use Laminas\Db\Adapter\Platform\PlatformInterface;
 use Laminas\Db\Sql\Expression;
 
+/**
+ * @method static order(string|array|Expression $order)
+ * @method static limit(int $limit)
+ * @method static offset(int $offset)
+ * @method static where(\Laminas\Db\Sql\Where|\Closure|string|array|\Laminas\Db\Sql\Predicate\PredicateInterface $predicate,string $combination = Predicate\PredicateSet::OP_AND)
+ */
 class Query extends Select implements IteratorAggregate
 {
     protected $class;
