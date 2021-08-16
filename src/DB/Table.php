@@ -2,19 +2,21 @@
 
 namespace R\DB;
 
-use Laminas\Db\ResultSet\HydratingResultSet;
-use Laminas\Db\ResultSet\ResultSet;
+use Laminas\Db\Adapter\AdapterAwareInterface;
+use Laminas\Db\Adapter\AdapterAwareTrait;
+use Laminas\Db\Sql\Ddl\AlterTable;
+use Laminas\Db\Sql\Ddl\Column\ColumnInterface;
 use Laminas\Db\Sql\Expression;
 use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
 use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Sql;
-use Laminas\Db\TableGateway\Feature\RowGatewayFeature;
 use Laminas\Hydrator\ObjectPropertyHydrator;
 
-class Table
+class Table implements AdapterAwareInterface
 {
+    use AdapterAwareTrait;
     private $db;
     public $name;
 
@@ -45,18 +47,24 @@ class Table
 
     public function dropColumn(string $name)
     {
-        $sql = "ALTER TABLE `{$this->name}` DROP COLUMN `$name`";
-        return $this->db->exec($sql);
+        $alter = new AlterTable($this->name);
+        $alter->dropColumn($name);
+
+        $sql = new Sql($this->adapter);
+        return $this->adapter->query($sql->buildSqlString($alter), $this->adapter::QUERY_MODE_EXECUTE);
     }
 
-    public function addColumn(string $name, string $type, $constraint = null)
+    public function addColumn(ColumnInterface $column)
     {
-        $sql = "ALTER TABLE `{$this->name}` ADD COLUMN `$name` $type $constraint";
-        return $this->db->exec($sql);
+        $alter = new AlterTable($this->name);
+        $alter->addColumn($column);
+        $sql = new Sql($this->adapter);
+        return $this->adapter->query($sql->buildSqlString($alter), $this->adapter::QUERY_MODE_EXECUTE);
     }
 
     public function truncate()
     {
+
         $sql = "TRUNCATE `{$this->name}`";
         return $this->db->exec($sql);
     }
@@ -64,14 +72,14 @@ class Table
     public function columns()
     {
         $sth = $this->db->query("SHOW COLUMNS FROM `$this->name`");
-        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this]);
+        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this, $this->adapter]);
         return $sth->fetchAll();
     }
 
     public function column(string $field): ?Column
     {
         $sth = $this->db->query("SHOW COLUMNS FROM `{$this->name}` WHERE Field='$field'");
-        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this]);
+        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this, $this->adapter]);
         $ret = $sth->fetch();
         if ($ret === false) {
             return null;
@@ -162,11 +170,6 @@ class Table
     public function db()
     {
         return $this->db;
-    }
-
-    public function from()
-    {
-        return $this->db->from($this->name);
     }
 
 

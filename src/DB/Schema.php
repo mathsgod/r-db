@@ -45,7 +45,9 @@ class Schema implements LoggerAwareInterface, AdapterAwareInterface
 
     public function table(string $name)
     {
-        return new Table($this, $name);
+        $table = new Table($this, $name);
+        $table->setDbAdapter($this->adapter);
+        return $table;
     }
 
     /**
@@ -76,7 +78,9 @@ class Schema implements LoggerAwareInterface, AdapterAwareInterface
     public function getTable(string $name): ?Table
     {
         if ($this->hasTable($name)) {
-            return new Table($this, $name);
+            $t = new Table($this, $name);
+            $t->setDbAdapter($this->adapter);
+            return $t;
         }
         return null;
     }

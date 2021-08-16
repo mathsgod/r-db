@@ -16,7 +16,12 @@ setlocale(LC_ALL, 'en_US.UTF-8'); //do not remove
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
-$rows = Testing::Query()->first();
+
+foreach (Testing::_table()->columns() as $column) {
+    print_r($column->getMetaData());
+    die();
+}
+die();
 
 
 foreach ($rows as $row) {

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 error_reporting(E_ALL & ~E_WARNING & ~E_NOTICE);
 
+use Laminas\Db\Sql\Ddl\Column as ColumnColumn;
 use PHPUnit\Framework\TestCase;
 
 use R\DB\Column;
@@ -40,7 +41,7 @@ final class TableTest extends TestCase
     {
         $db = Testing::GetSchema();
         $table = $db->table("Testing");
-        $table->addColumn("new_column", "int");
+        $table->addColumn(new ColumnColumn\Integer("new_column"));
         $new_column = $table->column("new_column");
         $this->assertInstanceOf(Column::class, $new_column);
 
@@ -128,6 +129,4 @@ final class TableTest extends TestCase
 
         $this->assertEquals($table->avg('name'), '2');
     }
-
-  
 }
