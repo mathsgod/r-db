@@ -8,6 +8,7 @@ use IteratorAggregate;
 use Laminas\Db\Adapter\Driver\DriverInterface;
 use Laminas\Db\Adapter\ParameterContainer;
 use Laminas\Db\Adapter\Platform\PlatformInterface;
+use Laminas\Db\Sql\Delete;
 use Laminas\Db\Sql\Expression;
 
 /**
@@ -143,5 +144,13 @@ class Query extends Select implements IteratorAggregate
     public function toArray()
     {
         return iterator_to_array($this);
+    }
+
+    public function delete()
+    {
+        $delete = new Delete($this->table);
+        $delete->where($this->where);
+        $sql = $delete->getSqlString($this->schema->getPlatform());
+        return $this->schema->exec($sql);
     }
 }

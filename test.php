@@ -17,6 +17,9 @@ require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
 
+print_r(User::Load(1)->UserLog->delete());
+die();
+
 foreach (Testing::_table()->columns() as $column) {
     print_r($column->getMetaData());
     die();
