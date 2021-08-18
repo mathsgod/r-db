@@ -10,6 +10,7 @@ use Laminas\Db\Adapter\ParameterContainer;
 use Laminas\Db\Adapter\Platform\PlatformInterface;
 use Laminas\Db\Sql\Delete;
 use Laminas\Db\Sql\Expression;
+use Laminas\Db\Sql\Update;
 
 /**
  * @method static order(string|array|Expression $order)
@@ -152,5 +153,14 @@ class Query extends Select implements IteratorAggregate
         $delete->where($this->where);
         $sql = $delete->getSqlString($this->schema->getPlatform());
         return $this->schema->exec($sql);
+    }
+
+    public function update(array $values){
+        $update=new Update($this->table);
+        $update->where($this->where);
+        $update->set($values);
+        $sql = $update->getSqlString($this->schema->getPlatform());
+        return $this->schema->exec($sql);
+        
     }
 }
