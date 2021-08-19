@@ -41,7 +41,7 @@ abstract class Model
         return new static;
     }
 
-    public static function Load(int $id): static
+    public static function Load(int $id): ?static
     {
         $key = self::_key();
         return self::Query([$key => $id])->first();
