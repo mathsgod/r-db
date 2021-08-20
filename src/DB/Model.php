@@ -161,6 +161,14 @@ abstract class Model
                 }
             }
 
+            if (($attribute["Type"] == "longtext" || $attribute["Type"] == "text") && is_object($records[$name])) {
+                $records[$name] = json_encode($records[$name], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                if ($records[$name] === false) {
+                    $records[$name] = null;
+                }
+            }
+
+
             if ($attribute["Null"] == "NO" && $records[$name] === null) {
                 $records[$name] = "";
             }
