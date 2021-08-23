@@ -11,13 +11,10 @@ use Laminas\Db\Sql\Ddl\AlterTable;
 use Laminas\Db\Sql\Ddl\CreateTable;
 use Laminas\Db\Sql\Ddl\DropTable;
 use Laminas\Db\Sql\Sql;
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
 
-class Schema implements LoggerAwareInterface, AdapterAwareInterface
+class Schema implements AdapterAwareInterface
 {
     use AdapterAwareTrait;
-    use LoggerAwareTrait;
 
     public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8mb4", int $port = 3306)
     {
@@ -137,7 +134,6 @@ class Schema implements LoggerAwareInterface, AdapterAwareInterface
      */
     public function prepare($statement, $options = null)
     {
-        if ($this->logger) $this->logger->debug("PDO::prepare", func_get_args());
         $statement = $this->adapter->createStatement($statement);
         $statement->prepare();
         return $statement->getResource();
