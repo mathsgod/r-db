@@ -155,12 +155,17 @@ class Query extends Select implements IteratorAggregate
         return $this->schema->exec($sql);
     }
 
-    public function update(array $values){
-        $update=new Update($this->table);
+    public function update(array $values)
+    {
+        $update = new Update($this->table);
         $update->where($this->where);
         $update->set($values);
         $sql = $update->getSqlString($this->schema->getPlatform());
         return $this->schema->exec($sql);
-        
+    }
+
+    public function filter(callable $filter)
+    {
+        return collect($this)->filter($filter);
     }
 }
