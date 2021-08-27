@@ -168,4 +168,9 @@ class Query extends Select implements IteratorAggregate
     {
         return collect($this)->filter($filter);
     }
+
+    public function map(callable $map)
+    {
+        return collect($this)->map($map);
+    }
 }
