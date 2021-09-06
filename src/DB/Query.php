@@ -21,8 +21,8 @@ use Laminas\Db\Sql\Update;
 class Query extends Select implements IteratorAggregate
 {
     protected $class;
-    protected $_dirty;
     protected $statement;
+    private $_custom_column = false;
     /**
      * @var \R\DB\Schema 
      */
@@ -33,6 +33,15 @@ class Query extends Select implements IteratorAggregate
         $this->class = $class;
         parent::__construct((string)$class::_table());
         $this->schema = $class::GetSchema();
+    }
+
+    /**
+     * @return static
+     */
+    public function columns(array $columns, $prefixColumnsWithTable = true)
+    {
+        $this->_custom_column = true;
+        return parent::columns($columns, $prefixColumnsWithTable);
     }
 
     public function count(): int
@@ -103,7 +112,13 @@ class Query extends Select implements IteratorAggregate
             throw new Exception("PDO SQLSTATE [" . $error[0] . "] " . $error[2] . " sql: $sql ", $error[1]);
         }
 
-        $this->statement->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, $this->class, []);
+        if ($this->_custom_column) {
+            $this->statement->setFetchMode(\PDO::FETCH_ASSOC);
+        } else {
+            $this->statement->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, $this->class, []);
+        }
+
+
 
         $attr = $this->class::__attribute();
         $json_fields = array_filter($attr, function ($o) {
