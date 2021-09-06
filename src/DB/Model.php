@@ -99,6 +99,8 @@ abstract class Model
                         $this->{$attribute["Field"]} = (int)$attribute["Default"];
                     } elseif (in_array($type, self::FLOAT_DATA_TYPE)) {
                         $this->{$attribute["Field"]} = (float)$attribute["Default"];
+                    } else {
+                        $this->{$attribute["Field"]} = (string)$attribute["Default"];
                     }
                 }
             }
