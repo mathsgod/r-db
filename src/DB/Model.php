@@ -327,7 +327,7 @@ abstract class Model
 
 
     /**
-     * @return Query|static[]
+     * @return Query<static>
      */
     public static function Query(Where|\Closure|string|array|Predicate\PredicateInterface $predicate = null, $combination = Predicate\PredicateSet::OP_AND)
     {
