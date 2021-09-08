@@ -12,6 +12,7 @@ use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
+use Psr\EventDispatcher\EventDispatcherInterface;
 
 abstract class Model
 {
@@ -23,7 +24,7 @@ abstract class Model
 
     private static $_Keys = [];
     private static $_Attributes = [];
-
+    private $_dispatcher;
 
     static $schema;
     public static function SetSchema(Schema $schema)
@@ -39,6 +40,11 @@ abstract class Model
     public static function Create(): static
     {
         return new static;
+    }
+
+    public function setEventDispatcher(EventDispatcherInterface $dispatcher)
+    {
+        $this->_dispatcher = $dispatcher;
     }
 
     public static function Load(int $id): ?static
@@ -208,6 +214,7 @@ abstract class Model
         $methods = array_column($methods, "name");
 
         if ($this->$key) { // update
+
 
             if (in_array("BeforeUpdate", $methods)) {
                 $method = $class->getMethod("BeforeUpdate");
