@@ -160,10 +160,11 @@ class Query extends Select implements IteratorAggregate
                 foreach ($bool_fields as $field) {
                     $obj->$field = (bool)$obj->$field;
                 }
+                $a->add($obj);
             }
 
 
-            $a->add($obj);
+            
         }
 
         return $a;
