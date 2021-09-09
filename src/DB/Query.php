@@ -101,6 +101,7 @@ class Query extends Select implements IteratorAggregate
         return [intval($this->limit)];
     }
 
+
     public function execute(array $input_parameters = [])
     {
         $sql = $this->getSqlString($this->schema->getPlatform());
@@ -138,13 +139,29 @@ class Query extends Select implements IteratorAggregate
         $a = collect([]);
         foreach ($this->statement as $obj) {
 
-            foreach ($json_fields as $field) {
-                $obj->$field = json_decode($obj->$field, true);
+            if ($this->_custom_column) {
+                $aa = [];
+                foreach ($obj as $k => $v) {
+                    $aa[$k] = $v;
+                    if (in_array($k, $json_fields)) {
+                        $aa[$k] = json_decode($v, true);
+                    }
+
+                    if (in_array($k, $bool_fields)) {
+                        $aa[$k] = (bool)$obj[$v];
+                    }
+                }
+                $a->add($aa);
+            } else {
+                foreach ($json_fields as $field) {
+                    $obj->$field = json_decode($obj->$field, true);
+                }
+
+                foreach ($bool_fields as $field) {
+                    $obj->$field = (bool)$obj->$field;
+                }
             }
 
-            foreach ($bool_fields as $field) {
-                $obj->$field = (bool)$obj->$field;
-            }
 
             $a->add($obj);
         }
