@@ -37,11 +37,18 @@ abstract class Model
         return self::$schema;
     }
 
-    public static function Create(): static
+    public static function Create(?array $data = []): static
     {
-        return new static;
-    }
+        $obj = new static;
+        foreach (get_object_vars($obj) as $key => $val) {
+            if ($key[0] == "_") continue;
 
+            if (array_key_exists($key, $data)) {
+                $obj->$key = $data[$key];
+            }
+        }
+        return $obj;
+    }
     public function setEventDispatcher(EventDispatcherInterface $dispatcher)
     {
         $this->_dispatcher = $dispatcher;
