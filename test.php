@@ -16,6 +16,8 @@ setlocale(LC_ALL, 'en_US.UTF-8'); //do not remove
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
+print_r(new User(1));
+die();
 
 print_r(User::Load(1)->UserLog->delete());
 die();

@@ -13,6 +13,7 @@ use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use ReflectionProperty;
 
 abstract class Model
 {
@@ -27,17 +28,17 @@ abstract class Model
     private $_dispatcher;
 
     static $schema;
-    public static function SetSchema(Schema $schema)
+    static function SetSchema(Schema $schema)
     {
         self::$schema = $schema;
     }
 
-    public static function GetSchema()
+    static function GetSchema()
     {
         return self::$schema;
     }
 
-    public static function Create(?array $data = []): static
+    static function Create(?array $data = []): static
     {
         $obj = new static;
         foreach (get_object_vars($obj) as $key => $val) {
@@ -49,18 +50,28 @@ abstract class Model
         }
         return $obj;
     }
-    public function setEventDispatcher(EventDispatcherInterface $dispatcher)
+
+    function  setEventDispatcher(EventDispatcherInterface $dispatcher)
     {
         $this->_dispatcher = $dispatcher;
     }
 
-    public static function Load(int $id): ?static
+
+    // direct get the data from database
+    static function Get(int $id): ?static
     {
         $key = self::_key();
         return self::Query([$key => $id])->first();
     }
 
-    public static function _table(): \R\DB\Table
+    // change to proxy object later
+    static function Load(int $id): ?static
+    {
+        $key = self::_key();
+        return self::Query([$key => $id])->first();
+    }
+
+    static function _table(): \R\DB\Table
     {
         $class = new \ReflectionClass(get_called_class());
         $props = $class->getStaticProperties();
@@ -72,7 +83,7 @@ abstract class Model
         return static::$schema->table($table);
     }
 
-    public static function _key()
+    static function _key()
     {
         $class = get_called_class();
         if (isset(self::$_Keys[$class])) return self::$_Keys[$class];
@@ -83,7 +94,7 @@ abstract class Model
         }
     }
 
-    public static function __attribute(string $name = null)
+    static function __attribute(string $name = null)
     {
         if ($name) {
             foreach (self::__attribute() as $attribute) {
@@ -99,7 +110,7 @@ abstract class Model
         return self::$_Attributes[$class] = static::_table()->describe();
     }
 
-    public function __construct($id = null)
+    function  __construct($id = null)
     {
         if (is_null($id)) {
             foreach (static::__attribute() as $attribute) {
@@ -144,7 +155,7 @@ abstract class Model
         }
     }
 
-    public function save()
+    function  save()
     {
         $key = static::_key();
 
@@ -271,25 +282,25 @@ abstract class Model
         return $ret;
     }
 
-    public static function __table_gateway()
+    static function __table_gateway()
     {
         return new TableGateway(self::_table()->name, static::$schema->getDbAdatpter());
     }
 
-    public function _id()
+    function  _id()
     {
         $key = $this->_key();
         return $this->$key;
     }
 
-    public function delete()
+    function  delete()
     {
         $key = static::_key();
         $gateway = new TableGateway(self::_table()->name, static::$schema->getDbAdatpter());
         return $gateway->delete([$key => $this->$key]);
     }
 
-    public function bind($rs)
+    function  bind($rs)
     {
         foreach (get_object_vars($this) as $key => $val) {
             if ($key[0] == "_") continue;
@@ -307,7 +318,7 @@ abstract class Model
         return $this;
     }
 
-    public function __call($class_name, $args)
+    function  __call($class_name, $args)
     {
         $ro = new ReflectionObject($this);
 
@@ -343,7 +354,7 @@ abstract class Model
     /**
      * @return Query<static>
      */
-    public static function Query(Where|\Closure|string|array|Predicate\PredicateInterface $predicate = null, $combination = Predicate\PredicateSet::OP_AND)
+    static function Query(Where|\Closure|string|array|Predicate\PredicateInterface $predicate = null, $combination = Predicate\PredicateSet::OP_AND)
     {
         $query = new Query(static::class);
         if ($predicate) {
@@ -353,7 +364,7 @@ abstract class Model
     }
 
 
-    public function __get(string $name)
+    function  __get(string $name)
     {
         $ro = new \ReflectionObject($this);
 
