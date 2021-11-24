@@ -7,6 +7,11 @@ use Laminas\Db\Sql\Sql;
 use Laminas\Db\Sql\Where;
 use R\DB\Rows;
 use R\DB\Schema;
+use Symfony\Component\Validator\Validation;
+
+
+
+
 
 //date_default_timezone_set('Asia/Hong_Kong');
 //ini_set("display_errors", "On");
@@ -15,6 +20,15 @@ setlocale(LC_ALL, 'en_US.UTF-8'); //do not remove
 
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
+
+$validator = Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
+$ug = new UserGroup();
+$ug->setValidator($validator);
+$ug->save();
+
+
+die();
+
 
 print_r(new User(1));
 die();

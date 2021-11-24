@@ -13,7 +13,8 @@ use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
 use Psr\EventDispatcher\EventDispatcherInterface;
-use ReflectionProperty;
+use Symfony\Component\Validator\Validation;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 abstract class Model
 {
@@ -27,7 +28,16 @@ abstract class Model
     private static $_Attributes = [];
     private $_dispatcher;
 
+    /**
+     * @var ValidatorInterface|null
+     */
+    private $_validator;
+
+    /**
+     * @var Schema
+     */
     static $schema;
+
     static function SetSchema(Schema $schema)
     {
         self::$schema = $schema;
@@ -51,7 +61,12 @@ abstract class Model
         return $obj;
     }
 
-    function  setEventDispatcher(EventDispatcherInterface $dispatcher)
+    function setValidator(ValidatorInterface $validator)
+    {
+        $this->_validator = $validator;
+    }
+
+    function setEventDispatcher(EventDispatcherInterface $dispatcher)
     {
         $this->_dispatcher = $dispatcher;
     }
@@ -110,8 +125,12 @@ abstract class Model
         return self::$_Attributes[$class] = static::_table()->describe();
     }
 
-    function  __construct($id = null)
+    function __construct($id = null)
     {
+        if ($validator = self::$schema->getDefaultValidator()) {
+            $this->setValidator($validator);
+        }
+
         if (is_null($id)) {
             foreach (static::__attribute() as $attribute) {
                 $this->{$attribute["Field"]} = null;
@@ -129,8 +148,6 @@ abstract class Model
                 }
             }
         } else {
-
-
             $table = static::_table()->name;
             $key = static::_key();
             $select = new Select($table);
@@ -141,7 +158,7 @@ abstract class Model
             $s->setFetchMode(PDO::FETCH_INTO, $this);
 
             if ($s->fetch() === false) {
-                throw new \Exception("$table:$id", 404);
+                throw new Exception("$table:$id", 404);
             }
             foreach ($this->__attribute() as $a) {
                 $n = $a["Field"];
@@ -155,8 +172,16 @@ abstract class Model
         }
     }
 
-    function  save()
+    function save()
     {
+
+        if ($this->_validator) {
+            $error = $this->_validator->validate($this);
+            if (count($error) !== 0) {
+                throw new Exception($error);
+            }
+        }
+
         $key = static::_key();
 
         $records = [];

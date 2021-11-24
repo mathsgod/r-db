@@ -11,10 +11,16 @@ use Laminas\Db\Sql\Ddl\AlterTable;
 use Laminas\Db\Sql\Ddl\CreateTable;
 use Laminas\Db\Sql\Ddl\DropTable;
 use Laminas\Db\Sql\Sql;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class Schema implements AdapterAwareInterface
 {
     use AdapterAwareTrait;
+
+    /**
+     * @var ValidatorInterface|null
+     */
+    private $validator;
 
     public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8mb4", int $port = 3306)
     {
@@ -33,6 +39,16 @@ class Schema implements AdapterAwareInterface
             ]
         ]);
         $this->setDbAdapter($adapter);
+    }
+
+    function setDefaultValidator(ValidatorInterface $validator)
+    {
+        $this->validator = $validator;
+    }
+
+    function getDefaultValidator()
+    {
+        return $this->validator;
     }
 
     public function getDbAdatpter()
