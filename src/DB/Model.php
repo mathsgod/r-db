@@ -12,6 +12,7 @@ use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
+use Laminas\Hydrator\ArraySerializableHydrator;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -318,14 +319,14 @@ abstract class Model
         return $this->$key;
     }
 
-    function  delete()
+    function delete()
     {
         $key = static::_key();
         $gateway = new TableGateway(self::_table()->name, static::$schema->getDbAdatpter());
         return $gateway->delete([$key => $this->$key]);
     }
 
-    function  bind($rs)
+    function bind($rs)
     {
         foreach (get_object_vars($this) as $key => $val) {
             if ($key[0] == "_") continue;
@@ -343,7 +344,7 @@ abstract class Model
         return $this;
     }
 
-    function  __call($class_name, $args)
+    function __call($class_name, $args)
     {
         $ro = new ReflectionObject($this);
 
@@ -416,5 +417,11 @@ abstract class Model
 
         $key = static::_key();
         return $class::Query([$key => $this->$key]);
+    }
+
+    function __debugInfo()
+    {
+        $hydrator = new \Laminas\Hydrator\ObjectPropertyHydrator();
+        return $hydrator->extract($this);
     }
 }

@@ -5,6 +5,7 @@ use Laminas\Db\Sql\Ddl\Column\Column;
 use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Sql;
 use Laminas\Db\Sql\Where;
+use R\DB\Model;
 use R\DB\Rows;
 use R\DB\Schema;
 use Symfony\Component\Validator\Validation;
@@ -21,9 +22,14 @@ setlocale(LC_ALL, 'en_US.UTF-8'); //do not remove
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
+
+$schema = Model::GetSchema();
 $validator = Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
-$ug = new UserGroup();
-$ug->setValidator($validator);
+$schema->setDefaultValidator($validator);
+
+$ugs = UserGroup::Query()->toArray();
+$ug = $ugs[0];
+$ug->name = "";
 $ug->save();
 
 
