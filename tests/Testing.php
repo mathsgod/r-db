@@ -17,3 +17,7 @@ class Testing extends Model
 class Testing2 extends Model
 {
 }
+
+class Testing3 extends Model
+{
+}

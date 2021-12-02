@@ -20,6 +20,10 @@ require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
 
+print_r(Testing3::Get(["id1" => 3, "id2" => 2]));
+
+exit;
+
 
 $schema = Model::GetSchema();
 

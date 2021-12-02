@@ -51,82 +51,6 @@ abstract class Model
         return self::$schema;
     }
 
-    static function Create(?array $data = []): static
-    {
-        $obj = new static;
-        foreach (get_object_vars($obj) as $key => $val) {
-            if ($key[0] == "_") continue;
-
-            if (array_key_exists($key, $data)) {
-                $obj->$key = $data[$key];
-            }
-        }
-        return $obj;
-    }
-
-    function setValidator(ValidatorInterface $validator)
-    {
-        $this->_validator = $validator;
-    }
-
-    function getValidator(): ValidatorInterface
-    {
-        return $this->_validator ?? $this->_schema->getValidator();
-    }
-
-    // direct get the data from database
-    static function Get(int $id): ?static
-    {
-        $key = self::_key();
-        return self::Query([$key => $id])->first();
-    }
-
-    // change to proxy object later
-    static function Load(int $id): ?static
-    {
-        $key = self::_key();
-        return self::Query([$key => $id])->first();
-    }
-
-    static function _table(): \R\DB\Table
-    {
-        $class = new \ReflectionClass(get_called_class());
-        $props = $class->getStaticProperties();
-
-        $table = $class->getShortName();
-        if (isset($props["_table"]))
-            $table = $props["_table"];
-
-        return static::$schema->table($table);
-    }
-
-    static function _key()
-    {
-        $class = get_called_class();
-        if (isset(self::$_keys[$class])) return self::$_keys[$class];
-        foreach (static::__attribute() as $attribute) {
-            if ($attribute["Key"] == "PRI") {
-                return self::$_keys[$class] = $attribute["Field"];
-            }
-        }
-    }
-
-    static function __attribute(string $name = null)
-    {
-        if ($name) {
-            foreach (self::__attribute() as $attribute) {
-                if ($attribute["Field"] == $name) {
-                    return $attribute;
-                }
-            }
-            return null;
-        }
-        $class = get_called_class();
-        if (isset(self::$_attributes[$class])) return self::$_attributes[$class];
-
-        return self::$_attributes[$class] = static::_table()->describe();
-    }
-
     function __construct($id = null)
     {
         $this->_schema = self::$schema;
@@ -150,10 +74,24 @@ abstract class Model
         } else {
             $table = static::_table()->name;
             $key = static::_key();
+            if (is_null($key)) {
+                throw new Exception("Key not found");
+            }
+
             $select = new Select($table);
-            $select->where([$key => $id]);
-            $sql = $select->getSqlString(static::$schema->getPlatform());
-            $s = static::$schema->prepare($sql);
+
+            if (is_array($id)) {
+                foreach ($id as $k => $v) {
+                    if (in_array($k, $key)) {
+                        $select->where([$k => $v]);
+                    }
+                }
+            } else {
+                $select->where([$key => $id]);
+            }
+
+            $sql = $select->getSqlString(static::GetSchema()->getPlatform());
+            $s = static::GetSchema()->prepare($sql);
             $s->execute();
             $s->setFetchMode(PDO::FETCH_INTO, $this);
 
@@ -171,6 +109,110 @@ abstract class Model
             }
         }
     }
+
+
+    static function Create(?array $data = []): static
+    {
+        $obj = new static;
+        foreach (get_object_vars($obj) as $key => $val) {
+            if ($key[0] == "_") continue;
+
+            if (array_key_exists($key, $data)) {
+                $obj->$key = $data[$key];
+            }
+        }
+        return $obj;
+    }
+
+    function setValidator(ValidatorInterface $validator)
+    {
+        $this->_validator = $validator;
+    }
+
+    function getValidator(): ValidatorInterface
+    {
+        return $this->_validator ?? self::GetSchema()->getValidator();
+    }
+
+    /**
+     * direct get the data from database
+     * @param int|string|array $id
+     */
+    static function Get($id): ?static
+    {
+        $key = self::_key();
+        if (is_array($key)) {
+            $q = self::Query($id);
+        } else {
+            $q = self::Query([$key => $id]);
+        }
+
+        return $q->first();
+    }
+
+    // change to proxy object later
+    static function Load(int $id): ?static
+    {
+        $key = self::_key();
+        return self::Query([$key => $id])->first();
+    }
+
+    static function _table(): \R\DB\Table
+    {
+        $class = new \ReflectionClass(get_called_class());
+        $props = $class->getStaticProperties();
+
+        $table = $class->getShortName();
+        if (isset($props["_table"]))
+            $table = $props["_table"];
+
+        return static::GetSchema()->table($table);
+    }
+
+    /**
+     * get the primary key of the model,
+     * if the model has no primary key, return null,
+     * if the model has multiple primary keys, return an array
+     * @return string|array|null
+     */
+    static function _key()
+    {
+        $class = get_called_class();
+        if (isset(self::$_keys[$class])) return self::$_keys[$class];
+        $keys = [];
+        foreach (static::__attribute() as $attribute) {
+            if ($attribute["Key"] == "PRI") {
+                $keys[] = $attribute["Field"];
+            }
+        }
+
+        if (count($keys) == 0) {
+            self::$_keys[$class] = null;
+        } elseif (count($keys) == 1) {
+            self::$_keys[$class] = $keys[0];
+        } else {
+            self::$_keys[$class] = $keys;
+        }
+        return self::$_keys[$class];
+    }
+
+    // get the attributes of the model
+    static function __attribute(string $name = null)
+    {
+        if ($name) {
+            foreach (self::__attribute() as $attribute) {
+                if ($attribute["Field"] == $name) {
+                    return $attribute;
+                }
+            }
+            return null;
+        }
+        $class = get_called_class();
+        if (isset(self::$_attributes[$class])) return self::$_attributes[$class];
+
+        return self::$_attributes[$class] = static::_table()->describe();
+    }
+
 
     function save()
     {
@@ -256,48 +298,59 @@ abstract class Model
 
         if ($this->$key) { // update
             $gateway = static::__table_gateway();
-            $this->_schema->eventDispatcher()->dispatch(new Event\BeforeUpdate($this));
+            self::GetSchema()->eventDispatcher()->dispatch(new Event\BeforeUpdate($this));
             $ret = $gateway->update($records, [$key => $this->$key]);
-            $this->_schema->eventDispatcher()->dispatch(new Event\AfterUpdate($this));
+            self::GetSchema()->eventDispatcher()->dispatch(new Event\AfterUpdate($this));
         } else {
 
             $gateway = static::__table_gateway();
-            $this->_schema->eventDispatcher()->dispatch(new Event\BeforeInsert($this));
+            self::GetSchema()->eventDispatcher()->dispatch(new Event\BeforeInsert($this));
             $ret = $gateway->insert($records);
             $this->$key = $gateway->getLastInsertValue();
-            $this->_schema->eventDispatcher()->dispatch(new Event\AfterInsert($this));
+            self::GetSchema()->eventDispatcher()->dispatch(new Event\AfterInsert($this));
         }
 
-        if (count($generated)) {
-            /*             $table = static::_table();
+        //   if (count($generated)) {
+        /*             $table = static::_table();
             $s = $table->select($generated)->where([$key => $this->$key])->get();
             foreach ($s->fetch() as $name => $value) {
                 $this->$name = $value;
             }
  */
-        }
+        // }
 
         return $ret;
     }
 
     static function __table_gateway()
     {
-        return new TableGateway(self::_table()->name, static::$schema->getDbAdatpter());
+        return new TableGateway(self::_table()->name, static::GetSchema()->getDbAdatpter());
     }
 
-    function  _id()
+    function _id()
     {
         $key = $this->_key();
+        if (is_array($key)) {
+            $id = [];
+            foreach ($key as $k) {
+                $id[$k] = $this->$k;
+            }
+            return $id;
+        }
         return $this->$key;
     }
 
     function delete()
     {
         $key = static::_key();
-        $gateway = new TableGateway(self::_table()->name, static::$schema->getDbAdatpter());
-        $this->_schema->eventDispatcher()->dispatch(new Event\BeforeDelete($this));
-        $result = $gateway->delete([$key => $this->$key]);
-        $this->_schema->eventDispatcher()->dispatch(new Event\AfterDelete($this));
+        $gateway = new TableGateway(self::_table()->name, static::GetSchema()->getDbAdatpter());
+        static::GetSchema()->eventDispatcher()->dispatch(new Event\BeforeDelete($this));
+        if (is_array($key)) {
+            $result = $gateway->delete($this->_id());
+        } else {
+            $result = $gateway->delete([$key => $this->$key]);
+        }
+        static::GetSchema()->eventDispatcher()->dispatch(new Event\AfterDelete($this));
         return $result;
     }
 
