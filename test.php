@@ -24,6 +24,12 @@ $schema = Model::GetSchema();
 
 $dispatcher = $schema->eventDispatcher();
 $dispatcher->subscribeTo(BeforeInsert::class, function (BeforeInsert $event) {
+    echo "1";
+    print_r($event);
+});
+
+$dispatcher->subscribeTo(BeforeInsert::class, function (BeforeInsert $event) {
+    echo "2";
     print_r($event);
 });
 
@@ -37,6 +43,7 @@ $d->save();
 $d->delete();;
 
 
+$ug = UserGroup::Query();
 
 
 

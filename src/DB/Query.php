@@ -175,6 +175,9 @@ class Query extends Select implements IteratorAggregate
         return $this->execute();
     }
 
+    /**
+     * @return T[]
+     */
     public function toArray()
     {
         return iterator_to_array($this);

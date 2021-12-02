@@ -14,6 +14,7 @@ use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+
 abstract class Model
 {
     const NUMERIC_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint", "float", "double", "decimal"];

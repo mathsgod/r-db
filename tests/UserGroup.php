@@ -6,4 +6,6 @@ class UserGroup extends Model
 {
     #[Assert\NotBlank]
     public $name;
+
+  
 }
