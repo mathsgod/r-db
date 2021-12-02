@@ -13,6 +13,7 @@ use Laminas\Db\Sql\Ddl\DropTable;
 use Laminas\Db\Sql\Sql;
 use League\Event\EventDispatcherAware;
 use League\Event\EventDispatcherAwareBehavior;
+use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class Schema implements AdapterAwareInterface, EventDispatcherAware
@@ -51,6 +52,14 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware
 
     function getDefaultValidator()
     {
+        return $this->validator;
+    }
+
+    function getValidator(): ValidatorInterface
+    {
+        if (!$this->validator) {
+            $this->validator = Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
+        }
         return $this->validator;
     }
 

@@ -27,8 +27,8 @@ abstract class Model
      */
     protected $_schema;
 
-    private static $_Keys = [];
-    private static $_Attributes = [];
+    private static $_keys = [];
+    private static $_attributes = [];
 
 
     /**
@@ -69,6 +69,11 @@ abstract class Model
         $this->_validator = $validator;
     }
 
+    function getValidator(): ValidatorInterface
+    {
+        return $this->_validator ?? $this->_schema->getValidator();
+    }
+
     // direct get the data from database
     static function Get(int $id): ?static
     {
@@ -98,10 +103,10 @@ abstract class Model
     static function _key()
     {
         $class = get_called_class();
-        if (isset(self::$_Keys[$class])) return self::$_Keys[$class];
+        if (isset(self::$_keys[$class])) return self::$_keys[$class];
         foreach (static::__attribute() as $attribute) {
             if ($attribute["Key"] == "PRI") {
-                return self::$_Keys[$class] = $attribute["Field"];
+                return self::$_keys[$class] = $attribute["Field"];
             }
         }
     }
@@ -117,17 +122,14 @@ abstract class Model
             return null;
         }
         $class = get_called_class();
-        if (isset(self::$_Attributes[$class])) return self::$_Attributes[$class];
+        if (isset(self::$_attributes[$class])) return self::$_attributes[$class];
 
-        return self::$_Attributes[$class] = static::_table()->describe();
+        return self::$_attributes[$class] = static::_table()->describe();
     }
 
     function __construct($id = null)
     {
         $this->_schema = self::$schema;
-        if ($validator = self::$schema->getDefaultValidator()) {
-            $this->setValidator($validator);
-        }
 
         if (is_null($id)) {
             foreach (static::__attribute() as $attribute) {
@@ -172,13 +174,11 @@ abstract class Model
 
     function save()
     {
-
-        if ($this->_validator) {
-            $error = $this->_validator->validate($this);
-            if (count($error) !== 0) {
-                throw new Exception($error);
-            }
+        $error = $this->getValidator()->validate($this);
+        if (count($error) !== 0) {
+            throw new Exception($error);
         }
+
 
         $key = static::_key();
 

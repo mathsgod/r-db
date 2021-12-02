@@ -20,7 +20,11 @@ require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
 
+
 $schema = Model::GetSchema();
+
+print_r(UserGroup::Query()->first());
+die();
 
 $dispatcher = $schema->eventDispatcher();
 $dispatcher->subscribeTo(BeforeInsert::class, function (BeforeInsert $event) {
