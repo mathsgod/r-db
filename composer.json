@@ -3,7 +3,7 @@
     "description": "raymond framework db",
     "autoload": {
         "psr-4": {
-            "R\\": "src"
+            "R\\DB\\": "src"
         }
     },
     "require": {
