@@ -11,11 +11,14 @@ use Laminas\Db\Sql\Ddl\AlterTable;
 use Laminas\Db\Sql\Ddl\CreateTable;
 use Laminas\Db\Sql\Ddl\DropTable;
 use Laminas\Db\Sql\Sql;
+use League\Event\EventDispatcherAware;
+use League\Event\EventDispatcherAwareBehavior;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class Schema implements AdapterAwareInterface
+class Schema implements AdapterAwareInterface, EventDispatcherAware
 {
     use AdapterAwareTrait;
+    use EventDispatcherAwareBehavior;
 
     /**
      * @var ValidatorInterface|null

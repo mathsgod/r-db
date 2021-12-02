@@ -12,9 +12,6 @@ use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
-use Laminas\Hydrator\ArraySerializableHydrator;
-use Psr\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 abstract class Model
@@ -24,10 +21,14 @@ abstract class Model
     const FLOAT_DATA_TYPE = ["float", "double", "decimal"];
 
     protected $_key;
+    /**
+     * @var Schema
+     */
+    protected $_schema;
 
     private static $_Keys = [];
     private static $_Attributes = [];
-    private $_dispatcher;
+
 
     /**
      * @var ValidatorInterface|null
@@ -66,12 +67,6 @@ abstract class Model
     {
         $this->_validator = $validator;
     }
-
-    function setEventDispatcher(EventDispatcherInterface $dispatcher)
-    {
-        $this->_dispatcher = $dispatcher;
-    }
-
 
     // direct get the data from database
     static function Get(int $id): ?static
@@ -128,6 +123,7 @@ abstract class Model
 
     function __construct($id = null)
     {
+        $this->_schema = self::$schema;
         if ($validator = self::$schema->getDefaultValidator()) {
             $this->setValidator($validator);
         }
@@ -258,42 +254,17 @@ abstract class Model
         $methods = array_column($methods, "name");
 
         if ($this->$key) { // update
-
-
-            if (in_array("BeforeUpdate", $methods)) {
-                $method = $class->getMethod("BeforeUpdate");
-                $old = new static($this->$key);
-                $method->invoke(null, $this, $old);
-            }
-
-            if (in_array("AfterUpdate", $methods)) {
-                $old = new static($this->$key);
-            }
-
             $gateway = static::__table_gateway();
+            $this->_schema->eventDispatcher()->dispatch(new Event\BeforeUpdate($this));
             $ret = $gateway->update($records, [$key => $this->$key]);
-
-            if (in_array("AfterUpdate", $methods)) {
-                $method = $class->getMethod("AfterUpdate");
-                $method->invoke(null, new static($this->$key), $old);
-            }
+            $this->_schema->eventDispatcher()->dispatch(new Event\AfterUpdate($this));
         } else {
 
-
-            if (in_array("BeforeInsert", $methods)) {
-                $method = $class->getMethod("BeforeInsert");
-                $method->invoke(null, $this);
-            }
-
             $gateway = static::__table_gateway();
+            $this->_schema->eventDispatcher()->dispatch(new Event\BeforeInsert($this));
             $ret = $gateway->insert($records);
-
             $this->$key = $gateway->getLastInsertValue();
-
-            if (in_array("AfterInsert", $methods)) {
-                $method = $class->getMethod("AfterInsert");
-                $method->invoke(null, new static($this->$key));
-            }
+            $this->_schema->eventDispatcher()->dispatch(new Event\AfterInsert($this));
         }
 
         if (count($generated)) {
@@ -323,7 +294,10 @@ abstract class Model
     {
         $key = static::_key();
         $gateway = new TableGateway(self::_table()->name, static::$schema->getDbAdatpter());
-        return $gateway->delete([$key => $this->$key]);
+        $this->_schema->eventDispatcher()->dispatch(new Event\BeforeDelete($this));
+        $result = $gateway->delete([$key => $this->$key]);
+        $this->_schema->eventDispatcher()->dispatch(new Event\AfterDelete($this));
+        return $result;
     }
 
     function bind($rs)

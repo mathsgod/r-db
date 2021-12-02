@@ -5,13 +5,10 @@ use Laminas\Db\Sql\Ddl\Column\Column;
 use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Sql;
 use Laminas\Db\Sql\Where;
+use R\DB\Event\AfterDelete;
+use R\DB\Event\BeforeInsert;
 use R\DB\Model;
-use R\DB\Rows;
-use R\DB\Schema;
 use Symfony\Component\Validator\Validation;
-
-
-
 
 
 //date_default_timezone_set('Asia/Hong_Kong');
@@ -24,6 +21,29 @@ require_once __DIR__ . "/tests/Testing.php";
 
 
 $schema = Model::GetSchema();
+
+$dispatcher = $schema->eventDispatcher();
+$dispatcher->subscribeTo(BeforeInsert::class, function (BeforeInsert $event) {
+    print_r($event);
+});
+
+$dispatcher->subscribeTo(AfterDelete::class, function (AfterDelete $event) {
+    print_r($event);
+});
+
+
+$d = UserGroup::Create(['name' => 'test1']);
+$d->save();
+$d->delete();;
+
+
+
+
+
+
+die();
+
+
 $validator = Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
 $schema->setDefaultValidator($validator);
 
