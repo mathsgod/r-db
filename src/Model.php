@@ -221,12 +221,19 @@ abstract class Model
             throw new Exception($error);
         }
 
-
         $key = static::_key();
 
+        if ($this->$key) { // update
+            $mode = "update";
+            self::GetSchema()->eventDispatcher()->dispatch(new Event\BeforeUpdate($this));
+        } else { // insert
+            $mode = "insert";
+            self::GetSchema()->eventDispatcher()->dispatch(new Event\BeforeInsert($this));
+        }
+
+        // generate record
         $records = [];
         $generated = [];
-
 
         foreach (get_object_vars($this) as $name => $value) {
             if ($name[0] == "_" || $name == $key)
@@ -291,22 +298,15 @@ abstract class Model
         }
 
 
-        //exists before insert
-        $class = new ReflectionClass(get_called_class());
-        $methods = $class->getMethods(ReflectionMethod::IS_STATIC);
-        $methods = array_column($methods, "name");
 
-        if ($this->$key) { // update
+        if ($mode == "update") { // update
             $gateway = static::__table_gateway();
-            self::GetSchema()->eventDispatcher()->dispatch(new Event\BeforeUpdate($this));
             $ret = $gateway->update($records, [$key => $this->$key]);
             self::GetSchema()->eventDispatcher()->dispatch(new Event\AfterUpdate($this));
         } else {
-
             $gateway = static::__table_gateway();
-            self::GetSchema()->eventDispatcher()->dispatch(new Event\BeforeInsert($this));
             $ret = $gateway->insert($records);
-            $this->$key = $gateway->getLastInsertValue();
+            $this->$key = $gateway->getLastInsertValue(); //save the id
             self::GetSchema()->eventDispatcher()->dispatch(new Event\AfterInsert($this));
         }
 
