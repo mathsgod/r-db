@@ -2,6 +2,10 @@
 
 namespace R\DB;
 
+use Laminas\Db\Adapter\AdapterInterface;
+use Laminas\Db\ResultSet\ResultSetInterface;
+use Laminas\Db\Sql\Sql;
+use Laminas\Db\TableGateway\TableGatewayInterface;
 use PDOStatement;
 
 interface PDOInterface
@@ -22,4 +26,13 @@ interface PDOInterface
      * @return PDOStatement|false
      */
     function query(string $query);
+
+    function getTableGateway(
+        $name,
+        $features = null,
+        ?ResultSetInterface $resultSetPrototype = null,
+        ?Sql $sql = null
+    ): TableGatewayInterface;
+
+    function getAdapter(): AdapterInterface;
 }

@@ -8,6 +8,7 @@ use Laminas\Db\Sql\Where;
 use R\DB\Event\AfterDelete;
 use R\DB\Event\BeforeInsert;
 use R\DB\Model;
+use R\DB\PDO;
 use Symfony\Component\Validator\Validation;
 
 
@@ -19,8 +20,17 @@ setlocale(LC_ALL, 'en_US.UTF-8'); //do not remove
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
-$schema = Model::GetSchema();
 
+$pdo = new PDO("mysql:host=127.0.0.1;dbname=raymond", "root", "111111");
+
+$table = $pdo->getTable("User");
+foreach ($table->top(3) as $t) {
+    print_r($t);
+}
+
+die();
+
+$schema = Model::GetSchema();
 
 $schema->beginTransaction();
 $ug = new UserGroup();

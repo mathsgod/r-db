@@ -2,6 +2,7 @@
 
 namespace R\DB;
 
+use Laminas\Db\Adapter\Adapter;
 use Laminas\Db\Adapter\AdapterAwareInterface;
 use Laminas\Db\Adapter\AdapterAwareTrait;
 use Laminas\Db\Sql\Ddl\AlterTable;
@@ -14,16 +15,22 @@ use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Sql;
 use Laminas\Hydrator\ObjectPropertyHydrator;
 
-class Table implements AdapterAwareInterface
+class Table
 {
-    use AdapterAwareTrait;
-    private $db;
+    private $pdo;
     public $name;
+    private $adapter;
 
-    public function __construct(Schema $db, string $name)
+    public function __construct(PDOInterface $pdo, string $name)
     {
-        $this->db = $db;
+        $this->pdo = $pdo;
         $this->name = $name;
+        $this->adapter = $pdo->getAdapter();
+    }
+
+    public function getPDO()
+    {
+        return $this->pdo;
     }
 
     /**
@@ -36,9 +43,8 @@ class Table implements AdapterAwareInterface
             $select->where($predicate, $combination);
         }
 
-
         $row = new Row($this);
-        $row->setDbAdapter($this->db->getDbAdatpter());
+        $row->setDbAdapter($this->pdo->getAdapter());
         $resultSet = new  Rows(new ObjectPropertyHydrator, $row);
         $gateway = new  TableGateway($this->name, $this->db->getDbAdatpter(), null, $resultSet);
 
@@ -49,9 +55,8 @@ class Table implements AdapterAwareInterface
     {
         $alter = new AlterTable($this->name);
         $alter->dropColumn($name);
-
         $sql = new Sql($this->adapter);
-        return $this->adapter->query($sql->buildSqlString($alter), $this->adapter::QUERY_MODE_EXECUTE);
+        $this->pdo->exec($sql->buildSqlString($alter));
     }
 
     public function addColumn(ColumnInterface $column)
@@ -59,27 +64,26 @@ class Table implements AdapterAwareInterface
         $alter = new AlterTable($this->name);
         $alter->addColumn($column);
         $sql = new Sql($this->adapter);
-        return $this->adapter->query($sql->buildSqlString($alter), $this->adapter::QUERY_MODE_EXECUTE);
+        $this->pdo->exec($sql->buildSqlString($alter));
     }
 
     public function truncate()
     {
-
         $sql = "TRUNCATE `{$this->name}`";
-        return $this->db->exec($sql);
+        return $this->pdo->exec($sql);
     }
 
     public function columns()
     {
-        $sth = $this->db->query("SHOW COLUMNS FROM `$this->name`");
-        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this, $this->adapter]);
+        $sth = $this->pdo->query("SHOW COLUMNS FROM `$this->name`");
+        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this]);
         return $sth->fetchAll();
     }
 
     public function column(string $field): ?Column
     {
-        $sth = $this->db->query("SHOW COLUMNS FROM `{$this->name}` WHERE Field='$field'");
-        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this, $this->adapter]);
+        $sth = $this->pdo->query("SHOW COLUMNS FROM `{$this->name}` WHERE Field='$field'");
+        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this]);
         $ret = $sth->fetch();
         if ($ret === false) {
             return null;
@@ -95,7 +99,7 @@ class Table implements AdapterAwareInterface
     public function describe(): array
     {
         $sql = "DESCRIBE `{$this->name}`";
-        if ($sth = $this->db->query($sql)) {
+        if ($sth = $this->pdo->query($sql)) {
             return $sth->fetchAll();
         }
         return [];
@@ -119,19 +123,19 @@ class Table implements AdapterAwareInterface
 
     public function select(Where|\Closure|string|array $where = null)
     {
-        $gateway = new TableGateway($this->name, $this->db->getDbAdatpter());
+        $gateway = $this->pdo->getTableGateway($this->name);
         return $gateway->select($where);
     }
 
     public function insert(array $set = [])
     {
-        $gateway = new TableGateway($this->name, $this->db->getDbAdatpter());
+        $gateway = $this->pdo->getTableGateway($this->name);
         return $gateway->insert($set);
     }
 
     public function delete(Where|\Closure|string|array $where)
     {
-        $gateway = new TableGateway($this->name, $this->db->getDbAdatpter());
+        $gateway = $this->pdo->getTableGateway($this->name);
         return $gateway->delete($where);
     }
 
@@ -144,7 +148,7 @@ class Table implements AdapterAwareInterface
         $names = implode(",", array_map(function ($name) {
             return "`" . $name . "`";
         }, $names));
-        return $this->db->prepare("REPLACE INTO `$this->name` ({$names}) values ({$values})")->execute($records);
+        return $this->pdo->prepare("REPLACE INTO `$this->name` ({$names}) values ({$values})")->execute($records);
     }
 
     public function updateOrCreate(array $records = [])
@@ -164,14 +168,8 @@ class Table implements AdapterAwareInterface
         $set = implode(",", $update);
 
 
-        return $this->db->prepare("INSERT INTO `$this->name` ({$names}) values ({$values}) on duplicate key update {$set}")->execute($records);
+        return  $this->pdo->prepare("INSERT INTO `$this->name` ({$names}) values ({$values}) on duplicate key update {$set}")->execute($records);
     }
-
-    public function db()
-    {
-        return $this->db;
-    }
-
 
     public function first(Where|\Closure|string|array $where = null, $combination = Predicate\PredicateSet::OP_AND)
     {
@@ -188,17 +186,18 @@ class Table implements AdapterAwareInterface
 
     protected function getGateway()
     {
-        return new TableGateway($this->name, $this->db->getDbAdatpter());
+        return $this->pdo->getTableGateway($this->name);
     }
 
     public function max($column)
     {
-        $result = $this->select(function (Select $select) use ($column) {
-            $select->columns([
-                "m" => new Expression("max(`$column`)")
-            ]);
-        });
-        return $result->current()["m"];
+        $select = new Select($this->name);
+        $select->columns([
+            "c" => new Expression("max(`$column`)")
+        ]);
+
+        $sql = new Sql($this->adapter, $this->name);
+        return $this->pdo->query($sql->buildSqlString($select))->fetchColumn(0);
     }
 
     public function count(): int
@@ -208,8 +207,8 @@ class Table implements AdapterAwareInterface
             "c" => new Expression("count(*)")
         ]);
 
-        $result = $this->getGateway()->selectWith($select);
-        return $result->current()["c"];
+        $sql = new Sql($this->adapter, $this->name);
+        return $this->pdo->query($sql->buildSqlString($select))->fetchColumn(0);
     }
 
     public function min(string $column)
@@ -219,8 +218,8 @@ class Table implements AdapterAwareInterface
             "c" => new Expression("min(`$column`)")
         ]);
 
-        $result = $this->getGateway()->selectWith($select);
-        return $result->current()["c"];
+        $sql = new Sql($this->adapter, $this->name);
+        return $this->pdo->query($sql->buildSqlString($select))->fetchColumn(0);
     }
 
     public function avg(string $column)
@@ -230,15 +229,16 @@ class Table implements AdapterAwareInterface
             "c" => new Expression("avg(`$column`)")
         ]);
 
-        $result = $this->getGateway()->selectWith($select);
-        return $result->current()["c"];
+        $sql = new Sql($this->adapter, $this->name);
+        return $this->pdo->query($sql->buildSqlString($select))->fetchColumn(0);
     }
 
     public function top(int $top)
     {
         $select = new Select($this->name);
         $select->limit($top);
-        $result = $this->getGateway()->selectWith($select);
-        return $result;
+
+        $sql = new Sql($this->adapter, $this->name);
+        return $this->pdo->query($sql->buildSqlString($select))->fetchAll();
     }
 }

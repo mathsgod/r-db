@@ -9,9 +9,8 @@ use Laminas\Db\Metadata\Source\Factory;
 use Laminas\Db\Sql\Ddl\AlterTable;
 use Laminas\Hydrator\ObjectPropertyHydrator;
 
-class Column implements AdapterAwareInterface
+class Column
 {
-	use AdapterAwareTrait;
 	protected $table;
 	public $Field;
 	public $Type;
@@ -20,10 +19,9 @@ class Column implements AdapterAwareInterface
 	public $Default;
 	public $Extra;
 
-	public function __construct(Table $table, Adapter $adapter)
+	public function __construct(Table $table)
 	{
 		$this->table = $table;
-		$this->setDbAdapter($adapter);
 	}
 
 	public function table(): Table
@@ -35,7 +33,8 @@ class Column implements AdapterAwareInterface
 	{
 		$sql = "ALTER TABLE `{$this->table}` CHANGE COLUMN `$this->Field` `$field` {$this->Type} {$this->Extra}";
 		$this->Field = $field;
-		return $this->table->db()->exec($sql);
+
+		return $this->table->getPDO()->exec($sql);
 	}
 
 	public function __debugInfo()

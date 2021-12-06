@@ -5,8 +5,6 @@ namespace R\DB;
 use ArrayObject;
 use PDO;
 use Exception;
-use ReflectionClass;
-use ReflectionMethod;
 use ReflectionObject;
 use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Select;

@@ -7,10 +7,14 @@ use PDOStatement;
 use Laminas\Db\Adapter\Adapter;
 use Laminas\Db\Adapter\AdapterAwareInterface;
 use Laminas\Db\Adapter\AdapterAwareTrait;
+use Laminas\Db\Adapter\AdapterInterface;
+use Laminas\Db\ResultSet\ResultSetInterface;
 use Laminas\Db\Sql\Ddl\AlterTable;
 use Laminas\Db\Sql\Ddl\CreateTable;
 use Laminas\Db\Sql\Ddl\DropTable;
 use Laminas\Db\Sql\Sql;
+use Laminas\Db\TableGateway\TableGateway;
+use Laminas\Db\TableGateway\TableGatewayInterface;
 use League\Event\EventDispatcherAware;
 use League\Event\EventDispatcherAwareBehavior;
 use Symfony\Component\Validator\Validation;
@@ -31,8 +35,18 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
 
     private $in_transaction = false;
 
-    public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8mb4", int $port = 3306)
+    public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8mb4", int $port = 3306, ?array $options = null)
     {
+
+        if ($options === null) {
+            $options = [
+                PDO::ATTR_PERSISTENT => true,
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ];
+        }
+
         $this->adapter = new Adapter([
             "database" => $database,
             "hostname" => $hostname,
@@ -41,12 +55,7 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
             "port" => $port,
             "charset" => $charset,
             "driver" => "Pdo_Mysql",
-            "driver_options" => [
-                PDO::ATTR_PERSISTENT => true,
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ]
+            "driver_options" => $options
         ]);
     }
 
@@ -106,10 +115,14 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         return $this->adapter;
     }
 
+    function getAdapter(): AdapterInterface
+    {
+        return $this->adapter;
+    }
+
     public function table(string $name)
     {
         $table = new Table($this, $name);
-        $table->setDbAdapter($this->adapter);
         return $table;
     }
 
@@ -142,7 +155,6 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
     {
         if ($this->hasTable($name)) {
             $t = new Table($this, $name);
-            $t->setDbAdapter($this->adapter);
             return $t;
         }
         return null;
@@ -200,7 +212,7 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
      */
     public function prepare(string $query, array $options = [])
     {
-        $statement = $this->adapter->createStatement($query);
+        $statement = $this->adapter->createStatement($query, $options);
         $statement->prepare();
         return $statement->getResource();
     }
@@ -223,5 +235,11 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         $call($create);
         $sql = new Sql($this->adapter);
         return $this->adapter->query($sql->buildSqlString($create), Adapter::QUERY_MODE_EXECUTE);
+    }
+
+    public function getTableGateway($name, $features = null, ?ResultSetInterface $resultSetPrototype = null, ?Sql $sql = null): TableGatewayInterface
+    {
+        $table = new TableGateway($name, $this->adapter, $features, $resultSetPrototype, $sql);
+        return $table;
     }
 }
