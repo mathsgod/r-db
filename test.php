@@ -9,6 +9,7 @@ use R\DB\Event\AfterDelete;
 use R\DB\Event\BeforeInsert;
 use R\DB\Model;
 use R\DB\PDO;
+use R\DB\Stream;
 use Symfony\Component\Validator\Validation;
 
 
@@ -22,6 +23,15 @@ require_once __DIR__ . "/tests/Testing.php";
 
 
 $pdo = new PDO("mysql:host=127.0.0.1;dbname=raymond", "root", "111111");
+
+$stream = new Stream($pdo);;
+print_r($stream->filterParser("( ( (a eq 1 or c lt 2) and (b eq 2) ) or (c gt 2) )"));
+die();
+
+Stream::Register($pdo, "db");
+print_r(file_get_contents("db://User/1"));
+
+die();
 
 $table = $pdo->getTable("User");
 print_r($table->first());

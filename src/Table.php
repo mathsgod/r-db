@@ -2,6 +2,7 @@
 
 namespace R\DB;
 
+use Closure;
 use Laminas\Db\Sql\Ddl\AlterTable;
 use Laminas\Db\Sql\Ddl\Column\ColumnInterface;
 use Laminas\Db\Sql\Expression;
@@ -23,6 +24,17 @@ class Table implements TableInterface
         $this->pdo = $pdo;
         $this->name = $name;
         $this->adapter = $pdo->getAdapter();
+    }
+
+    function getPrimaryKeys(): array
+    {
+        $ret = array_filter($this->describe(), function ($o) {
+            return $o["Key"] == "PRI";
+        });
+
+        return array_map(function ($o) {
+            return $o["Field"];
+        }, $ret);
     }
 
     function getName(): string
@@ -148,16 +160,23 @@ class Table implements TableInterface
         return $gateway->select($where);
     }
 
-    public function insert(array $set = [])
+    public function insert(array $data = [])
     {
         $gateway = $this->pdo->getTableGateway($this->name);
-        return $gateway->insert($set);
+        return $gateway->insert($data);
     }
 
     public function delete(Where|\Closure|string|array $where)
     {
         $gateway = $this->pdo->getTableGateway($this->name);
         return $gateway->delete($where);
+    }
+
+
+    public function update(array $data, Where|Closure|string|array|null $where = null)
+    {
+        $gateway = $this->pdo->getTableGateway($this->name);
+        return $gateway->update($data, $where);
     }
 
     public function replace(array $records = [])
