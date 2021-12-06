@@ -24,9 +24,7 @@ require_once __DIR__ . "/tests/Testing.php";
 $pdo = new PDO("mysql:host=127.0.0.1;dbname=raymond", "root", "111111");
 
 $table = $pdo->getTable("User");
-foreach ($table->top(3) as $t) {
-    print_r($t);
-}
+print_r($table->first());
 
 die();
 

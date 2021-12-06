@@ -2,9 +2,6 @@
 
 namespace R\DB;
 
-use Laminas\Db\Adapter\Adapter;
-use Laminas\Db\Adapter\AdapterAwareInterface;
-use Laminas\Db\Adapter\AdapterAwareTrait;
 use Laminas\Db\Sql\Ddl\AlterTable;
 use Laminas\Db\Sql\Ddl\Column\ColumnInterface;
 use Laminas\Db\Sql\Expression;
@@ -15,7 +12,7 @@ use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Sql;
 use Laminas\Hydrator\ObjectPropertyHydrator;
 
-class Table
+class Table implements TableInterface
 {
     private $pdo;
     public $name;
@@ -26,6 +23,11 @@ class Table
         $this->pdo = $pdo;
         $this->name = $name;
         $this->adapter = $pdo->getAdapter();
+    }
+
+    function getName(): string
+    {
+        return $this->name;
     }
 
     public function getPDO()
@@ -67,12 +69,31 @@ class Table
         $this->pdo->exec($sql->buildSqlString($alter));
     }
 
+    public function changeColumn(string $name, ColumnInterface $column)
+    {
+        $alter = new AlterTable($this->name);
+        $alter->changeColumn($name, $column);
+        $sql = new Sql($this->adapter);
+        $this->pdo->exec($sql->buildSqlString($alter));
+    }
+
     public function truncate()
     {
         $sql = "TRUNCATE `{$this->name}`";
         return $this->pdo->exec($sql);
     }
 
+
+    public function getColumns()
+    {
+        $sth = $this->pdo->query("SHOW COLUMNS FROM `$this->name`");
+        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this]);
+        return $sth->fetchAll();
+    }
+
+    /**
+     * @return ColumnInterface[]
+     */
     public function columns()
     {
         $sth = $this->pdo->query("SHOW COLUMNS FROM `$this->name`");
@@ -179,9 +200,10 @@ class Table
         }
 
         $select->limit(1);
-        $gateway = $this->getGateway();
-        $result = $gateway->selectWith($select);
-        return $result->current();
+
+
+        $sql = new Sql($this->adapter, $this->name);
+        return $this->pdo->query($sql->buildSqlString($select))->fetch();
     }
 
     protected function getGateway()

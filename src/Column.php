@@ -9,7 +9,7 @@ use Laminas\Db\Metadata\Source\Factory;
 use Laminas\Db\Sql\Ddl\AlterTable;
 use Laminas\Hydrator\ObjectPropertyHydrator;
 
-class Column
+class Column implements ColumnInterface
 {
 	protected $table;
 	public $Field;
@@ -24,9 +24,29 @@ class Column
 		$this->table = $table;
 	}
 
-	public function table(): Table
+	function getName()
 	{
-		return $this->table;
+		return $this->Field;
+	}
+
+	function isNullable()
+	{
+		return $this->Null == 'YES';
+	}
+
+	function isPrimary()
+	{
+		return $this->Key == 'PRI';
+	}
+
+	function getDefault()
+	{
+		return $this->Default;
+	}
+
+	function getType()
+	{
+		return $this->Type;
 	}
 
 	public function rename(string $field)
