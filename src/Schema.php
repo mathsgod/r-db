@@ -16,23 +16,29 @@ use League\Event\EventDispatcherAwareBehavior;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class Schema implements AdapterAwareInterface, EventDispatcherAware
+class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterface
 {
+
     use AdapterAwareTrait;
     use EventDispatcherAwareBehavior;
+
 
     /**
      * @var ValidatorInterface|null
      */
     private $validator;
 
+
+    private $in_transaction = false;
+
     public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8mb4", int $port = 3306)
     {
-        $adapter = new Adapter([
+        $this->adapter = new Adapter([
             "database" => $database,
             "hostname" => $hostname,
             "username" => $username,
             "password" => $password,
+            "port" => $port,
             "charset" => $charset,
             "driver" => "Pdo_Mysql",
             "driver_options" => [
@@ -42,7 +48,39 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware
                 PDO::ATTR_EMULATE_PREPARES => false,
             ]
         ]);
-        $this->setDbAdapter($adapter);
+    }
+
+    function beginTransaction(): bool
+    {
+        $this->in_transaction = true;
+        $this->adapter->getDriver()->getConnection()->beginTransaction();
+        return true;
+    }
+
+    function commit(): bool
+    {
+        $this->in_transaction = false;
+        $this->adapter->getDriver()->getConnection()->commit();
+        return true;
+    }
+
+    function rollback(): bool
+    {
+        $this->in_transaction = false;
+        $this->adapter->getDriver()->getConnection()->rollBack();
+        return true;
+    }
+
+    function inTransaction(): bool
+    {
+        return $this->in_transaction;
+    }
+
+    function exec(string $statement): int|false
+    {
+        $statement = $this->adapter->createStatement($statement);
+        $result = $statement->execute();
+        return $result->getAffectedRows();
     }
 
     function setDefaultValidator(ValidatorInterface $validator)
@@ -148,9 +186,9 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware
     /**
      * @return PDOStatement 
      */
-    public function query(string $statement)
+    public function query(string $query)
     {
-        $statement = $this->adapter->getDriver()->createStatement($statement);
+        $statement = $this->adapter->getDriver()->createStatement($query);
         $statement->prepare();
         $statement->execute();
         $pdo_statement = $statement->getResource();
@@ -158,22 +196,16 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware
     }
 
     /**
-     * @return PDOStatement 
+     * @return PDOStatement
      */
-    public function prepare($statement, $options = null)
+    public function prepare(string $query, array $options = [])
     {
-        $statement = $this->adapter->createStatement($statement);
+        $statement = $this->adapter->createStatement($query);
         $statement->prepare();
         return $statement->getResource();
     }
 
 
-    public function exec($statement)
-    {
-        $statement = $this->adapter->createStatement($statement);
-        $result = $statement->execute();
-        return $result->getAffectedRows();
-    }
 
     public function alterTable(string $name, callable $call)
     {

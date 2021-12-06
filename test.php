@@ -19,17 +19,18 @@ setlocale(LC_ALL, 'en_US.UTF-8'); //do not remove
 require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/tests/Testing.php";
 
-
-print_r(Testing3::Get(["id1" => 3, "id2" => 2]));
-
-exit;
-
-
 $schema = Model::GetSchema();
 
-print_r(UserGroup::Query()->first());
-die();
 
+$schema->beginTransaction();
+$ug = new UserGroup();
+$ug->name = "Test";
+$ug->delete();
+$schema->rollback();
+
+
+
+die();
 $dispatcher = $schema->eventDispatcher();
 $dispatcher->subscribeTo(BeforeInsert::class, function (BeforeInsert $event) {
     echo "1";

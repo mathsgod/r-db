@@ -14,8 +14,7 @@ use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-
-abstract class Model
+abstract class Model implements ModelInterface
 {
     const NUMERIC_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint", "float", "double", "decimal"];
     const INT_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint"];
@@ -151,7 +150,7 @@ abstract class Model
     }
 
     // change to proxy object later
-    static function Load(int $id): ?static
+    static function Load($id): static
     {
         $key = self::_key();
         return self::Query([$key => $id])->first();
