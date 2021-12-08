@@ -2,87 +2,9 @@
 
 namespace R\DB;
 
-class ParensParser
-{
-    // something to keep track of parens nesting
-    protected $stack = null;
-    // current level
-    protected $current = null;
+use Laminas\Db\Sql\Select;
+use Laminas\Db\Sql\Where;
 
-    // input string to parse
-    protected $string = null;
-    // current character offset in string
-    protected $position = null;
-    // start of text-buffer
-    protected $buffer_start = null;
-
-    public function parse($string)
-    {
-        if (!$string) {
-            // no string, no data
-            return array();
-        }
-
-        if ($string[0] == '(') {
-            // killer outer parens, as they're unnecessary
-            $string = substr($string, 1, -1);
-        }
-
-        $this->current = array();
-        $this->stack = array();
-
-        $this->string = $string;
-        $this->length = strlen($this->string);
-        // look at each character
-        for ($this->position = 0; $this->position < $this->length; $this->position++) {
-            switch ($this->string[$this->position]) {
-                case '(':
-                    $this->push();
-                    // push current scope to the stack an begin a new scope
-                    array_push($this->stack, $this->current);
-                    $this->current = array();
-                    break;
-
-                case ')':
-                    $this->push();
-                    // save current scope
-                    $t = $this->current;
-                    // get the last scope from stack
-                    $this->current = array_pop($this->stack);
-                    // add just saved scope to current scope
-                    $this->current[] = $t;
-                    break;
-                    /* 
-                case ' ':
-                    // make each word its own token
-                    $this->push();
-                    break;
-                */
-                default:
-                    // remember the offset to do a string capture later
-                    // could've also done $buffer .= $string[$position]
-                    // but that would just be wasting resources…
-                    if ($this->buffer_start === null) {
-                        $this->buffer_start = $this->position;
-                    }
-            }
-        }
-
-        return $this->current;
-    }
-
-    protected function push()
-    {
-        if ($this->buffer_start !== null) {
-            // extract string from buffer start to current position
-            $buffer = substr($this->string, $this->buffer_start, $this->position - $this->buffer_start);
-            // clean buffer
-            $this->buffer_start = null;
-            // throw token into current scope
-            $this->current[] = $buffer;
-        }
-    }
-}
 class Stream
 {
     /**
@@ -142,12 +64,19 @@ class Stream
     }
 
 
-    public function filterParser(string $filter)
+    public function filterParser(string $filter): Where
     {
-        $parser = new ParensParser();
-        $result = $parser->parse($filter);
-        return $result;
+        $filter = str_replace(
+            [" eq ", " gt ", " lt ", " ge ", " le", " ne "],
+            [" = ", " > ", " < ", " >= ", " <= ", " !="],
+            $filter
+        );
+
+        $where = new Where();
+        $where->expression($filter, []);
+        return $where;
     }
+
 
     function stream_read()
     {
@@ -160,23 +89,27 @@ class Stream
                 return json_encode(iterator_to_array($ret)[0], JSON_UNESCAPED_UNICODE);
             } else {
 
-                if (isset($this->query['$filter']) && $this->query['$filter']) {
-
-                    foreach ($this->query["filter"] as $k => $v) {
-                        if (is_array($v)) {
-                            foreach ($v as $a => $b) {
-                                if ($a == "lt") {
-                                    $this->_table->where("$k>?", [$b]);
-                                }
-                            }
-                        } else {
-                            $this->table->where("$k=?", [$v]);
-                        }
+                $f = function (Select $select) {
+                    if (isset($this->query['$filter']) && $this->query['$filter']) {
+                        $select->where($this->filterParser($this->query['$filter']));
                     }
-                }
 
+                    if (isset($this->query['$orderBy'])) {
+                        $select->order($this->query['$orderBy']);
+                    }
 
-                return json_encode(iterator_to_array($this->table->select()));
+                    if (isset($this->query['$skip'])) {
+                        $select->offset($this->query['$skip']);
+                    }
+
+                    if (isset($this->query['$top'])) {
+                        $select->limit($this->query['$top']);
+                    }
+                };
+
+                $f->bindTo($this);
+
+                return json_encode(iterator_to_array($this->table->select($f)), JSON_UNESCAPED_UNICODE);
             }
         }
     }
