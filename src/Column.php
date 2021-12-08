@@ -2,11 +2,7 @@
 
 namespace R\DB;
 
-use Laminas\Db\Adapter\Adapter;
-use Laminas\Db\Adapter\AdapterAwareInterface;
-use Laminas\Db\Adapter\AdapterAwareTrait;
 use Laminas\Db\Metadata\Source\Factory;
-use Laminas\Db\Sql\Ddl\AlterTable;
 use Laminas\Hydrator\ObjectPropertyHydrator;
 
 class Column implements ColumnInterface
