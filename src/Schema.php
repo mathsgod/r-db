@@ -45,7 +45,7 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         ];
 
         if ($options !== null) {
-            $driver_options = array_merge($driver_options, $options);
+            $driver_options = $driver_options + $options;
         }
 
         $this->adapter = new Adapter([
