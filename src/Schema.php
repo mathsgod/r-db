@@ -37,14 +37,15 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
 
     public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8mb4", int $port = 3306, ?array $options = null)
     {
+        $driver_options = [
+            PDO::ATTR_PERSISTENT => true,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ];
 
-        if ($options === null) {
-            $options = [
-                PDO::ATTR_PERSISTENT => true,
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ];
+        if ($options !== null) {
+            $driver_options = array_merge($driver_options, $options);
         }
 
         $this->adapter = new Adapter([
@@ -55,7 +56,7 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
             "port" => $port,
             "charset" => $charset,
             "driver" => "Pdo_Mysql",
-            "driver_options" => $options
+            "driver_options" => $driver_options
         ]);
     }
 
