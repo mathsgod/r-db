@@ -8,6 +8,7 @@ use JsonSerializable;
 use PDOStatement;
 use PHP\Util\QueryInterface;
 use R\DataList;
+use Traversable;
 
 class Query implements IteratorAggregate, QueryInterface, JsonSerializable
 {
@@ -53,7 +54,7 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
         return $this->statement->setFetchMode($mode, $classname, $ctorargs);
     }
 
-    public function getIterator()
+    function getIterator(): Traversable
     {
         if ($this->statement === null || $this->_dirty) {
             $this->execute();
@@ -147,7 +148,6 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
                             $order_field = $this->orderMap[$order_field];
                         }
                         $orderby[] = $order_field . " " . $o[1];
-                        
                     } else {
                         $orderby[] = $o;
                     }
@@ -483,7 +483,7 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
         array_walk($this->getIterator(), $callback);
     }
 
-    
+
     public function filter(array $filter)
     {
         $this->_dirty = true;
@@ -493,7 +493,7 @@ class Query implements IteratorAggregate, QueryInterface, JsonSerializable
                 if (array_keys($f) === range(0, count($f) - 1)) {
                     //sequential array
 
-    
+
                     $i = 0;
                     $or = [];
                     foreach ($f as $v) {

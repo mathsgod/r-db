@@ -52,16 +52,16 @@
         },
         {
             "name": "mathsgod/php-util",
-            "version": "1.4.1",
+            "version": "1.4.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mathsgod/php-util.git",
-                "reference": "48308298b039cb8416d79588c9b0329667249ad8"
+                "reference": "9d582256da9d8054db1f9e4cf10e9ee0acecf16a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mathsgod/php-util/zipball/48308298b039cb8416d79588c9b0329667249ad8",
-                "reference": "48308298b039cb8416d79588c9b0329667249ad8",
+                "url": "https://api.github.com/repos/mathsgod/php-util/zipball/9d582256da9d8054db1f9e4cf10e9ee0acecf16a",
+                "reference": "9d582256da9d8054db1f9e4cf10e9ee0acecf16a",
                 "shasum": ""
             },
             "require": {
@@ -92,9 +92,9 @@
             "description": "a simple php util for data structure",
             "support": {
                 "issues": "https://github.com/mathsgod/php-util/issues",
-                "source": "https://github.com/mathsgod/php-util/tree/1.4.1"
+                "source": "https://github.com/mathsgod/php-util/tree/1.4.2"
             },
-            "time": "2021-09-07T09:53:59+00:00"
+            "time": "2022-04-06T09:51:21+00:00"
         },
         {
             "name": "psr/log",

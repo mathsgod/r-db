@@ -3,6 +3,7 @@
 namespace R\ORM;
 
 use R\RSList;
+use Traversable;
 
 class Query extends \R\DB\Query
 {
@@ -15,7 +16,7 @@ class Query extends \R\DB\Query
     /**
      * @return R\RSList
      */
-    public function getIterator()
+    function getIterator(): Traversable
     {
         $iterator = parent::getIterator();
         if ($this->select) {
