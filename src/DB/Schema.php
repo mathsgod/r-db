@@ -4,6 +4,7 @@ namespace R\DB;
 
 use PDO;
 use Exception;
+use PDOStatement;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 
@@ -83,8 +84,8 @@ class Schema extends PDO implements LoggerAwareInterface
         $method = $parent->getMethod('query');
         return $method->invokeArgs($this, func_get_args());
     }
-    
-    public function prepare($statement, $options = null)
+
+    public function prepare(string $query, array $options = []): PDOStatement|false
     {
         if ($this->logger) $this->logger->debug("PDO::prepare", func_get_args());
         $reflector = new \ReflectionClass(get_class($this));
@@ -98,7 +99,7 @@ class Schema extends PDO implements LoggerAwareInterface
         return new Query($this, $table);
     }
 
-    public function exec($statement)
+    public function exec(string $statement): int|false
     {
         if ($this->logger) $this->logger->debug("PDO::exec", func_get_args());
         $reflector = new \ReflectionClass(get_class($this));
