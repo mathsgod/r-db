@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4692a1f74b04c7eb21c9107a4d279b76",
+    "content-hash": "729cb80a2d7d0a75f313e0b4a593f3d0",
     "packages": [
         {
             "name": "mathsgod/data-structure",
