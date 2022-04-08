@@ -12,10 +12,8 @@ use Psr\Log\LoggerInterface;
 class Schema extends PDO implements LoggerAwareInterface
 {
     private $logger;
-    public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8", LoggerInterface $logger = null)
+    public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8mb4", int $port = 3306)
     {
-        //PDO::ERRMODE_EXCEPTION;
-        $this->logger = $logger;
 
         try {
             parent::__construct("mysql:dbname={$database};host={$hostname};charset={$charset}", $username, $password, [
@@ -26,7 +24,6 @@ class Schema extends PDO implements LoggerAwareInterface
             ]);
         } catch (PDOException $e) {
             echo $e->getMessage();
-            if ($this->logger) $logger->error("SQLSTATE[HY000] [1045] Access denied");
             exit();
         }
     }

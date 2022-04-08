@@ -1,9 +1,10 @@
-<?
+<?php
 
 namespace R\ORM;
 
 use R\RSList;
 use R\ObjectList;
+use Traversable;
 
 class Query extends \R\DB\Query
 {
@@ -13,7 +14,7 @@ class Query extends \R\DB\Query
         parent::__construct($class::__db(), $class::_table());
     }
 
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         $iterator = parent::getIterator();
         if ($this->select) {
