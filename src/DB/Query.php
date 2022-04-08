@@ -5,6 +5,7 @@ namespace R\DB;
 use Exception;
 use IteratorAggregate;
 use PDOStatement;
+use Traversable;
 
 class Query implements IteratorAggregate
 {
@@ -46,7 +47,7 @@ class Query implements IteratorAggregate
         return $this->statement->setFetchMode($mode, $classname, $ctorargs);
     }
 
-    public function getIterator()
+    function getIterator(): Traversable
     {
         if ($this->statement === null || $this->_dirty) {
             $this->execute();
@@ -77,6 +78,7 @@ class Query implements IteratorAggregate
 
     public function sql(): string
     {
+        $sql = "";
         if ($this->_type == "SELECT") {
             $sql = "SELECT";
             if ($this->select) {

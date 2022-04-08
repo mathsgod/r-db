@@ -5,6 +5,7 @@ namespace R\DB;
 use PDO;
 use PDOException;
 use Exception;
+use PDOStatement;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 
@@ -30,7 +31,7 @@ class Schema extends PDO implements LoggerAwareInterface
         }
     }
 
-    public function setLogger(LoggerInterface $logger)
+    function setLogger(LoggerInterface $logger): void
     {
         $this->logger = $logger;
     }
@@ -105,7 +106,7 @@ class Schema extends PDO implements LoggerAwareInterface
         return $this->exec("DROP TABLE `$name`");
     }
 
-    public function query(string $sql)
+    function query($statement, $mode = PDO::ATTR_DEFAULT_FETCH_MODE, ...$fetch_mode_args)
     {
         if ($this->logger) $this->logger->debug("PDO::query", func_get_args());
         $reflector = new \ReflectionClass(get_class($this));
@@ -114,7 +115,8 @@ class Schema extends PDO implements LoggerAwareInterface
         return $method->invokeArgs($this, func_get_args());
     }
 
-    public function prepare(string $statement, $options = null)
+
+    function prepare(string $query, array $options = []): PDOStatement|false
     {
         if ($this->logger) $this->logger->debug("PDO::prepare", func_get_args());
         $reflector = new \ReflectionClass(get_class($this));
@@ -128,7 +130,7 @@ class Schema extends PDO implements LoggerAwareInterface
         return new Query($this, $table);
     }
 
-    public function exec(string $query)
+    function exec(string $statement): int|false
     {
         if ($this->logger) $this->logger->debug("PDO::exec", func_get_args());
         $reflector = new \ReflectionClass(get_class($this));
