@@ -11,6 +11,9 @@ use Laminas\Db\Adapter\Platform\PlatformInterface;
 use Laminas\Db\Sql\Delete;
 use Laminas\Db\Sql\Expression;
 use Laminas\Db\Sql\Update;
+use Laminas\Paginator\Paginator;
+use R\DB\Paginator\Adapter;
+use Traversable;
 
 /**
  * @method static order(string|array|Expression $order)
@@ -162,18 +165,16 @@ class Query extends Select implements IteratorAggregate
                 }
                 $a->add($obj);
             }
-
-
-            
         }
 
         return $a;
     }
 
-    public function getIterator()
+    function getIterator(): Traversable
     {
         return $this->execute();
     }
+
 
     /**
      * @return T[]
@@ -208,5 +209,10 @@ class Query extends Select implements IteratorAggregate
     public function map(callable $map)
     {
         return collect($this)->map($map);
+    }
+
+    public function getPaginator()
+    {
+        return new Paginator(new Adapter($this));
     }
 }
