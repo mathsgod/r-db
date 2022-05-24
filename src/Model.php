@@ -14,6 +14,8 @@ use Laminas\Hydrator\ObjectPropertyHydrator;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\VarExporter\Internal\Hydrator;
 
+use function PHPUnit\Framework\isNull;
+
 abstract class Model implements ModelInterface
 {
     const NUMERIC_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint", "float", "double", "decimal"];
@@ -29,6 +31,7 @@ abstract class Model implements ModelInterface
     private static $_keys = [];
     private static $_attributes = [];
 
+    private $_dirty = [];
 
     /**
      * @var ValidatorInterface|null
@@ -453,5 +456,25 @@ abstract class Model implements ModelInterface
     {
         $hydrator = new \Laminas\Hydrator\ObjectPropertyHydrator();
         return $hydrator->extract($this);
+    }
+
+    function __set($name, $value)
+    {
+        if (self::__attribute($name)) {
+            if (!$this->isDirty($name)) {
+                $this->_dirty[$name] = $this->$name;
+            }
+        }
+        $this->$name = $value;
+    }
+
+    function isDirty(string $name = null)
+    {
+        if (is_null($name)) {
+            return count($this->_dirty) > 0;
+        }
+
+        $keys = array_keys($this->_dirty);
+        return in_array($name, $keys);
     }
 }
