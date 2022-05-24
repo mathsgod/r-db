@@ -10,7 +10,9 @@ use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
+use Laminas\Hydrator\ObjectPropertyHydrator;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\VarExporter\Internal\Hydrator;
 
 abstract class Model implements ModelInterface
 {
@@ -214,25 +216,32 @@ abstract class Model implements ModelInterface
     function save()
     {
         $error = $this->getValidator()->validate($this);
-        if (count($error) !== 0) {
-            throw new Exception($error);
+        if ($error->count() !== 0) {
+            throw new Exception($error->get(0)->getMessage());
         }
+
+        $dispatcher = self::GetSchema()->eventDispatcher();
+        $gateway = static::__table_gateway();
 
         $key = static::_key();
 
+
+        $hydrator = new ObjectPropertyHydrator();
+        $source = $hydrator->extract($this);
+
         if ($this->$key) { // update
             $mode = "update";
-            self::GetSchema()->eventDispatcher()->dispatch(new Event\BeforeUpdate($this));
+            $dispatcher->dispatch(new Event\BeforeUpdate($this));
         } else { // insert
             $mode = "insert";
-            self::GetSchema()->eventDispatcher()->dispatch(new Event\BeforeInsert($this));
+            $dispatcher->dispatch(new Event\BeforeInsert($this));
         }
 
         // generate record
         $records = [];
         $generated = [];
 
-        foreach (get_object_vars($this) as $name => $value) {
+        foreach ($source as $name => $value) {
             if ($name[0] == "_" || $name == $key)
                 continue;
 
@@ -294,17 +303,13 @@ abstract class Model implements ModelInterface
             }
         }
 
-
-
         if ($mode == "update") { // update
-            $gateway = static::__table_gateway();
             $ret = $gateway->update($records, [$key => $this->$key]);
-            self::GetSchema()->eventDispatcher()->dispatch(new Event\AfterUpdate($this));
+            $dispatcher->dispatch(new Event\AfterUpdate($this, $source));
         } else {
-            $gateway = static::__table_gateway();
             $ret = $gateway->insert($records);
             $this->$key = $gateway->getLastInsertValue(); //save the id
-            self::GetSchema()->eventDispatcher()->dispatch(new Event\AfterInsert($this));
+            $dispatcher->dispatch(new Event\AfterInsert($this));
         }
 
         //   if (count($generated)) {
@@ -340,14 +345,15 @@ abstract class Model implements ModelInterface
     function delete()
     {
         $key = static::_key();
-        $gateway = new TableGateway(self::_table()->name, static::GetSchema()->getDbAdatpter());
-        static::GetSchema()->eventDispatcher()->dispatch(new Event\BeforeDelete($this));
+        $gateway = static::__table_gateway();
+        $dispatcher = self::GetSchema()->eventDispatcher();
+        $dispatcher->dispatch(new Event\BeforeDelete($this));
         if (is_array($key)) {
             $result = $gateway->delete($this->_id());
         } else {
             $result = $gateway->delete([$key => $this->$key]);
         }
-        static::GetSchema()->eventDispatcher()->dispatch(new Event\AfterDelete($this));
+        $dispatcher->dispatch(new Event\AfterDelete($this));
         return $result;
     }
 
