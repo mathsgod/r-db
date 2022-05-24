@@ -307,7 +307,7 @@ abstract class Model implements ModelInterface
 
         if ($mode == "update") { // update
             $ret = $gateway->update($records, [$key => $this->$key]);
-            $dispatcher->dispatch(new Event\AfterUpdate($this, $source));
+            $dispatcher->dispatch(new Event\AfterUpdate($this));
         } else {
             $ret = $gateway->insert($records);
             $this->$key = $gateway->getLastInsertValue(); //save the id

@@ -30,5 +30,5 @@ interface ModelInterface
     public function save();
     public function delete();
 
-    public function isDirty();
+    public function isDirty(string $name = null);
 }
