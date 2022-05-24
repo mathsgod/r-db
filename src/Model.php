@@ -31,7 +31,7 @@ abstract class Model implements ModelInterface
     private static $_keys = [];
     private static $_attributes = [];
 
-    private $_dirty = [];
+    private $_original = [];
 
     /**
      * @var ValidatorInterface|null
@@ -462,7 +462,7 @@ abstract class Model implements ModelInterface
     {
         if (self::__attribute($name)) {
             if (!$this->isDirty($name)) {
-                $this->_dirty[$name] = $this->$name;
+                $this->_original[$name] = $this->$name;
             }
         }
         $this->$name = $value;
@@ -471,10 +471,10 @@ abstract class Model implements ModelInterface
     function isDirty(string $name = null)
     {
         if (is_null($name)) {
-            return count($this->_dirty) > 0;
+            return count($this->_original) > 0;
         }
 
-        $keys = array_keys($this->_dirty);
+        $keys = array_keys($this->_original);
         return in_array($name, $keys);
     }
 }
