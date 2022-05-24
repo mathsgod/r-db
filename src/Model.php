@@ -225,10 +225,6 @@ abstract class Model implements ModelInterface
 
         $key = static::_key();
 
-
-        $hydrator = new ObjectPropertyHydrator();
-        $source = $hydrator->extract($this);
-
         if ($this->$key) { // update
             $mode = "update";
             $dispatcher->dispatch(new Event\BeforeUpdate($this));
@@ -236,6 +232,9 @@ abstract class Model implements ModelInterface
             $mode = "insert";
             $dispatcher->dispatch(new Event\BeforeInsert($this));
         }
+
+        $hydrator = new ObjectPropertyHydrator();
+        $source = $hydrator->extract($this);
 
         // generate record
         $records = [];
