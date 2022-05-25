@@ -544,7 +544,7 @@ abstract class Model implements ModelInterface, IteratorAggregate
         return array_key_exists($name, $this->_fields);
     }
 
-    function __fields()
+    function __fields(): array
     {
         return array_column(self::__attributes(), "Field");
     }
