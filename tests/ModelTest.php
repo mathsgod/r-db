@@ -9,6 +9,24 @@ use PHPUnit\Framework\TestCase;
 final class ModelTest extends TestCase
 {
 
+    function test_isDirty()
+    {
+        Testing::Query()->delete();
+        Testing::Create([
+            "name" => "testing"
+        ])->save();
+
+        $first = Testing::Query()->first();
+
+        $this->assertFalse($first->isDirty());
+        $this->assertFalse($first->isDirty("name"));
+
+        $first->name = "changed";
+
+        $this->assertTrue($first->isDirty());
+        $this->assertTrue($first->isDirty("name"));
+    }
+
     public function test_save_false()
     {
         $table = Testing2::_table();
@@ -137,7 +155,7 @@ final class ModelTest extends TestCase
         $this->assertInstanceOf(UserList::class, $ul);
 
 
-        $user = $ul->User;
+        $user = $ul->User();
         $this->assertInstanceOf(User::class, $user);
 
 
@@ -156,8 +174,7 @@ final class ModelTest extends TestCase
         $this->assertInstanceOf(UserList::class, $ul);
 
 
-        $user = $ul->User;
-        $this->assertInstanceOf(User::class, $user);
+        $this->assertInstanceOf(R\DB\Query::class,  $ul->User);
 
 
         $ul = $u->UserList();

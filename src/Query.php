@@ -14,6 +14,7 @@ use Laminas\Db\Sql\Update;
 use Laminas\Paginator\Paginator;
 use R\DB\Paginator\Adapter;
 use Traversable;
+use PDO;
 
 /**
  * @method static order(string|array|Expression $order)
@@ -117,52 +118,20 @@ class Query extends Select implements IteratorAggregate
         }
 
         if ($this->_custom_column) {
-            $this->statement->setFetchMode(\PDO::FETCH_ASSOC);
+            $this->statement->setFetchMode(PDO::FETCH_ASSOC);
         } else {
-            $this->statement->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, $this->class, []);
+            $this->statement->setFetchMode(PDO::FETCH_CLASS, $this->class);
         }
-
-
-
-        $attr = $this->class::__attribute();
-        $json_fields = array_filter($attr, function ($o) {
-            return $o["Type"] == "json";
-        });
-
-        $json_fields = array_map(function ($o) {
-            return $o["Field"];
-        }, $json_fields);
-
-        $bool_fields = array_filter($attr, function ($o) {
-            return $o["Type"] == "tinyint(1)";
-        });
-        $bool_fields = array_column($bool_fields, "Field");
-
 
         $a = collect([]);
         foreach ($this->statement as $obj) {
-
             if ($this->_custom_column) {
                 $aa = [];
                 foreach ($obj as $k => $v) {
                     $aa[$k] = $v;
-                    if (in_array($k, $json_fields)) {
-                        $aa[$k] = json_decode($v, true);
-                    }
-
-                    if (in_array($k, $bool_fields)) {
-                        $aa[$k] = (bool)$obj[$v];
-                    }
                 }
                 $a->add($aa);
             } else {
-                foreach ($json_fields as $field) {
-                    $obj->$field = json_decode($obj->$field, true);
-                }
-
-                foreach ($bool_fields as $field) {
-                    $obj->$field = (bool)$obj->$field;
-                }
                 $a->add($obj);
             }
         }

@@ -2,9 +2,11 @@
 
 namespace R\DB;
 
+use ArrayIterator;
 use ArrayObject;
 use PDO;
 use Exception;
+use IteratorAggregate;
 use ReflectionObject;
 use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Select;
@@ -12,11 +14,9 @@ use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
 use Laminas\Hydrator\ObjectPropertyHydrator;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Component\VarExporter\Internal\Hydrator;
+use Traversable;
 
-use function PHPUnit\Framework\isNull;
-
-abstract class Model implements ModelInterface
+abstract class Model implements ModelInterface, IteratorAggregate
 {
     const NUMERIC_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint", "float", "double", "decimal"];
     const INT_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint"];
@@ -31,7 +31,8 @@ abstract class Model implements ModelInterface
     private static $_keys = [];
     private static $_attributes = [];
 
-    private $_original = [];
+    protected $_fields = [];
+    protected $_original = [];
 
     /**
      * @var ValidatorInterface|null
@@ -56,30 +57,51 @@ abstract class Model implements ModelInterface
     function __construct($id = null)
     {
         $this->_schema = self::$schema;
-
         if (is_null($id)) {
+            $key = self::_key();
+            if ($this->$key) { //already fetch from pdo
+                foreach ($this->__attribute() as $attribute) {
+                    $field = $attribute["Field"];
+                    $type = $attribute["Type"];
+
+                    if ($type == "json") {
+                        $this->$field = json_decode($this->$field, true);
+                    }
+
+                    if ($type == "tinyint(1)") {
+                        $this->$field = (bool)$this->$field;
+                    }
+                }
+
+                $this->_original = [];
+                return;
+            }
+
             foreach (static::__attribute() as $attribute) {
-                $this->{$attribute["Field"]} = null;
+                $field = $attribute["Field"];
+                $default = $attribute["Default"];
+
+                $this->$field = null;
                 if ($attribute["Default"] != null) {
                     $type = explode("(", $attribute["Type"])[0];
                     if ($attribute["Type"] == "tinyint(1)") { //bool
-                        $this->{$attribute["Field"]} = (bool)$attribute["Default"];
+                        $this->$field = (bool)$default;
                     } elseif (in_array($type, self::INT_DATA_TYPE)) {
-                        $this->{$attribute["Field"]} = (int)$attribute["Default"];
+                        $this->$field = (int)$default;
                     } elseif (in_array($type, self::FLOAT_DATA_TYPE)) {
-                        $this->{$attribute["Field"]} = (float)$attribute["Default"];
+                        $this->$field = (float)$default;
                     } else {
-                        $this->{$attribute["Field"]} = (string)$attribute["Default"];
+                        $this->$field = (string)$default;
                     }
                 }
             }
         } else {
-            $table = static::_table()->name;
             $key = static::_key();
             if (is_null($key)) {
                 throw new Exception("Key not found");
             }
 
+            $table = static::_table()->name;
             $select = new Select($table);
 
             if (is_array($id)) {
@@ -100,30 +122,42 @@ abstract class Model implements ModelInterface
             if ($s->fetch() === false) {
                 throw new Exception("$table:$id", 404);
             }
-            foreach ($this->__attribute() as $a) {
-                $n = $a["Field"];
-                if ($a["Type"] == "json") {
-                    $this->$n = json_decode($this->$n, true);
+
+            foreach ($this->__attribute() as $attribute) {
+                $field = $attribute["Field"];
+                $type = $attribute["Type"];
+                if ($type == "json") {
+                    $this->$field = json_decode($this->$field, true);
                 }
-                if ($a["Type"] == "tinyint(1)") {
-                    $this->$n = (bool)$this->$n;
+                if ($type == "tinyint(1)") {
+                    $this->$field = (bool)$this->$field;
                 }
             }
         }
+        $this->_original = [];
     }
 
 
     static function Create(?array $data = []): static
     {
         $obj = new static;
-        foreach (get_object_vars($obj) as $key => $val) {
-            if ($key[0] == "_") continue;
-
-            if (array_key_exists($key, $data)) {
-                $obj->$key = $data[$key];
+        foreach (self::__attribute() as $attribute) {
+            $field = $attribute["Field"];
+            if (array_key_exists($field, $data)) {
+                $obj->$field = $data[$field];
             }
         }
         return $obj;
+    }
+
+    function getIterator(): Traversable
+    {
+        $data = [];
+        foreach (self::__attribute() as $attribute) {
+            $field = $attribute["Field"];
+            $data[$field] = $this->$field;
+        }
+        return new ArrayIterator($data);
     }
 
     function setValidator(ValidatorInterface $validator)
@@ -182,7 +216,7 @@ abstract class Model implements ModelInterface
         $class = get_called_class();
         if (isset(self::$_keys[$class])) return self::$_keys[$class];
         $keys = [];
-        foreach (static::__attribute() as $attribute) {
+        foreach (static::__attributes() as $attribute) {
             if ($attribute["Key"] == "PRI") {
                 $keys[] = $attribute["Field"];
             }
@@ -202,17 +236,24 @@ abstract class Model implements ModelInterface
     static function __attribute(string $name = null)
     {
         if ($name) {
-            foreach (self::__attribute() as $attribute) {
+            foreach (self::__attributes() as $attribute) {
                 if ($attribute["Field"] == $name) {
                     return $attribute;
                 }
             }
             return null;
         }
-        $class = get_called_class();
-        if (isset(self::$_attributes[$class])) return self::$_attributes[$class];
 
-        return self::$_attributes[$class] = static::_table()->describe();
+        return self::__attributes();
+    }
+
+    static function __attributes(): array
+    {
+        $class = get_called_class();
+        if (!isset(self::$_attributes[$class])) {
+            self::$_attributes[$class] = static::_table()->describe();
+        }
+        return self::$_attributes[$class];
     }
 
 
@@ -236,18 +277,15 @@ abstract class Model implements ModelInterface
             $dispatcher->dispatch(new Event\BeforeInsert($this));
         }
 
-        $hydrator = new ObjectPropertyHydrator();
-        $source = $hydrator->extract($this);
-
         // generate record
         $records = [];
         $generated = [];
+        foreach (self::__attributes() as $attribute) {
 
-        foreach ($source as $name => $value) {
-            if ($name[0] == "_" || $name == $key)
-                continue;
+            if ($attribute["Key"] == "PRI") continue;
 
-            $attribute = self::__attribute($name);
+            $name = $attribute["Field"];
+            $value = $this->__get($name);
 
             $extra = $attribute["Extra"];
 
@@ -273,7 +311,6 @@ abstract class Model implements ModelInterface
                     $records[$name] = null;
                 }
             }
-
 
             if ($attribute["Null"] == "NO" && $records[$name] === null) {
                 $records[$name] = "";
@@ -306,7 +343,7 @@ abstract class Model implements ModelInterface
         }
 
         if ($mode == "update") { // update
-            $ret = $gateway->update($records, [$key => $this->$key]);
+            $ret = $gateway->update($records, [$key => $this->__get($key)]);
             $dispatcher->dispatch(new Event\AfterUpdate($this));
         } else {
             $ret = $gateway->insert($records);
@@ -361,16 +398,14 @@ abstract class Model implements ModelInterface
 
     function bind($rs)
     {
-        foreach (get_object_vars($this) as $key => $val) {
-            if ($key[0] == "_") continue;
-
+        foreach (array_column(self::__attributes(), "Field") as $field) {
             if (is_object($rs)) {
-                if (property_exists($rs, $key)) {
-                    $this->$key = $rs->$key;
+                if (property_exists($rs, $field)) {
+                    $this->$field = $rs->$field;
                 }
             } else {
-                if (array_key_exists($key, $rs)) {
-                    $this->$key = $rs[$key];
+                if (array_key_exists($field, $rs)) {
+                    $this->$field = $rs[$field];
                 }
             }
         }
@@ -396,8 +431,7 @@ abstract class Model implements ModelInterface
         }
 
         $key = forward_static_call(array($class, "_key"));
-
-        if (in_array($key, array_keys(get_object_vars($this)))) {
+        if (self::__attribute($key)) {
             $id = $this->$key;
             if (!$id) return null;
             return new $class($this->$key);
@@ -406,6 +440,7 @@ abstract class Model implements ModelInterface
         $key = static::_key();
         $q = $class::Query([$key => $this->$key]);
         $q->where($args);
+
         return new ArrayObject($q->toArray());
     }
 
@@ -425,7 +460,15 @@ abstract class Model implements ModelInterface
 
     function  __get(string $name)
     {
-        $ro = new \ReflectionObject($this);
+        if (isset($this->_fields[$name])) {
+            return $this->_fields[$name];
+        }
+
+        if (property_exists($this, $name)) {
+            return $this->$name;
+        }
+
+        $ro = new ReflectionObject($this);
 
         $namespace = $ro->getNamespaceName();
         if ($namespace == "") {
@@ -436,17 +479,18 @@ abstract class Model implements ModelInterface
                 $class = $name;
             }
         }
-
         if (!class_exists($class)) {
             return null;
         }
 
-        $key = forward_static_call([$class, "_key"]);
+        /*       $key = forward_static_call([$class, "_key"]);
+
         if (in_array($key, array_keys(get_object_vars($this)))) {
             $id = $this->$key;
             if (!$id) return null;
             return new $class($this->$key);
         }
+ */
 
         $key = static::_key();
         return $class::Query([$key => $this->$key]);
@@ -454,18 +498,13 @@ abstract class Model implements ModelInterface
 
     function __debugInfo()
     {
-        $hydrator = new \Laminas\Hydrator\ObjectPropertyHydrator();
-        return $hydrator->extract($this);
-    }
-
-    function __set($name, $value)
-    {
-        if (self::__attribute($name)) {
-            if (!$this->isDirty($name)) {
-                $this->_original[$name] = $this->$name;
-            }
+        $info = [];
+        foreach (self::__attribute() as $attribute) {
+            $field = $attribute["Field"];
+            $info[$field] = $this->$field;
         }
-        $this->$name = $value;
+
+        return $info;
     }
 
     function isDirty(string $name = null)
@@ -474,7 +513,20 @@ abstract class Model implements ModelInterface
             return count($this->_original) > 0;
         }
 
-        $keys = array_keys($this->_original);
-        return in_array($name, $keys);
+        return array_key_exists($name, $this->_original);
+    }
+
+    function __set($name, $value)
+    {
+        if (!array_key_exists($name, $this->_original) && array_key_exists($name, $this->_fields)) {
+            $this->_original[$name] = $this->_fields[$name];
+        }
+
+        $this->_fields[$name] = $value;
+    }
+
+    function __isset($name)
+    {
+        return isset($this->_fields[$name]);
     }
 }
