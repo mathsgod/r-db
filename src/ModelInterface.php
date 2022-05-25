@@ -31,4 +31,7 @@ interface ModelInterface
     public function delete();
 
     public function isDirty(string $name = null);
+    public function wasChanged(string $name = null);
+    public function __isset(string $name);
+    public function __fields(): array;
 }

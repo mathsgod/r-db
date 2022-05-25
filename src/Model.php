@@ -33,6 +33,7 @@ abstract class Model implements ModelInterface, IteratorAggregate
 
     protected $_fields = [];
     protected $_original = [];
+    protected $_changed = [];
 
     /**
      * @var ValidatorInterface|null
@@ -351,6 +352,11 @@ abstract class Model implements ModelInterface, IteratorAggregate
             $dispatcher->dispatch(new Event\AfterInsert($this));
         }
 
+        $this->_changed = $this->_original;
+        $this->_original = [];
+
+
+
         //   if (count($generated)) {
         /*             $table = static::_table();
             $s = $table->select($generated)->where([$key => $this->$key])->get();
@@ -516,6 +522,14 @@ abstract class Model implements ModelInterface, IteratorAggregate
         return array_key_exists($name, $this->_original);
     }
 
+    function wasChanged(string $name = null)
+    {
+        if (is_null($name)) {
+            return count($this->_changed) > 0;
+        }
+        return array_key_exists($name, $this->_changed);
+    }
+
     function __set($name, $value)
     {
         if (!array_key_exists($name, $this->_original) && array_key_exists($name, $this->_fields)) {
@@ -528,7 +542,10 @@ abstract class Model implements ModelInterface, IteratorAggregate
     function __isset($name)
     {
         return array_key_exists($name, $this->_fields);
-        
+    }
+
+    function __fields()
+    {
+        return array_column(self::__attributes(), "Field");
     }
 }
-
