@@ -527,6 +527,8 @@ abstract class Model implements ModelInterface, IteratorAggregate
 
     function __isset($name)
     {
-        return isset($this->_fields[$name]);
+        return array_key_exists($name, $this->_fields);
+        
     }
 }
+

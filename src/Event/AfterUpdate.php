@@ -6,7 +6,7 @@ use R\DB\ModelInterface;
 
 class AfterUpdate
 {
-    public ModelInterface $target;
+    public $target;
     public function __construct(ModelInterface $target)
     {
         $this->target = $target;
