@@ -513,7 +513,7 @@ abstract class Model implements ModelInterface, IteratorAggregate
         return $info;
     }
 
-    function isDirty(string $name = null)
+    function isDirty(string $name = null): bool
     {
         if (is_null($name)) {
             return count($this->_original) > 0;
@@ -522,7 +522,7 @@ abstract class Model implements ModelInterface, IteratorAggregate
         return array_key_exists($name, $this->_original);
     }
 
-    function wasChanged(string $name = null)
+    function wasChanged(string $name = null): bool
     {
         if (is_null($name)) {
             return count($this->_changed) > 0;
