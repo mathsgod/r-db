@@ -7,6 +7,7 @@ use ArrayObject;
 use PDO;
 use Exception;
 use IteratorAggregate;
+use JsonSerializable;
 use ReflectionObject;
 use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Select;
@@ -16,7 +17,7 @@ use Laminas\Hydrator\ObjectPropertyHydrator;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Traversable;
 
-abstract class Model implements ModelInterface, IteratorAggregate
+abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializable
 {
     const NUMERIC_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint", "float", "double", "decimal"];
     const INT_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint"];
@@ -138,6 +139,15 @@ abstract class Model implements ModelInterface, IteratorAggregate
         $this->_original = [];
     }
 
+
+    function jsonSerialize()
+    {
+        $data = [];
+        foreach ($this->__fields() as $field) {
+            $data[$field] = $this->$field;
+        }
+        return $data;
+    }
 
     static function Create(?array $data = []): static
     {
