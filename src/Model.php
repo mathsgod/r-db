@@ -578,6 +578,11 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
     function __set($name, $value)
     {
+        if (str_starts_with($name, "_")) {
+            $this->$name = $value;
+            return;
+        }
+
         if (!array_key_exists($name, $this->_original) && array_key_exists($name, $this->_fields)) {
             if ($this->_original[$name] !== $this->_fields[$name]) {
                 $this->_original[$name] = $this->_fields[$name];
