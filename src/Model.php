@@ -540,6 +540,24 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         return array_key_exists($name, $this->_changed);
     }
 
+    function getOriginal(string $name = null)
+    {
+        $data = [];
+        foreach ($this->_fields as $key => $value) {
+            $data[$key] = $value;
+        }
+
+        foreach ($this->_original as $key => $value) {
+            $data[$key] = $value;
+        }
+
+        if ($name === null) {
+            return $data;
+        }
+
+        return $data[$name];
+    }
+
     function __set($name, $value)
     {
         if (!array_key_exists($name, $this->_original) && array_key_exists($name, $this->_fields)) {
