@@ -362,7 +362,12 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             $dispatcher->dispatch(new Event\AfterInsert($this));
         }
 
-        $this->_changed = $this->_original;
+
+        $this->_changed = [];
+        foreach ($this->getDirty() as $field => $value) {
+            $this->_changed[$field] = $value;
+        }
+
         $this->_original = [];
 
 
@@ -521,6 +526,19 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         }
 
         return $info;
+    }
+
+
+
+    function getDirty(): array
+    {
+        $dirty = [];
+        foreach ($this->getOriginal() as $field => $value) {
+            if ($this->$field !== $value) {
+                $dirty[$field] = $this->$field;
+            }
+        }
+        return $dirty;
     }
 
     function isDirty(string $name = null): bool

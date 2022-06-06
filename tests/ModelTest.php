@@ -9,20 +9,34 @@ use PHPUnit\Framework\TestCase;
 final class ModelTest extends TestCase
 {
 
-    
+
     function test_wasChanged()
     {
         Testing::Query()->delete();
-        $t = Testing::Create([
+        Testing::Create([
             "name" => "testing"
-        ]);
+        ])->save();
 
-
+        $t = Testing::Query()->first();
         $this->assertFalse($t->wasChanged("name"));
 
+        $t->name = "changed";
         $t->save();
 
         $this->assertTrue($t->wasChanged("name"));
+    }
+
+    function test_getDirty()
+    {
+        Testing::Query()->delete();
+        Testing::Create([
+            "name" => "testing"
+        ])->save();
+
+        $first = Testing::Query()->first();
+        $first->name = "changed";
+
+        $this->assertEquals(["name" => "changed"], $first->getDirty());
     }
 
     function test_isDirty()
