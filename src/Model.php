@@ -146,6 +146,9 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         foreach ($this->__fields() as $field) {
             $data[$field] = $this->$field;
         }
+        foreach($this->_fields as $field => $value) {
+            $data[$field] = $value;
+        }
         return $data;
     }
 
@@ -163,8 +166,9 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
     function getIterator(): Traversable
     {
-        return new ArrayIterator($this->_fields);
+        return new ArrayIterator($this->jsonSerialize());
     }
+
 
     function setValidator(ValidatorInterface $validator)
     {
