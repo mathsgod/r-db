@@ -481,7 +481,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
     function  __get(string $name)
     {
-        if (isset($this->_fields[$name])) {
+        if (array_key_exists($name, $this->_fields)) {
             return $this->_fields[$name];
         }
 
@@ -578,12 +578,10 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
     function __set($name, $value)
     {
-        if ($this->$name === $value) {
-            return;
-        }
-
         if (!array_key_exists($name, $this->_original) && array_key_exists($name, $this->_fields)) {
-            $this->_original[$name] = $this->_fields[$name];
+            if ($this->_original[$name] !== $this->_fields[$name]) {
+                $this->_original[$name] = $this->_fields[$name];
+            }
         }
 
         $this->_fields[$name] = $value;
