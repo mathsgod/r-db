@@ -110,8 +110,12 @@ class Query extends Select implements IteratorAggregate
     {
         $sql = $this->getSqlString($this->schema->getPlatform());
 
-        $this->statement = $this->schema->prepare($sql);
-
+        try {
+            $this->statement = $this->schema->prepare($sql);
+        } catch (Exception $e) {
+            throw new Exception("Error preparing query: " . $e->getMessage() . "\n\n" . $sql);
+        }
+        
         if (!$this->statement->execute($input_parameters)) {
             $error = $this->statement->errorInfo();
             throw new Exception("PDO SQLSTATE [" . $error[0] . "] " . $error[2] . " sql: $sql ", $error[1]);
