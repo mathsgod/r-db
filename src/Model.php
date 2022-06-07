@@ -146,7 +146,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         foreach ($this->__fields() as $field) {
             $data[$field] = $this->$field;
         }
-        foreach($this->_fields as $field => $value) {
+        foreach ($this->_fields as $field => $value) {
             $data[$field] = $value;
         }
         return $data;
@@ -519,11 +519,10 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     function __debugInfo()
     {
         $info = [];
-        foreach (self::__attribute() as $attribute) {
-            $field = $attribute["Field"];
-            $info[$field] = $this->$field;
+        foreach (get_object_vars($this) as $key => $value) {
+            if ($key == "_schema") continue;
+            $info[$key] = $value;
         }
-
         return $info;
     }
 
