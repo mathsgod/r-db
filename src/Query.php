@@ -11,6 +11,7 @@ use Laminas\Db\Adapter\Platform\PlatformInterface;
 use Laminas\Db\Sql\Delete;
 use Laminas\Db\Sql\Expression;
 use Laminas\Db\Sql\Update;
+use Laminas\Paginator\Adapter\Callback;
 use Laminas\Paginator\Paginator;
 use R\DB\Paginator\Adapter;
 use Traversable;
@@ -115,7 +116,7 @@ class Query extends Select implements IteratorAggregate
         } catch (Exception $e) {
             throw new Exception("Error preparing query: " . $e->getMessage() . "\n\n" . $sql);
         }
-        
+
         if (!$this->statement->execute($input_parameters)) {
             $error = $this->statement->errorInfo();
             throw new Exception("PDO SQLSTATE [" . $error[0] . "] " . $error[2] . " sql: $sql ", $error[1]);
@@ -187,5 +188,12 @@ class Query extends Select implements IteratorAggregate
     public function getPaginator()
     {
         return new Paginator(new Adapter($this));
+    }
+
+    public function each(callable $callback)
+    {
+        foreach ($this as $obj) {
+            $callback($obj);
+        }
     }
 }
