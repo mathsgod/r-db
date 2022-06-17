@@ -187,10 +187,15 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     static function Get($id): ?static
     {
         $key = self::_key();
+
         if (is_array($key)) {
             $q = self::Query($id);
         } else {
-            $q = self::Query([$key => $id]);
+            if (is_array($id)) {
+                $q = self::Query($id);
+            } else {
+                $q = self::Query([$key => $id]);
+            }
         }
 
         return $q->first();
