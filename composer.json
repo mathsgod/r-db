@@ -1,6 +1,6 @@
 {
     "name": "mathsgod/r-db",
-    "description": "raymond framework db",
+    "description": "A lightweight orm for mysql",
     "autoload": {
         "psr-4": {
             "R\\DB\\": "src"
