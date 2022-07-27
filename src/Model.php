@@ -180,22 +180,14 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         return $this->_validator ?? self::GetSchema()->getValidator();
     }
 
-    /**
-     * direct get the data from database
-     * @param int|string|array $id
-     */
-    static function Get($id): ?static
+    static function Get(Where|string|int|array $where): ?static
     {
         $key = self::_key();
 
-        if (is_array($key)) {
-            $q = self::Query($id);
+        if (is_string($where) || is_numeric($where)) {
+            $q = self::Query([$key => $where]);
         } else {
-            if (is_array($id)) {
-                $q = self::Query($id);
-            } else {
-                $q = self::Query([$key => $id]);
-            }
+            $q = self::Query($where);
         }
 
         return $q->first();

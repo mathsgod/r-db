@@ -2,6 +2,7 @@
 
 namespace R\DB;
 
+use Laminas\Db\Sql\Where;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 interface ModelInterface
@@ -13,10 +14,9 @@ interface ModelInterface
 
 
     /**
-     * Get model by id
-     * @param int|string|array $id
+     * Get single object
      */
-    public static function Get($id): ?static;
+    public static function Get(Where|string|int|array $where): ?static;
 
     /**
      * Load model by id
