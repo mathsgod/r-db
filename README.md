@@ -13,15 +13,6 @@ DATABASE_PORT=
 DATABASE_CHARSET=
 ```
 
-## mysql8 collation
-Due to php pdo default collation not match with mysql8, add the following options
-```php
-$options=[
-    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_0900_ai_ci'"
-];
-```
-
-
 ## Example
 
 
@@ -77,4 +68,10 @@ print_r($users->toArray());  // list all users status is equal to 0
 ]
 ```
 
-
+## mysql8 collation
+Due to php pdo default collation not match with mysql8, add the following options
+```php
+$options=[
+    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_0900_ai_ci'"
+];
+```
