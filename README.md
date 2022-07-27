@@ -20,3 +20,46 @@ $options=[
     PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_0900_ai_ci'"
 ];
 ```
+
+
+## Example
+
+
+### class file
+
+```php
+class User extends Model{
+} 
+```
+
+### insert record
+```php
+
+User::Create([
+    "username"=>"user1",
+    "first_name"=>"John"
+])->save();
+```
+
+### get record
+```php
+$user = User::Get(1);  // 1 is primary key
+
+$user_not_exists = User::Get(999); // $user_not_exists==null
+```
+
+### update record
+```php
+$user = User::Get(1); // 1 is primary key
+$user->first_name="Mary";
+$user->save(); // user record updated
+```
+
+### delete record
+```php
+$user = User::Get(1);  // 1 is primary key
+$user->delete(); // user record is deleted
+```
+
+
+
