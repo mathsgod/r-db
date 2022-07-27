@@ -2,6 +2,20 @@
 
 # r-db
 
+
+## setup using .env
+```
+DATABASE_HOSTNAME=
+DATABASE_DATABASE=
+DATABASE_USERNAME=
+DATABASE_PASSWORD=
+DATABASE_PORT=
+DATABASE_CHARSET=
+
+```
+
+
+
 default driver option
 ```php
 [
