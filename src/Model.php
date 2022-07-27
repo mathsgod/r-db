@@ -13,7 +13,6 @@ use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
-use Laminas\Hydrator\ObjectPropertyHydrator;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Traversable;
 
