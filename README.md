@@ -2,12 +2,13 @@
 
 # r-db
 
-## install
+## Install
 ```
 composer require mathsgod/r-db
 ```
 
-## setup using .env
+## Setup
+### using .env
 ```
 DATABASE_HOSTNAME=
 DATABASE_DATABASE=
