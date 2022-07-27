@@ -1,9 +1,6 @@
 <?php
 
 namespace R\DB;
-
-use Laminas\Db\Sql\Ddl\Column\ColumnInterface as ColumnColumnInterface;
-
 interface ColumnInterface
 {
 
