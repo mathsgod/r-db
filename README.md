@@ -11,20 +11,6 @@ DATABASE_USERNAME=
 DATABASE_PASSWORD=
 DATABASE_PORT=
 DATABASE_CHARSET=
-
-```
-
-
-
-default driver option
-```php
-[
-    PDO::ATTR_PERSISTENT => true,
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES => false
-]
-
 ```
 
 ## mysql8 collation
@@ -81,5 +67,14 @@ $users = User::Query(["status"=>0]);
 print_r($users->toArray());  // list all users status is equal to 0
 ```
 
+## Default driver option
+```php
+[
+    PDO::ATTR_PERSISTENT => true,
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES => false
+]
+```
 
 
