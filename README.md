@@ -61,5 +61,11 @@ $user = User::Get(1);  // 1 is primary key
 $user->delete(); // user record is deleted
 ```
 
+### query list record
+```php
+$users = User::Query(["status"=>0]);
+print_r($users->toArray());  // list all users status is equal to 0
+```
+
 
 
