@@ -2,6 +2,10 @@
 
 # r-db
 
+## install
+```
+composer require mathsgod/r-db
+```
 
 ## setup using .env
 ```
@@ -19,7 +23,7 @@ DATABASE_CHARSET=
 ### class file
 
 ```php
-class User extends Model{
+class User extends R\DB\Model{
 } 
 ```
 
