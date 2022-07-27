@@ -182,9 +182,8 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
     static function Get(Where|string|int|array $where): ?static
     {
-        $key = self::_key();
-
-        if (is_string($where) || is_numeric($where)) {
+        if (is_numeric($where) || is_string($where)) {
+            $key = self::_key();
             $q = self::Query([$key => $where]);
         } else {
             $q = self::Query($where);
