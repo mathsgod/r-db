@@ -1,6 +1,6 @@
 {
     "name": "mathsgod/r-db",
-    "description": "A lightweight orm for mysql",
+    "description": "A lightweight orm library for mysql",
     "autoload": {
         "psr-4": {
             "R\\DB\\": "src"
