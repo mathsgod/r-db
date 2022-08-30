@@ -13,6 +13,7 @@ use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
+use Psr\Http\Message\UploadedFileInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Traversable;
 
@@ -316,52 +317,56 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
                 continue;
             }
 
-            $records[$name] = $value;
+            if ($value instanceof UploadedFileInterface) {
+                $value = $value->getStream()->getContents();
+            }
 
             $type = explode("(", $attribute["Type"])[0];
 
             if ($attribute["Type"] == "json") {
-                $records[$name] = json_encode($records[$name], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                if ($records[$name] === false) {
-                    $records[$name] = null;
+                $value = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                if ($value === false) {
+                    $value = null;
                 }
             }
 
-            if (($attribute["Type"] == "longtext" || $attribute["Type"] == "text") && is_object($records[$name])) {
-                $records[$name] = json_encode($records[$name], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                if ($records[$name] === false) {
-                    $records[$name] = null;
+            if (($attribute["Type"] == "longtext" || $attribute["Type"] == "text") && is_object($value)) {
+                $value = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                if ($value === false) {
+                    $value = null;
                 }
             }
 
-            if ($attribute["Null"] == "NO" && $records[$name] === null) {
-                $records[$name] = "";
+            if ($attribute["Null"] == "NO" && $value === null) {
+                $value = "";
             }
 
             //如果是uni 而value是"",直接set null, 因為uniqie key 不會check null value
-            if ($attribute["Key"] == "UNI" && $records[$name] === "") {
-                $records[$name] = null;
+            if ($attribute["Key"] == "UNI" && $value === "") {
+                $value = null;
             }
 
-            if ($records[$name] === "") {
+            if ($value === "") {
                 if ($type == "date" || $type == "datetime" || $type == "time" || $type == "enum") {
-                    $records[$name] = null;
+                    $value = null;
                 }
             }
 
-            if (in_array($type, self::NUMERIC_DATA_TYPE) && $attribute["Null"] == "YES" && $records[$name] === "") {
-                $records[$name] = null;
+            if (in_array($type, self::NUMERIC_DATA_TYPE) && $attribute["Null"] == "YES" && $value === "") {
+                $value = null;
             }
 
-            if (is_array($records[$name])) {
-                $records[$name] = implode(",", $records[$name]);
+            if (is_array($value)) {
+                $value = implode(",", $value);
             }
 
-            if ($records[$name] === false) {
-                $records[$name] = 0;
-            } elseif ($records[$name] === true) {
-                $records[$name] = 1;
+            if ($value === false) {
+                $value = 0;
+            } elseif ($value === true) {
+                $value = 1;
             }
+
+            $records[$name] = $value;
         }
 
         if ($mode == "update") { // update
