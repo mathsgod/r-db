@@ -48,17 +48,14 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
      */
     static $schema;
 
-
-    static $schemaClass = [];
-
     static function SetSchema(Schema $schema)
     {
-        self::$schemaClass[get_called_class()] = $schema;
+        self::$schema = $schema;
     }
 
     static function GetSchema()
     {
-        $schema = self::$schemaClass[get_called_class()];
+        $schema = self::$schema;
         if ($schema == null) {
 
             //load from .env
@@ -73,7 +70,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             $charset = $_ENV["DATABASE_CHARSET"] ?? "utf8mb4";
 
             $schema = new Schema($name, $host, $username, $password, $charset, $port);
-            self::$schemaClass[get_called_class()] = $schema;
+            self::$schema = $schema;
         }
 
 
