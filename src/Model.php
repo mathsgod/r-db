@@ -36,6 +36,8 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     protected $_original = [];
     protected $_changed = [];
 
+
+
     /**
      * @var ValidatorInterface|null
      */
@@ -46,14 +48,18 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
      */
     static $schema;
 
+
+    static $schemaClass = [];
+
     static function SetSchema(Schema $schema)
     {
-        self::$schema = $schema;
+        self::$schemaClass[get_called_class()] = $schema;
     }
 
     static function GetSchema()
     {
-        if (self::$schema == null) {
+        $schema = self::$schemaClass[get_called_class()];
+        if ($schema == null) {
 
             //load from .env
             $dotenv = \Dotenv\Dotenv::createImmutable(getcwd());
@@ -66,11 +72,12 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             $password = $_ENV["DATABASE_PASSWORD"];
             $charset = $_ENV["DATABASE_CHARSET"] ?? "utf8mb4";
 
-            self::$schema = new Schema($name, $host, $username, $password, $charset, $port);
+            $schema = new Schema($name, $host, $username, $password, $charset, $port);
+            self::$schemaClass[get_called_class()] = $schema;
         }
 
 
-        return self::$schema;
+        return $schema;
     }
 
     function __construct($id = null)
