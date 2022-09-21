@@ -8,7 +8,27 @@ use PHPUnit\Framework\TestCase;
 
 final class ModelTest extends TestCase
 {
+    function test_json()
+    {
+        Testing::Query()->delete();
+        Testing::Create([
+            'j' => [
+                'a' => 1,
+                'b' => 2,
+            ]
+        ])->save();
 
+        $o = Testing::Query()->first();
+        $this->assertEquals(1, $o->j['a']);
+        $this->assertEquals(2, $o->j['b']);
+
+        $o->j['a'] = 2;
+        $o->save();
+
+        $o = Testing::Query()->first();
+        $this->assertEquals(2, $o->j['a']);
+        $this->assertEquals(2, $o->j['b']);
+    }
 
     function test_wasChanged()
     {
@@ -86,6 +106,7 @@ final class ModelTest extends TestCase
         $o->name = "a";
         $o->int_null = 1;
         $o->save();
+
         $o = new Testing2($o->testing2_id);
         $this->assertEquals(1, $o->int_null);
 

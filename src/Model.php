@@ -23,20 +23,12 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     const INT_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint"];
     const FLOAT_DATA_TYPE = ["float", "double", "decimal"];
 
-    protected $_key;
-    /**
-     * @var Schema
-     */
-    protected $_schema;
-
     private static $_keys = [];
     private static $_attributes = [];
 
-    protected $_fields = [];
     protected $_original = [];
+    protected $_fields = [];
     protected $_changed = [];
-
-
 
     /**
      * @var ValidatorInterface|null
@@ -46,17 +38,16 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     /**
      * @var Schema
      */
-    static $schema;
+    static $_schema;
 
     static function SetSchema(Schema $schema)
     {
-        self::$schema = $schema;
+        self::$_schema = $schema;
     }
 
     static function GetSchema()
     {
-        $schema = self::$schema;
-        if ($schema == null) {
+        if (self::$_schema == null) {
 
             //load from .env
             $dotenv = \Dotenv\Dotenv::createImmutable(getcwd());
@@ -68,58 +59,45 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             $username = $_ENV["DATABASE_USERNAME"];
             $password = $_ENV["DATABASE_PASSWORD"];
             $charset = $_ENV["DATABASE_CHARSET"] ?? "utf8mb4";
-
-            $schema = new Schema($name, $host, $username, $password, $charset, $port);
-            self::$schema = $schema;
+            self::$_schema = new Schema($name, $host, $username, $password, $charset, $port);
         }
-
-
-        return $schema;
+        return self::$_schema;
     }
 
     function __construct($id = null)
     {
-        $this->_schema = self::$schema;
+        $key = self::_key();
         if (is_null($id)) {
-            $key = self::_key();
             if ($this->$key) { //already fetch from pdo
-                foreach ($this->__attribute() as $attribute) {
-                    $field = $attribute["Field"];
-                    $type = $attribute["Type"];
-
-                    if ($type == "json") {
-                        $this->$field = json_decode($this->$field, true);
-                    }
-
-                    if ($type == "tinyint(1)") {
-                        $this->$field = (bool)$this->$field;
+                foreach ($this->__fields() as $field) {
+                    if (property_exists($this, $field)) {
+                        $this->_original[$field] = $this->$field;
                     }
                 }
 
-                $this->_original = [];
+                foreach ($this->_fields as $name => $value) {
+                    $this->_original[$name] = $value;
+                }
+
+                foreach ($this->_original as $name => $value) {
+                    $attribute = $this->__attribute($name);
+                    switch ($attribute["Type"]) {
+                        case "json":
+                            $this->_original[$name] = json_decode($value, true);
+                            break;
+                        case "tinyint(1)":
+                            $this->_original[$name] = (bool)$value;
+                            break;
+                        default:
+                            $this->_original[$name] = $value;
+                            break;
+                    }
+                }
+                $this->_fields = [];
+
                 return;
             }
-
-            foreach (static::__attribute() as $attribute) {
-                $field = $attribute["Field"];
-                $default = $attribute["Default"];
-
-                $this->$field = null;
-                if ($attribute["Default"] != null) {
-                    $type = explode("(", $attribute["Type"])[0];
-                    if ($attribute["Type"] == "tinyint(1)") { //bool
-                        $this->$field = (bool)$default;
-                    } elseif (in_array($type, self::INT_DATA_TYPE)) {
-                        $this->$field = (int)$default;
-                    } elseif (in_array($type, self::FLOAT_DATA_TYPE)) {
-                        $this->$field = (float)$default;
-                    } else {
-                        $this->$field = (string)$default;
-                    }
-                }
-            }
         } else {
-            $key = static::_key();
             if (is_null($key)) {
                 throw new Exception("Key not found");
             }
@@ -141,23 +119,33 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             $s = static::GetSchema()->prepare($sql);
             $s->execute();
             $s->setFetchMode(PDO::FETCH_INTO, $this);
-
             if ($s->fetch() === false) {
-                throw new Exception("$table:$id", 404);
+                throw new Exception("Record not found. Table: $table, Key: $key, ID: $id");
             }
 
-            foreach ($this->__attribute() as $attribute) {
-                $field = $attribute["Field"];
-                $type = $attribute["Type"];
-                if ($type == "json") {
-                    $this->$field = json_decode($this->$field, true);
-                }
-                if ($type == "tinyint(1)") {
-                    $this->$field = (bool)$this->$field;
+            foreach ($this->__fields() as $field) {
+                if (property_exists($this, $field)) {
+                    $this->_original[$field] = $this->$field;
                 }
             }
+
+            foreach ($this->_fields as $name => $value) {
+                $attribute = $this->__attribute($name);
+                switch ($attribute["Type"]) {
+                    case "json":
+                        $this->_original[$name] = json_decode($value, true);
+                        break;
+                    case "tinyint(1)":
+                        $this->_original[$name] = (bool)$value;
+                        break;
+                    default:
+                        $this->_original[$name] = $value;
+                        break;
+                }
+            }
+
+            $this->_fields = [];
         }
-        $this->_original = [];
     }
 
 
@@ -167,21 +155,24 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         foreach ($this->__fields() as $field) {
             $data[$field] = $this->$field;
         }
-        foreach ($this->_fields as $field => $value) {
-            $data[$field] = $value;
-        }
         return $data;
     }
 
     static function Create(?array $data = []): static
     {
+
         $obj = new static;
-        foreach (self::__attribute() as $attribute) {
-            $field = $attribute["Field"];
-            if (array_key_exists($field, $data)) {
-                $obj->$field = $data[$field];
+
+        $fields = $obj->__fields();
+        foreach ($data as $field => $value) {
+            if (in_array($field, $fields)) {
+                $obj->_fields[$field] = $value;
+                if (property_exists($obj, $field)) {
+                    $obj->$field = $value;
+                }
             }
         }
+
         return $obj;
     }
 
@@ -189,7 +180,6 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     {
         return new ArrayIterator($this->jsonSerialize());
     }
-
 
     function setValidator(ValidatorInterface $validator)
     {
@@ -283,41 +273,23 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         return self::$_attributes[$class];
     }
 
-
-    function save()
+    private function getDBSet(): array
     {
-        $error = $this->getValidator()->validate($this);
-        if ($error->count() !== 0) {
-            throw new Exception($error->get(0)->getMessage());
+        $set = $this->getDirty();
+
+        foreach ($this->__fields() as $field) {
+            if (property_exists($this, $field)) {
+                $set[$field] = $this->$field;
+            }
         }
 
-        $dispatcher = self::GetSchema()->eventDispatcher();
-        $gateway = static::__table_gateway();
+        foreach ($set as $field => $value) {
 
-        $key = static::_key();
-
-        if ($this->$key) { // update
-            $mode = "update";
-            $dispatcher->dispatch(new Event\BeforeUpdate($this));
-        } else { // insert
-            $mode = "insert";
-            $dispatcher->dispatch(new Event\BeforeInsert($this));
-        }
-
-        // generate record
-        $records = [];
-        $generated = [];
-        foreach (self::__attributes() as $attribute) {
-
-            if ($attribute["Key"] == "PRI") continue;
-
-            $name = $attribute["Field"];
-            $value = $this->__get($name);
-
+            $attribute = $this->__attribute($field);
             $extra = $attribute["Extra"];
 
             if ($extra == "STORED GENERATED" || $extra == "VIRTUAL GENERATED") {
-                $generated[] = $name;
+                $generated[] = $field;
                 continue;
             }
 
@@ -370,36 +342,77 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
                 $value = 1;
             }
 
-            $records[$name] = $value;
+            $set[$field] = $value;
+        }
+        return $set;
+    }
+
+
+    function save()
+    {
+        $error = $this->getValidator()->validate($this);
+        if ($error->count() !== 0) {
+            throw new Exception($error->get(0)->getMessage());
         }
 
-        if ($mode == "update") { // update
-            $ret = $gateway->update($records, [$key => $this->__get($key)]);
-            $dispatcher->dispatch(new Event\AfterUpdate($this));
-        } else {
+        $dispatcher = self::GetSchema()->eventDispatcher();
+        $gateway = static::__table_gateway();
+
+        $key = static::_key();
+
+        if ($this->$key) { // update
+            $mode = "update";
+        } else { // insert
+            $mode = "insert";
+        }
+
+
+        if ($mode == "insert") {
+
+            $dispatcher->dispatch(new Event\BeforeInsert($this));
+            $records = $this->getDBSet();
+            $records[$key] = null; // key is auto increment
             $ret = $gateway->insert($records);
+
             $this->$key = $gateway->getLastInsertValue(); //save the id
-            $dispatcher->dispatch(new Event\AfterInsert($this));
-        }
 
-
-        $this->_changed = [];
-        foreach ($this->getDirty() as $field => $value) {
-            $this->_changed[$field] = $value;
-        }
-
-        $this->_original = [];
-
-
-
-        //   if (count($generated)) {
-        /*             $table = static::_table();
-            $s = $table->select($generated)->where([$key => $this->$key])->get();
-            foreach ($s->fetch() as $name => $value) {
-                $this->$name = $value;
+            //move the data to original
+            $this->_original = $this->_fields;
+            foreach ($this->__fields() as $field) {
+                if (property_exists($this, $field)) {
+                    $this->_original[$field] = $this->$field;
+                }
             }
- */
-        // }
+
+            $this->_fields = [];
+
+            $dispatcher->dispatch(new Event\AfterInsert($this));
+        } else { //update
+            $dispatcher->dispatch(new Event\BeforeUpdate($this));
+
+            $records = [];
+            $records = $this->getDBSet();
+            $records[$key] = $this->$key;
+
+
+            $ret = $gateway->update($records, [$key => $this->$key]);
+            $dispatcher->dispatch(new Event\AfterUpdate($this));
+
+            //move the data to original
+            foreach ($this->_fields as $field => $value) {
+                $this->_original[$field] = $value;
+            }
+            foreach ($this->__fields() as $field) {
+                if (property_exists($this, $field)) {
+                    $this->_original[$field] = $this->$field;
+                }
+            }
+            $this->_changed = $this->_fields;
+            $this->_fields = [];
+        }
+
+        $dispatcher->dispatch(new Event\BeforeUpdate($this));
+
 
         return $ret;
     }
@@ -505,10 +518,33 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             return $this->_fields[$name];
         }
 
-        if (property_exists($this, $name)) {
-            return $this->$name;
+        if ($attribute = self::__attribute($name)) {
+            if (array_key_exists($name, $this->_original)) {
+                if ($attribute["Type"] == "json") { //should be assign to _fields and return pointer of array value in fields
+                    $this->_fields[$name] = $this->_original[$name];
+                    return $this->_fields[$name];
+                }
+                return $this->_original[$name];
+            }
+
+            $default = $attribute["Default"];
+            if ($default === null && $attribute["Null"] == "YES") {
+                return null;
+            }
+
+            $type = explode("(", $attribute["Type"])[0];
+            if ($attribute["Type"] == "tinyint(1)") { //bool
+                return (bool)$default;
+            } elseif (in_array($type, self::INT_DATA_TYPE)) {
+                return (int)$default;
+            } elseif (in_array($type, self::FLOAT_DATA_TYPE)) {
+                return (float)$default;
+            } else {
+                return (string)$default;
+            }
         }
 
+        //relation
         $ro = new ReflectionObject($this);
 
         $namespace = $ro->getNamespaceName();
@@ -524,36 +560,25 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             return null;
         }
 
-        /*       $key = forward_static_call([$class, "_key"]);
-
-        if (in_array($key, array_keys(get_object_vars($this)))) {
-            $id = $this->$key;
-            if (!$id) return null;
-            return new $class($this->$key);
-        }
- */
-
         $key = static::_key();
         return $class::Query([$key => $this->$key]);
     }
 
-    function __debugInfo()
-    {
-        $info = [];
-        foreach (get_object_vars($this) as $key => $value) {
-            if ($key == "_schema") continue;
-            $info[$key] = $value;
-        }
-        return $info;
-    }
-
-
 
     function getDirty(): array
     {
+        //get current fields
+        $fields = $this->_fields;
+
+        foreach ($this->__fields() as $field) {
+            if (property_exists($this, $field)) {
+                $fields[$field] = $this->$field;
+            }
+        }
+
         $dirty = [];
-        foreach ($this->getOriginal() as $field => $value) {
-            if ($this->$field !== $value) {
+        foreach ($fields as $field => $value) {
+            if ($this->_original[$field] !== $value) {
                 $dirty[$field] = $this->$field;
             }
         }
@@ -563,10 +588,9 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     function isDirty(string $name = null): bool
     {
         if (is_null($name)) {
-            return count($this->_original) > 0;
+            return count($this->getDirty()) > 0;
         }
-
-        return array_key_exists($name, $this->_original);
+        return $this->$name !== $this->_original[$name];
     }
 
     function wasChanged(string $name = null): bool
@@ -579,30 +603,15 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
     function getOriginal(string $name = null)
     {
-        $data = [];
-        foreach ($this->_fields as $key => $value) {
-            $data[$key] = $value;
-        }
-
-        foreach ($this->_original as $key => $value) {
-            $data[$key] = $value;
-        }
-
         if ($name === null) {
-            return $data;
+            return $this->_original;
         }
 
-        return $data[$name];
+        return $this->_original[$name];
     }
 
     function __set($name, $value)
     {
-        if (!array_key_exists($name, $this->_original) && array_key_exists($name, $this->_fields)) {
-            if ($this->_original[$name] !== $this->_fields[$name]) {
-                $this->_original[$name] = $this->_fields[$name];
-            }
-        }
-
         $this->_fields[$name] = $value;
     }
 
