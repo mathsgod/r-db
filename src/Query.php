@@ -40,6 +40,11 @@ class Query extends Select implements IteratorAggregate
         $this->schema = $class::GetSchema();
     }
 
+    public function getClassName()
+    {
+        return $this->class;
+    }
+
     /**
      * @return static
      */
