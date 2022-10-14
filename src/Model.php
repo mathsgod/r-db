@@ -48,18 +48,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     static function GetSchema()
     {
         if (self::$_schema == null) {
-
-            //load from .env
-            $dotenv = \Dotenv\Dotenv::createImmutable(getcwd());
-            $dotenv->load();
-
-            $host = $_ENV["DATABASE_HOSTNAME"];
-            $name = $_ENV["DATABASE_DATABASE"];
-            $port = $_ENV["DATABASE_PORT"] ?? 3306;
-            $username = $_ENV["DATABASE_USERNAME"];
-            $password = $_ENV["DATABASE_PASSWORD"];
-            $charset = $_ENV["DATABASE_CHARSET"] ?? "utf8mb4";
-            self::$_schema = new Schema($name, $host, $username, $password, $charset, $port);
+            self::$_schema = Schema::Create();
         }
         return self::$_schema;
     }

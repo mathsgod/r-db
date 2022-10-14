@@ -60,6 +60,21 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         ]);
     }
 
+    static function Create()
+    {
+        //load from .env
+        $dotenv = \Dotenv\Dotenv::createImmutable(getcwd());
+        $dotenv->load();
+
+        $host = $_ENV["DATABASE_HOSTNAME"];
+        $name = $_ENV["DATABASE_DATABASE"];
+        $port = $_ENV["DATABASE_PORT"] ?? 3306;
+        $username = $_ENV["DATABASE_USERNAME"];
+        $password = $_ENV["DATABASE_PASSWORD"];
+        $charset = $_ENV["DATABASE_CHARSET"] ?? "utf8mb4";
+        return new Schema($name, $host, $username, $password, $charset, $port);
+    }
+
     function beginTransaction(): bool
     {
         $this->in_transaction = true;
