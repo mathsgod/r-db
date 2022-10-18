@@ -606,7 +606,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
     function __isset($name)
     {
-        return array_key_exists($name, $this->_fields);
+        return array_key_exists($name, $this->_original) || array_key_exists($name, $this->_fields);
     }
 
     function __fields(): array
