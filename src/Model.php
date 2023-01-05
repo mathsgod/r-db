@@ -140,10 +140,19 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
     function jsonSerialize()
     {
+        $fields = $this->__fields();;
         $data = [];
         foreach ($this->__fields() as $field) {
             $data[$field] = $this->$field;
         }
+
+        foreach($this->_fields as $field => $value) {
+            if(in_array($field, $fields)) {
+                continue;
+            }
+            $data[$field] = $value;
+        }
+
         return $data;
     }
 
