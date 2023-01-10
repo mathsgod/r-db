@@ -121,8 +121,21 @@ class Q
 
         $select = $this->select;
         if (count($this->fields) > 0) {
-            //if custome fields are set, primary key is required
+            //if custom fields are set, primary key is required
             $this->fields[] = $primary_key;
+
+
+
+            //load populate class fields
+            foreach ($this->populate as $q) {
+                $key = $q->getPrimaryKey();
+
+                //check table has this field
+                if ($this->getSchema()->hasTableColumn($this->getName(), $key)) {
+                    $this->fields[] = $key;
+                }
+            }
+
 
             $select->columns($this->fields);
         }
@@ -150,8 +163,7 @@ class Q
             foreach ($this->populate as  $q) {
                 $key = $q->getPrimaryKey();
                 $name = $q->getName();
-                if ($obj->$key == null) {
-
+                if ($obj->$key === null) {
                     $obj->$name = $q->where([$primary_key => $obj->$primary_key])->get();
                 } else {
                     $r = $q->where([$key => $obj->$key])->get();

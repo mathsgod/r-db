@@ -167,6 +167,12 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         return in_array($name, $tables);
     }
 
+    public function hasTableColumn(string $table, string $column): bool
+    {
+        $columns = $this->getMetadata()->getColumnNames($table);
+        return in_array($column, $columns);
+    }
+
     public function getTable(string $name): ?Table
     {
         if ($this->hasTable($name)) {
