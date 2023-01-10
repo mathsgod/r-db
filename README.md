@@ -43,7 +43,7 @@ print_r(Q(User::class)->fields(["user_id","username"])->filter(["type"=>1])->get
 ```
 
 ### populate
-populate is used to select related data from other table, it will auto check the relationship between tables
+populate is used to select related data from other table, it will auto check the relationship between tables by primary key
 ```php 
 class UserRole{
 
