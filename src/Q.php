@@ -42,7 +42,7 @@ class Q
     public function fields(array $fields)
     {
         $this->fields = $fields;
-        return $this;
+        return clone $this;
     }
 
     /**
@@ -51,7 +51,7 @@ class Q
     public function where(array $predicate, $combination = Predicate\PredicateSet::OP_AND)
     {
         $this->select->where($predicate, $combination);
-        return $this;
+        return clone $this;
     }
 
     public function getName()
@@ -67,7 +67,7 @@ class Q
     public function order($order)
     {
         $this->select->order($order);
-        return $this;
+        return clone $this;
     }
 
     /**
@@ -78,7 +78,7 @@ class Q
     public function limit($limit)
     {
         $this->limit = $limit;
-        return $this;
+        return clone $this;
     }
 
     /**
@@ -89,7 +89,7 @@ class Q
     public function offset($offset)
     {
         $this->offset = $offset;
-        return $this;
+        return clone $this;
     }
 
 
@@ -99,7 +99,7 @@ class Q
     public function populate(array $populate)
     {
         $this->populate = $populate;
-        return $this;
+        return clone $this;
     }
 
     private function getSchema(): Schema
