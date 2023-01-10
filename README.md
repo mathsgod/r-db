@@ -58,9 +58,9 @@ print_r(Q(User::class)->populate([
 ])->get());
 
 /* 
-output:
+Array
 (
-    [0] => stdClass Object
+    [0] => User Object
         (
             [username] => admin
             [user_id] => 1
