@@ -18,10 +18,67 @@ DATABASE_PORT=
 DATABASE_CHARSET=
 ```
 
+## Select with function Q
+
+### simple select
+
+```php
+use function R\DB\Q;
+class User{ //simple class file
+
+}
+
+print_r(Q(User::class)->get()); // select * from User
+
+```
+
+### select with fields
+```php
+print_r(Q(User::class)->filter(["type"=>1])->get()); // select * from User where type=1
+
+```
+
+### populate
+```php 
+class UserRole{
+
+}
+
+class User{
+
+}
+
+print_r(Q(User::class)->populate([
+    Q(UserRole:class)
+])->get());
+
+/* 
+output:
+(
+    [0] => stdClass Object
+        (
+            [username] => admin
+            [user_id] => 1
+            [UserRole] => Array
+                (
+                    [0] => UserRole Object
+                        (
+                            [user_role_id] => 1
+                            [user_id] => 1
+                            [role] => Administrators
+                        )
+
+                )
+
+        )
+
+)
+*/
+```
+
 ## Example
 
-
-### class file
+### extends with R\DB\Model
 
 ```php
 class User extends R\DB\Model{
