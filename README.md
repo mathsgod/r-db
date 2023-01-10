@@ -76,6 +76,17 @@ output:
 */
 ```
 
+### Schema Aware
+You can define a static method GetSchema() in your class to define the schema of the table
+```php
+class User implmenet SchemaAwareInterface{
+    public static function GetSchema(){
+        return $schema1;
+    }
+}
+
+
+```
 ## Example
 
 ### extends with R\DB\Model
@@ -84,6 +95,7 @@ output:
 class User extends R\DB\Model{
 } 
 ```
+
 
 ### insert record
 ```php
