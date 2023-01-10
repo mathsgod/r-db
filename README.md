@@ -19,7 +19,7 @@ DATABASE_PORT=
 DATABASE_CHARSET=
 ```
 
-## Select with function Q
+## Function Q
 Function Q is a fast way to select data from database.
 ### simple select
 
@@ -92,7 +92,7 @@ class User implements SchemaAwareInterface{
 
 
 ```
-## extends with R\DB\Model
+## R\DB\Model
 By extends R\DB\Model, you can use the following methods to operate the database
 
 ```php
