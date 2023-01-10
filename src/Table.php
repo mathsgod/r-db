@@ -26,6 +26,11 @@ class Table implements TableInterface
         $this->adapter = $pdo->getAdapter();
     }
 
+    function  getAdapter()
+    {
+        return $this->adapter;
+    }
+
     function getPrimaryKeys(): array
     {
         $ret = array_filter($this->describe(), function ($o) {
@@ -60,7 +65,7 @@ class Table implements TableInterface
         $row = new Row($this);
         $row->setDbAdapter($this->pdo->getAdapter());
         $resultSet = new  Rows(new ObjectPropertyHydrator, $row);
-        $gateway = new  TableGateway($this->name, $this->db->getDbAdatpter(), null, $resultSet);
+        $gateway = new  TableGateway($this->name, $this->adapter, null, $resultSet);
 
         return $gateway->selectWith($select);
     }

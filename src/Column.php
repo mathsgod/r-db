@@ -61,7 +61,7 @@ class Column implements ColumnInterface
 
 	public function getMetadata()
 	{
-		$meta = Factory::createSourceFromAdapter($this->adapter);
+		$meta = Factory::createSourceFromAdapter($this->table->getAdapter());
 		return $meta->getColumn($this->Field, $this->table->name);
 	}
 }
