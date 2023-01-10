@@ -34,6 +34,4 @@ interface ModelInterface
     public function wasChanged(string $name = null): bool;
     public function __isset(string $name);
     public function __fields(): array;
-
-    public static function GetSchema(): Schema;
 }

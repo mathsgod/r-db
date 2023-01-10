@@ -17,7 +17,7 @@ use Psr\Http\Message\UploadedFileInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Traversable;
 
-abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializable
+abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializable, SchemaAwareInterface
 {
     const NUMERIC_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint", "float", "double", "decimal"];
     const INT_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint"];

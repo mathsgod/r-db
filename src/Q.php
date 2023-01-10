@@ -94,8 +94,8 @@ class Q
         $ref_class = new ReflectionClass($this->class);
         $short_name = $ref_class->getShortName();
 
-        if (is_subclass_of($short_name, ModelInterface::class)) {
-            return $short_name::GetSchema();
+        if (in_array(SchemaAwareInterface::class, $ref_class->getInterfaceNames())) {
+            return $ref_class->getMethod("GetSchema")->invoke(null);
         }
         return Schema::Create();
     }
