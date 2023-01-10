@@ -92,9 +92,8 @@ class User implements SchemaAwareInterface{
 
 
 ```
-## Example
-
-### extends with R\DB\Model
+## extends with R\DB\Model
+By extends R\DB\Model, you can use the following methods to operate the database
 
 ```php
 class User extends R\DB\Model{
