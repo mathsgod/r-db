@@ -9,7 +9,8 @@ composer require mathsgod/r-db
 
 ## Setup
 ### using .env
-```
+Using .env file to setup default database connection
+```ini
 DATABASE_HOSTNAME=
 DATABASE_DATABASE=
 DATABASE_USERNAME=
@@ -19,7 +20,7 @@ DATABASE_CHARSET=
 ```
 
 ## Select with function Q
-
+Function Q is a fast way to select data from database.
 ### simple select
 
 ```php
@@ -32,13 +33,17 @@ print_r(Q(User::class)->get()); // select * from User
 
 ```
 
-### select with fields
+### select with fields and filter
+filter parameter is based on laminas-db where 
+
 ```php
-print_r(Q(User::class)->filter(["type"=>1])->get()); // select * from User where type=1
+print_r(Q(User::class)->fields(["user_id","username"])->filter(["type"=>1])->get()); 
+// select user_id,username from User where type=1
 
 ```
 
 ### populate
+populate is used to select related data from other table, it will auto check the relationship between tables
 ```php 
 class UserRole{
 
@@ -79,7 +84,7 @@ output:
 ### Schema Aware
 You can define a static method GetSchema() in your class to define the schema of the table
 ```php
-class User implmenet SchemaAwareInterface{
+class User implements SchemaAwareInterface{
     public static function GetSchema(){
         return $schema1;
     }
