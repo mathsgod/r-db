@@ -188,6 +188,15 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         return $data;
     }
 
+    public function getTablePrimaryKey(string $table)
+    {
+        $data = $this->query("DESCRIBE $table")->fetchAll();
+        $fields = array_filter($data, function ($item) {
+            return $item["Key"] == "PRI";
+        });
+        return $fields[0]["Field"];
+    }
+
     public function __get(string $name)
     {
         if ($name == "function") {

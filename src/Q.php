@@ -89,11 +89,27 @@ class Q
         return $this;
     }
 
-    private function getPrimaryKey()
+    private function getSchema(): Schema
     {
         $ref_class = new ReflectionClass($this->class);
         $short_name = $ref_class->getShortName();
-        return $short_name::_key();
+
+        if (is_subclass_of($short_name, ModelInterface::class)) {
+            return $short_name::GetSchema();
+        }
+        return Schema::Create();
+    }
+
+    private function getTableName()
+    {
+        $ref_class = new ReflectionClass($this->class);
+        return $ref_class->getStaticPropertyValue("_table", $ref_class->getShortName());
+    }
+
+    private function getPrimaryKey(): string
+    {
+        $schema = $this->getSchema();
+        return  $schema->getTablePrimaryKey($this->getTableName());
     }
 
     /**
@@ -101,9 +117,7 @@ class Q
      */
     public function get()
     {
-        $ref_class = new ReflectionClass($this->class);
         $primary_key = $this->getPrimaryKey();
-        $short_name = $ref_class->getShortName();
 
         $select = $this->select;
         if (count($this->fields) > 0) {
@@ -126,7 +140,7 @@ class Q
         if (count($this->fields) > 0) {
             $statement->setFetchMode(PDO::FETCH_CLASS, stdClass::class);
         } else {
-            $statement->setFetchMode(PDO::FETCH_CLASS, $short_name);
+            $statement->setFetchMode(PDO::FETCH_CLASS, $this->class);
         }
 
 

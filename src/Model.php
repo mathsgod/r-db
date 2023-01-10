@@ -45,7 +45,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         self::$_schema = $schema;
     }
 
-    static function GetSchema()
+    static function GetSchema(): Schema
     {
         if (self::$_schema == null) {
             self::$_schema = Schema::Create();
@@ -146,8 +146,8 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             $data[$field] = $this->$field;
         }
 
-        foreach($this->_fields as $field => $value) {
-            if(in_array($field, $fields)) {
+        foreach ($this->_fields as $field => $value) {
+            if (in_array($field, $fields)) {
                 continue;
             }
             $data[$field] = $value;
