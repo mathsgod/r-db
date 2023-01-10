@@ -18,6 +18,7 @@ use Traversable;
 use PDO;
 
 /**
+ * @template T
  * @method static order(string|array|Expression $order)
  * @method static limit(int $limit)
  * @method static offset(int $offset)
@@ -33,6 +34,9 @@ class Query extends Select implements IteratorAggregate
      */
     protected $schema;
 
+    /**
+     * @param class-string<T> $class
+     */
     public function __construct(string $class)
     {
         $this->class = $class;
@@ -65,6 +69,9 @@ class Query extends Select implements IteratorAggregate
         return $this->schema->query($sql)->fetchColumn(0);
     }
 
+    /**
+     * @return T|null
+     */
     public function first()
     {
         $c = clone $this;

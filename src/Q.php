@@ -25,6 +25,7 @@ class Q
     protected $fields = [];
     protected $select;
     protected $limit = null;
+    protected $offset = null;
 
     /**
      * @param class-string<T> $class
@@ -79,6 +80,18 @@ class Q
         $this->limit = $limit;
         return $this;
     }
+
+    /**
+     * @param int $offset
+     * @return $this Provides a fluent interface
+     * @throws Exception\InvalidArgumentException
+     */
+    public function offset($offset)
+    {
+        $this->offset = $offset;
+        return $this;
+    }
+
 
     /**
      * @param Q[] $populate
@@ -144,6 +157,10 @@ class Q
 
         if ($this->limit) {
             $sql .= " LIMIT " . $this->limit;
+        }
+
+        if ($this->offset) {
+            $sql .= " OFFSET " . $this->offset;
         }
 
         $schema = Schema::Create();
