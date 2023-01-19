@@ -75,13 +75,22 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         ]);
     }
 
-    public function backupTo(string $filename): bool
+    public function backup(string $filename): bool
     {
 
         $command = "mysqldump -u {$this->username} -p{$this->password} -h {$this->hostname} -P {$this->port} {$this->database} > {$filename}";
         @exec($command, $output, $return_var);
         return $return_var === 0;
     }
+
+
+    public function restore(string $filename): bool
+    {
+        $command = "mysql -u {$this->username} -p{$this->password} -h {$this->hostname} -P {$this->port} {$this->database} < {$filename}";
+        @exec($command, $output, $return_var);
+        return $return_var === 0;
+    }
+
 
     static function Create()
     {
