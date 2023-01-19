@@ -34,9 +34,24 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
 
 
     private $in_transaction = false;
+    private $database;
+    private $hostname;
+    private $username;
+    private $password;
+    private $charset;
+    private $port;
+    private $options;
 
     public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8mb4", int $port = 3306, ?array $options = null)
     {
+        $this->database = $database;
+        $this->hostname = $hostname;
+        $this->username = $username;
+        $this->password = $password;
+        $this->charset = $charset;
+        $this->port = $port;
+        $this->options = $options;
+
         $driver_options = [
             PDO::ATTR_PERSISTENT => true,
             PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
@@ -58,6 +73,14 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
             "driver" => "Pdo_Mysql",
             "driver_options" => $driver_options
         ]);
+    }
+
+    public function backupTo(string $filename): bool
+    {
+
+        $command = "mysqldump -u {$this->username} -p{$this->password} -h {$this->hostname} -P {$this->port} {$this->database} > {$filename}";
+        @exec($command, $output, $return_var);
+        return $return_var === 0;
     }
 
     static function Create()
