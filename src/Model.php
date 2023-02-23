@@ -14,6 +14,7 @@ use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
 use Psr\Http\Message\UploadedFileInterface;
+use ReflectionClass;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Traversable;
 
@@ -230,6 +231,13 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     {
         $class = get_called_class();
         if (isset(self::$_keys[$class])) return self::$_keys[$class];
+
+        $ref = new ReflectionClass($class);
+        if ($ref->hasProperty("_primary_key")) {
+            self::$_keys[$class] = $ref->getStaticPropertyValue("_primary_key");
+            return self::$_keys[$class];
+        }
+
         $keys = [];
         foreach (static::__attributes() as $attribute) {
             if ($attribute["Key"] == "PRI") {
