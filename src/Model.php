@@ -563,7 +563,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             }
         }
         if (!class_exists($class)) {
-            return null;
+            return $this->_fields[$name];
         }
 
         $key = static::_key();
