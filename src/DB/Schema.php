@@ -85,7 +85,7 @@ class Schema extends PDO implements LoggerAwareInterface
         return $method->invokeArgs($this, func_get_args());
     }
 
-    public function prepare(string $query, array $options = null)
+    public function prepare($query, $options = null)
     {
         if ($this->logger) $this->logger->debug("PDO::prepare", func_get_args());
         $reflector = new \ReflectionClass(get_class($this));
@@ -99,7 +99,7 @@ class Schema extends PDO implements LoggerAwareInterface
         return new Query($this, $table);
     }
 
-    public function exec(string $statement)
+    public function exec($statement)
     {
         if ($this->logger) $this->logger->debug("PDO::exec", func_get_args());
         $reflector = new \ReflectionClass(get_class($this));
