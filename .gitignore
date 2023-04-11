@@ -1,2 +1,5 @@
 /vendor/
 /components/
+composer.phar
+.env
+test.php

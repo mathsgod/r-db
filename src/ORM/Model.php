@@ -6,6 +6,7 @@ use PDO;
 use R\RSList;
 use Exception;
 use R\DataList;
+use R\DB\Schema;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionObject;
@@ -21,7 +22,31 @@ abstract class Model
     private static $_Keys = [];
     private static $_Attributes = [];
 
-    abstract public static function __db();
+    public static function __db()
+    {
+
+        $dotenv = \Dotenv\Dotenv::createImmutable(getcwd());
+        $dotenv->load();
+
+        $port = 3306;
+        if ($_ENV["DATABASE_PORT"]) {
+            $port = $_ENV["DATABASE_PORT"];
+        }
+        $charset = "utf8mb4";
+        if ($_ENV["DATABASE_CHARSET"]) {
+            $charset = $_ENV["DATABASE_CHARSET"];
+        }
+
+        //read env
+        return new Schema(
+            $_ENV["DATABASE_DATABASE"],
+            $_ENV["DATABASE_HOSTNAME"],
+            $_ENV["DATABASE_USERNAME"],
+            $_ENV["DATABASE_PASSWORD"],
+            $charset,
+            $port
+        );
+    }
 
     /**
      * Get this object by id, if not found return null.
