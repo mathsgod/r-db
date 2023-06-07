@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "767018fd5d29856aa490bedf3163734f",
+    "content-hash": "7aaa1fbea2d1c2dfb2e27a2d18913b33",
     "packages": [
         {
             "name": "doctrine/annotations",
@@ -656,16 +656,16 @@
         },
         {
             "name": "mathsgod/php-util",
-            "version": "1.4.2",
+            "version": "1.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mathsgod/php-util.git",
-                "reference": "9d582256da9d8054db1f9e4cf10e9ee0acecf16a"
+                "reference": "5349e385da385b0a909c1d8165e252b63699e952"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mathsgod/php-util/zipball/9d582256da9d8054db1f9e4cf10e9ee0acecf16a",
-                "reference": "9d582256da9d8054db1f9e4cf10e9ee0acecf16a",
+                "url": "https://api.github.com/repos/mathsgod/php-util/zipball/5349e385da385b0a909c1d8165e252b63699e952",
+                "reference": "5349e385da385b0a909c1d8165e252b63699e952",
                 "shasum": ""
             },
             "require": {
@@ -696,9 +696,9 @@
             "description": "a simple php util for data structure",
             "support": {
                 "issues": "https://github.com/mathsgod/php-util/issues",
-                "source": "https://github.com/mathsgod/php-util/tree/1.4.2"
+                "source": "https://github.com/mathsgod/php-util/tree/1.5.0"
             },
-            "time": "2022-04-06T09:51:21+00:00"
+            "time": "2023-06-07T03:39:51+00:00"
         },
         {
             "name": "phpoption/phpoption",
