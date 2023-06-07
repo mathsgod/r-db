@@ -73,7 +73,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
                     $attribute = $this->__attribute($name);
                     switch ($attribute["Type"]) {
                         case "json":
-                            $this->_original[$name] = json_decode($value, true);
+                            $this->_original[$name] = json_decode($value ?? "", true);
                             break;
                         case "tinyint(1)":
                             $this->_original[$name] = (bool)$value;
@@ -123,7 +123,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
                 $attribute = $this->__attribute($name);
                 switch ($attribute["Type"]) {
                     case "json":
-                        $this->_original[$name] = json_decode($value, true);
+                        $this->_original[$name] = json_decode($value ?? "", true);
                         break;
                     case "tinyint(1)":
                         $this->_original[$name] = (bool)$value;
@@ -139,7 +139,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     }
 
 
-    function jsonSerialize()
+    function jsonSerialize(): mixed
     {
         $fields = $this->__fields();;
         $data = [];

@@ -8,6 +8,8 @@ use PHPUnit\Framework\TestCase;
 
 final class ModelTest extends TestCase
 {
+
+
     function test_json()
     {
         Testing::Query()->delete();
