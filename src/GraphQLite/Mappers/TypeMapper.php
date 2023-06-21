@@ -135,11 +135,11 @@ class TypeMapper implements TypeMapperInterface
                                 if (!isset($args['limit']) && isset($args['offset'])) {
                                     throw MissingParameterException::missingLimit();
                                 }
-                                if (isset($args['limit'])) {
+                                if (isset($args['limit']) && $args['limit'] !== null) {
                                     $root->limit($args['limit']);
                                 }
 
-                                if ($args["offset"]) {
+                                if (isset($args['offset']) && $args['offset'] !== null) {
                                     $root->offset($args["offset"]);
                                 }
 
