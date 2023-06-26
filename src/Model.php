@@ -15,6 +15,7 @@ use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
 use Psr\Http\Message\UploadedFileInterface;
 use ReflectionClass;
+use ReturnTypeWillChange;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Traversable;
 
@@ -138,10 +139,10 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         }
     }
 
-
+    #[ReturnTypeWillChange]
     function jsonSerialize()
     {
-        $fields = $this->__fields();;
+        $fields = $this->__fields();
         $data = [];
         foreach ($this->__fields() as $field) {
             $data[$field] = $this->$field;
