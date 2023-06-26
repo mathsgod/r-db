@@ -14,7 +14,11 @@ interface PDOInterface
     function commit(): bool;
     function rollBack(): bool;
     function inTransaction(): bool;
-    function exec(string $statement): int|false;
+
+    /**
+     * @return int|false
+     */
+    function exec(string $statement);
 
     /**
      * @return PDOStatement|false

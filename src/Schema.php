@@ -133,7 +133,11 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         return $this->in_transaction;
     }
 
-    function exec(string $statement): int|false
+    /**
+     * @param string $statement
+     * @return int|false
+     */
+    function exec(string $statement)
     {
         $statement = $this->adapter->createStatement($statement);
         $result = $statement->execute();

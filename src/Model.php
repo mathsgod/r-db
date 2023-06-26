@@ -139,7 +139,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     }
 
 
-    function jsonSerialize(): mixed
+    function jsonSerialize()
     {
         $fields = $this->__fields();;
         $data = [];
@@ -157,7 +157,10 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         return $data;
     }
 
-    static function Create(?array $data = []): static
+    /**
+     * @return static
+     */
+    static function Create(?array $data = [])
     {
 
         $obj = new static;
@@ -190,7 +193,11 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         return $this->_validator ?? self::GetSchema()->getValidator();
     }
 
-    static function Get(Where|string|int|array $where): ?static
+    /**
+     * @param Where|string|int|array $where
+     * @return ?static
+     */
+    static function Get($where)
     {
         if (is_numeric($where) || is_string($where)) {
             $key = self::_key();
@@ -203,7 +210,10 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     }
 
     // change to proxy object later
-    static function Load($id): static
+    /**
+     * @return static
+     */
+    static function Load($id)
     {
         $key = self::_key();
         return self::Query([$key => $id])->first();
@@ -507,8 +517,9 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
     /**
      * @return Query<static>
+     * @param Where|\Closure|string|array|Predicate\PredicateInterface $predicate
      */
-    static function Query(Where|\Closure|string|array|Predicate\PredicateInterface $predicate = null, $combination = Predicate\PredicateSet::OP_AND)
+    static function Query($predicate = null, $combination = Predicate\PredicateSet::OP_AND)
     {
         $query = new Query(static::class);
         if ($predicate) {

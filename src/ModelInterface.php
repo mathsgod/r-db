@@ -9,19 +9,23 @@ interface ModelInterface
 {
     /**
      * Create model from array
+     * @return static
      */
-    public static function Create(?array $data): static;
+    public static function Create(?array $data);
 
 
     /**
      * Get single object
+     * @return ?static
+     * @param Where|string|int|array $where
      */
-    public static function Get(Where|string|int|array $where): ?static;
+    public static function Get($where);
 
     /**
      * Load model by id
+     * @return static
      */
-    public static function Load($id): static;
+    public static function Load($id);
 
     public function getValidator(): ValidatorInterface;
     public function setValidator(ValidatorInterface $validator);

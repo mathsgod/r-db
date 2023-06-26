@@ -53,9 +53,10 @@ class Table implements TableInterface
     }
 
     /**
+     * @param Where|\Closure|string|array|Predicate\PredicateInterface $predicate
      * @return \R\DB\Rows|\R\DB\Row[]
      */
-    public function getRows(Where|\Closure|string|array|Predicate\PredicateInterface $predicate = null, string $combination = Predicate\PredicateSet::OP_AND)
+    public function getRows($predicate = null, string $combination = Predicate\PredicateSet::OP_AND)
     {
         $select = new Select($this->name);
         if ($predicate) {
@@ -159,7 +160,10 @@ class Table implements TableInterface
         }, $ret);
     }
 
-    public function select(Where|\Closure|string|array $where = null)
+    /**
+     * @param Where|\Closure|string|array $where
+     */
+    public function select($where = null)
     {
         $gateway = $this->pdo->getTableGateway($this->name);
         return $gateway->select($where);
@@ -171,14 +175,19 @@ class Table implements TableInterface
         return $gateway->insert($data);
     }
 
-    public function delete(Where|\Closure|string|array $where)
+    /**
+     * @param Where|\Closure|string|array $where
+     */
+    public function delete($where)
     {
         $gateway = $this->pdo->getTableGateway($this->name);
         return $gateway->delete($where);
     }
 
-
-    public function update(array $data, Where|Closure|string|array|null $where = null)
+    /**
+     * @param Where|\Closure|string|array $where
+     */
+    public function update(array $data, $where = null)
     {
         $gateway = $this->pdo->getTableGateway($this->name);
         return $gateway->update($data, $where);
@@ -216,7 +225,10 @@ class Table implements TableInterface
         return  $this->pdo->prepare("INSERT INTO `$this->name` ({$names}) values ({$values}) on duplicate key update {$set}")->execute($records);
     }
 
-    public function first(Where|\Closure|string|array $where = null, $combination = Predicate\PredicateSet::OP_AND)
+    /**
+     * @param Where|\Closure|string|array $where
+     */
+    public function first($where = null, $combination = Predicate\PredicateSet::OP_AND)
     {
         $select = new Select($this->name);
         if (isset($where)) {

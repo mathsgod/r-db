@@ -19,9 +19,20 @@ interface TableInterface
     public function addColumn(\Laminas\Db\Sql\Ddl\Column\ColumnInterface $column);
 
     public function getPrimaryKeys(): array;
-    public function select(Where|Closure|string|array $where = null);
+    /**
+     * @param Where|Closure|string|array $where
+     */
+    public function select($where = null);
 
     public function insert(array $data);
-    public function update(array $data, Where|Closure|string|array $where = null);
-    public function delete(Where|Closure|string|array $where);
+
+    /**
+     * @param Where|Closure|string|array $where
+     */
+    public function update(array $data,  $where = null);
+
+    /**
+     * @param Where|Closure|string|array $where
+     */
+    public function delete($where);
 }
