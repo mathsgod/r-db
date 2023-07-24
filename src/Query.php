@@ -61,6 +61,8 @@ class Query extends Select implements IteratorAggregate
     public function count(): int
     {
         $c = clone $this;
+        $c->offset(0);
+        $c->limit(1);
         $c->columns([
             "c" => new Expression("count(*)")
         ]);
