@@ -20,7 +20,6 @@ final class QueryTest extends TestCase
             ]
         ]);
 
-
         $user = $q->first();
         $this->assertEquals(1, $user->user_id);
     }

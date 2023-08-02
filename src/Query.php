@@ -189,6 +189,16 @@ class Query extends Select implements IteratorAggregate
         return $this->schema->exec($sql);
     }
 
+    public function sort(string $sort)
+    {
+        $query = clone $this;
+        if ($sort) {
+            $s = explode(':', $sort);
+            $query->order($s[0] . " " . $s[1]);
+        }
+        return $query;
+    }
+
     public function filters(array $filters)
     {
         $query = clone $this;
