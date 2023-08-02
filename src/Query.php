@@ -189,6 +189,53 @@ class Query extends Select implements IteratorAggregate
         return $this->schema->exec($sql);
     }
 
+    public function filters(array $filters)
+    {
+        $query = clone $this;
+        foreach ($filters as $field => $filter) {
+
+            foreach ($filter as $operator => $value) {
+
+                if ($operator == 'eq') {
+                    $query->where->equalTo($field, $value);
+                }
+
+                if ($operator == 'contains') {
+                    $query->where->like($field, "%$value%");
+                }
+
+                if ($operator == 'in') {
+                    $query->where->in($field, $value);
+                }
+
+                if ($operator == 'between') {
+                    $query->where->between($field, $value[0], $value[1]);
+                }
+
+                if ($operator == 'gt') {
+                    $query->where->greaterThan($field, $value);
+                }
+
+                if ($operator == 'gte') {
+                    $query->where->greaterThanOrEqualTo($field, $value);
+                }
+
+                if ($operator == 'lt') {
+                    $query->where->lessThan($field, $value);
+                }
+
+                if ($operator == 'lte') {
+                    $query->where->lessThanOrEqualTo($field, $value);
+                }
+
+                if ($operator == 'ne') {
+                    $query->where->notEqualTo($field, $value);
+                }
+            }
+        }
+        return $query;
+    }
+
     public function filter(callable $filter)
     {
         return collect($this)->filter($filter);
