@@ -83,17 +83,17 @@ final class ModelTest extends TestCase
     {
         $table = Testing2::_table();
         $table->truncate();
-        $o = new Testing2();
+        $o = Testing2::Create();
         $o->b = true;
         $o->save();
 
-        $o2 = new Testing2($o->testing2_id);
+        $o2 = Testing2::Get($o->testing2_id);
         $this->assertEquals(true, $o2->b);
 
         $o2->b = false;
         $o2->save();
 
-        $o3 = new Testing2($o->testing2_id);
+        $o3 = Testing2::Get($o->testing2_id);
         $this->assertEquals(false, $o3->b);
     }
 
@@ -104,24 +104,24 @@ final class ModelTest extends TestCase
         $table = Testing2::_table();
         $table->truncate();
         //insert
-        $o = new Testing2();
+        $o = Testing2::Create();
         $o->name = "a";
         $o->int_null = 1;
         $o->save();
 
-        $o = new Testing2($o->testing2_id);
+        $o = Testing2::Get($o->testing2_id);
         $this->assertEquals(1, $o->int_null);
 
         $o->int_null = "";
         $o->save();
 
-        $o = new Testing2($o->testing2_id);
+        $o = Testing2::Get($o->testing2_id);
         $this->assertNull($o->int_null);
     }
 
     public function testCreate()
     {
-        $t = new Testing();
+        $t = Testing::Create();
         $this->assertInstanceOf(Testing::class, $t);
     }
 
@@ -148,17 +148,17 @@ final class ModelTest extends TestCase
     public function test_save()
     {
 
-        $t = new Testing();
+        $t = Testing::Create();
         $t->name = "abc";
         $t->save();
 
-        $n = new Testing($t->testing_id);
+        $n = Testing::Get($t->testing_id);
         $this->assertEquals("abc", $n->name);
 
         $t->name = "xyz";
         $t->save();
 
-        $n = new Testing($t->testing_id);
+        $n = Testing::Get($t->testing_id);
         $this->assertEquals("xyz", $n->name);
     }
 
@@ -168,13 +168,13 @@ final class ModelTest extends TestCase
         Testing::_table()->truncate();
         $this->assertEquals(Testing::Query()->count(), 0);
 
-        $t = new Testing();
+        $t = Testing::Create();
         $t->name = "abc";
         $t->save();
 
         $this->assertEquals(Testing::Query(["name" => "abc"])->count(), 1);
 
-        $n = new Testing($t->testing_id);
+        $n = Testing::Get($t->testing_id);
         $n->delete();
 
         $this->assertEquals(Testing::Query(["name" => "abc"])->count(), 0);
@@ -184,12 +184,12 @@ final class ModelTest extends TestCase
     public function testUpdate()
     {
         Testing::_table()->truncate();
-        $t = new Testing();
+        $t = Testing::Create();
         $t->name = "abc";
         $t->save();
 
 
-        $t = new Testing($t->testing_id);
+        $t = Testing::Get($t->testing_id);
         $t->name = "xyz";
         $t->save();
         $this->assertEquals(Testing::Query(["name" => "xyz"])->count(), 1);
@@ -197,7 +197,7 @@ final class ModelTest extends TestCase
 
     public function testGet()
     {
-        $u = new User(1);
+        $u = User::Get(1);
 
         $a = $u->first_name;
         $this->assertInstanceOf(User::class, $u);
@@ -209,6 +209,7 @@ final class ModelTest extends TestCase
 
 
         $user = $ul->User();
+
         $this->assertInstanceOf(User::class, $user);
 
 
@@ -220,7 +221,7 @@ final class ModelTest extends TestCase
 
     public function testCall()
     {
-        $u = new User(1);
+        $u = User::Get(1);
         $this->assertInstanceOf(R\DB\Query::class, $u->UserList);
 
         $ul = $u->UserList->First();
@@ -267,13 +268,13 @@ final class ModelTest extends TestCase
         $table = Testing2::_table();
         $table->truncate();
         //insert
-        $o = new Testing2();
+        $o = Testing2::Create();
         $o->name = "null test";
         $o->null_field = null;
         $o->not_null_field = null;
         $o->save();
 
-        $o1 = new Testing2($o->testing_id);
+        $o1 = Testing2::Get($o->testing_id);
         $this->assertNull($o1->null_field);
         $this->assertEquals("", $o1->not_null_field);
 
@@ -283,7 +284,7 @@ final class ModelTest extends TestCase
         $o1->not_null_field = null;
         $o->save();
 
-        $o2 = new Testing2($o1->testing_id);
+        $o2 =  Testing2::Get($o1->testing_id);
         $this->assertNull($o2->null_field);
         $this->assertEquals("", $o2->not_null_field);
     }
@@ -292,7 +293,7 @@ final class ModelTest extends TestCase
     {
         Testing2::_table()->truncate();
 
-        $o = new Testing2();
+        $o = Testing2::Create();
         $o->name = ["a", "b", "c"];
         $o->save();
 
@@ -301,18 +302,18 @@ final class ModelTest extends TestCase
     public function test_save_array()
     {
         Testing2::_table()->truncate();
-        $o = new Testing2();
+        $o = Testing2::Create();
         $o->name = ["a", "b", "c"];
         $o->save();
 
-        $o1 = new Testing2($o->testing2_id);
+        $o1 = Testing2::Get($o->testing2_id);
         $this->assertEquals("a,b,c", $o1->name);
     }
 
     public function test_bind()
     {
 
-        $testing = new Testing();
+        $testing = Testing::Create();
         $testing->bind([
             "name" => "testing"
         ]);
@@ -323,7 +324,7 @@ final class ModelTest extends TestCase
     public function test_bind2()
     {
 
-        $testing = new Testing();
+        $testing = Testing::Create();
         $testing->bind([
             "name" => ["testing"]
         ]);

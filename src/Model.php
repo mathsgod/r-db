@@ -4,13 +4,11 @@ namespace R\DB;
 
 use ArrayIterator;
 use ArrayObject;
-use PDO;
 use Exception;
 use IteratorAggregate;
 use JsonSerializable;
 use ReflectionObject;
 use Laminas\Db\Sql\Predicate;
-use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
 use Psr\Http\Message\UploadedFileInterface;
@@ -55,65 +53,11 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         return self::$_schema;
     }
 
-    function __construct($id = null)
+    private function __construct()
     {
         $key = self::_key();
-        if (is_null($id)) {
-            if ($this->$key) { //already fetch from pdo
-                foreach ($this->__fields() as $field) {
-                    if (property_exists($this, $field)) {
-                        $this->_original[$field] = $this->$field;
-                    }
-                }
 
-                foreach ($this->_fields as $name => $value) {
-                    $this->_original[$name] = $value;
-                }
-
-                foreach ($this->_original as $name => $value) {
-                    $attribute = $this->__attribute($name);
-                    switch ($attribute["Type"]) {
-                        case "json":
-                            $this->_original[$name] = json_decode($value ?? "", true);
-                            break;
-                        case "tinyint(1)":
-                            $this->_original[$name] = (bool)$value;
-                            break;
-                        default:
-                            $this->_original[$name] = $value;
-                            break;
-                    }
-                }
-                $this->_fields = [];
-
-                return;
-            }
-        } else {
-            if (is_null($key)) {
-                throw new Exception("Key not found");
-            }
-
-            $table = static::_table()->name;
-            $select = new Select($table);
-
-            if (is_array($id)) {
-                foreach ($id as $k => $v) {
-                    if (in_array($k, $key)) {
-                        $select->where([$k => $v]);
-                    }
-                }
-            } else {
-                $select->where([$key => $id]);
-            }
-
-            $sql = $select->getSqlString(static::GetSchema()->getPlatform());
-            $s = static::GetSchema()->prepare($sql);
-            $s->execute();
-            $s->setFetchMode(PDO::FETCH_INTO, $this);
-            if ($s->fetch() === false) {
-                throw new Exception("Record not found. Table: $table, Key: $key, ID: $id");
-            }
-
+        if ($this->$key) { //already fetch from pdo
             foreach ($this->__fields() as $field) {
                 if (property_exists($this, $field)) {
                     $this->_original[$field] = $this->$field;
@@ -121,6 +65,10 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             }
 
             foreach ($this->_fields as $name => $value) {
+                $this->_original[$name] = $value;
+            }
+
+            foreach ($this->_original as $name => $value) {
                 $attribute = $this->__attribute($name);
                 switch ($attribute["Type"]) {
                     case "json":
@@ -134,8 +82,9 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
                         break;
                 }
             }
-
             $this->_fields = [];
+
+            return;
         }
     }
 
@@ -505,7 +454,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         if (self::__attribute($key)) {
             $id = $this->$key;
             if (!$id) return null;
-            return new $class($this->$key);
+            return $class::Get($this->$key);
         }
 
         $key = static::_key();
