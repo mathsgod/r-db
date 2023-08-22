@@ -11,11 +11,13 @@ use Laminas\Db\Adapter\Platform\PlatformInterface;
 use Laminas\Db\Sql\Delete;
 use Laminas\Db\Sql\Expression;
 use Laminas\Db\Sql\Update;
+use Laminas\Di\Injector;
 use Laminas\Paginator\Adapter\Callback;
 use Laminas\Paginator\Paginator;
 use R\DB\Paginator\Adapter;
 use Traversable;
 use PDO;
+use ReflectionClass;
 
 /**
  * @template T
@@ -139,7 +141,24 @@ class Query extends Select implements IteratorAggregate
         if ($this->_custom_column) {
             $this->statement->setFetchMode(PDO::FETCH_ASSOC);
         } else {
-            $this->statement->setFetchMode(PDO::FETCH_CLASS, $this->class);
+
+            //dependency injection
+
+            //reflection 
+            $ref = new ReflectionClass($this->class);
+            $ref_params = $ref->getConstructor()->getParameters();
+            $ref_params = array_map(function ($item) {
+                return $item->getClass()->getName();
+            }, $ref_params);
+
+
+            $injector = new Injector(null, $this->schema->getContainer());
+            $args = [];
+            foreach ($ref_params as $param) {
+                $args[] = $injector->create($param);
+            }
+
+            $this->statement->setFetchMode(PDO::FETCH_CLASS, $this->class, $args);
         }
 
         $a = collect([]);

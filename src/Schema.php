@@ -17,6 +17,7 @@ use Laminas\Db\TableGateway\TableGateway;
 use Laminas\Db\TableGateway\TableGatewayInterface;
 use League\Event\EventDispatcherAware;
 use League\Event\EventDispatcherAwareBehavior;
+use Psr\Container\ContainerInterface;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -41,6 +42,8 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
     private $charset;
     private $port;
     private $options;
+
+    protected $container;
 
     public function __construct(string $database, string $hostname, string $username, string $password = "", string $charset = "utf8mb4", int $port = 3306, ?array $options = null)
     {
@@ -73,6 +76,16 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
             "driver" => "Pdo_Mysql",
             "driver_options" => $driver_options
         ]);
+    }
+
+    public function setContainer(ContainerInterface $container = null)
+    {
+        $this->container = $container;
+    }
+
+    public function getContainer(): ?ContainerInterface
+    {
+        return $this->container;
     }
 
     public function backup(string $filename): bool
