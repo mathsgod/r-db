@@ -2,10 +2,8 @@
 
 namespace R\DB;
 
-use Laminas\Db\Sql\Ddl\AlterTable;
 use Laminas\Db\Sql\Ddl\Column;
 use Laminas\Db\Sql\Ddl\CreateTable;
-
 
 class Stream
 {
