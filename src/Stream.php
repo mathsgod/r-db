@@ -136,6 +136,10 @@ class Stream
 
     function unlink($path)
     {
+        if ($this->url_stat($path, 0) === false) {
+            return false;
+        }
+
         $url = parse_url($path);
         $this->query = $url["query"] ?? "";
         $this->class = $url["host"];
@@ -159,7 +163,7 @@ class Stream
         $url = parse_url($path);
         $table = $url["host"];
 
-        $schema = Q($table)->getSchema();
+        $schema = self::$Schema[$url["scheme"]];
         $schema->dropTable($table);
         return true;
     }
@@ -173,7 +177,7 @@ class Stream
         $query = [];
         parse_str($url["query"], $query);
 
-        $schema = Q($table)->getSchema();
+        $schema = self::$Schema[$url["scheme"]];
 
         $columns = $query["columns"];
         $schema->createTable($table, function (CreateTable $table) use ($columns) {
@@ -204,7 +208,7 @@ class Stream
         $url = parse_url($to);
         $newTable = $url["host"];
 
-        $schema = Q($table)->getSchema();
+        $schema = self::$Schema[$url["scheme"]];
         $schema->renameTable($table, $newTable);
         return true;
     }
@@ -216,6 +220,7 @@ class Stream
 
         $schema = self::$Schema[$url["scheme"]];
         $table = $url["host"];
+
 
         if ($schema->hasTable($table)) {
             return [
