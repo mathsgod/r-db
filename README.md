@@ -109,6 +109,22 @@ echo file_get_contents("db://User/1?fields[]=user_id&fields[]=username");
 ```
 
 
+### List by filter
+```php
+
+$query=http_build_query([
+    "filters"=>[
+        "status"=>[
+            "eq"=>1
+        ]
+    ]
+]);
+
+file_get_contents("db://User?$query"); //List all user with status=1
+
+```
+
+
 ## Schema Aware
 You can define a static method GetSchema() in your class to define the schema of the table
 ```php
