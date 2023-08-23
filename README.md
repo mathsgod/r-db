@@ -54,7 +54,7 @@ class User{
 }
 
 print_r(Q(User::class)->populate([
-    Q(UserRole:class)
+    UserRole::class=>[]
 ])->get());
 
 /* 
@@ -79,6 +79,19 @@ Array
 
 )
 */
+```
+
+### Stream wrapper
+
+By using stream wrapper, you can access the database table as a file
+
+```php
+use R\DB\Schema;
+use R\DB\Stream;
+
+Stream::Register(Schema::Create(), "db");
+print_r(json_decode(file_get_contents("db://User"), true));
+
 ```
 
 ### Schema Aware

@@ -1,9 +1,44 @@
 <?php
 
 use R\DB\Schema;
+use R\DB\Stream;
+
+use function R\DB\Q;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+/* class User
+{
+}
+
+class UserRole
+{
+}
+ */
+
+Stream::Register(Schema::Create(), "db");
+
+$q = http_build_query([
+    "fields" => ["user_id", "username"],
+    /*     "filters" => [
+        "user_id" => [
+            "eq" => 1
+        ]
+    ],
+ */    "sort" => "username:desc",
+    "populate" => [
+        "UserRole" => [
+            "fields" => ["user_id"]
+        ]
+    ]
+
+]);
+
+
+print_r(json_decode(file_get_contents("db://User?meta=1"), true));
+
+
+die();
 
 print_r(Schema::Create()->getMetadata());
 die();
@@ -25,14 +60,6 @@ class Service implements ServiceInterface
 $container = new League\Container\Container();
 $container->add(ServiceInterface::class, new Service);
 
-class User extends \R\DB\Model
-{
-    public $_service;
-    public function __construct(?ServiceInterface $service)
-    {
-        echo $service->name . "\n";
-    }
-}
 
 
 User::Get(1);

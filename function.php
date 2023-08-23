@@ -7,7 +7,7 @@ namespace R\DB;
  * @param class-string<T> $class
  * @return Q<T>
  */
-function Q(string $class)
+function Q(string $class, array $query = [])
 {
-    return new Q($class);
+    return new Q($class, $query);
 }
