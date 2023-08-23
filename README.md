@@ -90,9 +90,24 @@ use R\DB\Schema;
 use R\DB\Stream;
 
 Stream::Register(Schema::Create(), "db");
-print_r(json_decode(file_get_contents("db://User"), true));
+echo file_get_contents("db://User"); //List all users
 
 ```
+
+### List single record
+```php
+echo file_get_contents("db://User/1"); //List user with primary key 1
+``` 
+
+### List by fields
+```php
+//List all user with fields first_name and last_name
+echo file_get_contents("db://User?fields[]=first_name&fields[]=last_name"); 
+
+//List user with primary key 1 and field username
+echo file_get_contents("db://User/1?fields[]=user_id&fields[]=username"); 
+```
+
 
 ## Schema Aware
 You can define a static method GetSchema() in your class to define the schema of the table
