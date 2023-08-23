@@ -299,6 +299,10 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
     }
 
 
+    public function renameTable(string $old_name, string $new_name)
+    {
+        return $this->adapter->query("ALTER TABLE $old_name RENAME TO $new_name", Adapter::QUERY_MODE_EXECUTE);
+    }
 
     public function alterTable(string $name, callable $call)
     {

@@ -1,5 +1,7 @@
 <?php
 
+use Laminas\Db\Sql\Ddl\Column\Integer;
+use Laminas\Db\Sql\Ddl\Column\Varchar;
 use R\DB\Schema;
 use R\DB\Stream;
 
@@ -17,7 +19,54 @@ class UserRole
  */
 
 Stream::Register(Schema::Create(), "db");
+rename("db://Testing5", "db://Testing4");
 
+
+die();
+
+$q = http_build_query([
+    "columns" => [
+        "user_id" => [
+            "type" => "int",
+        ],
+        "username" => [
+            "type" => "varchar",
+            "length" => 255,
+        ],
+    ]
+]);
+
+
+
+/* var_dump(mkdir("db://Testing5?$q"));
+
+rmdir("db://Testing5"); */
+//("db://Testing/1", "db://Testing/2");
+
+die();
+
+//remove file
+$q = http_build_query([
+    "filters" => [
+        "testing_id" => [
+            "eq" => 2
+        ]
+    ],
+]);
+
+echo $q;
+die;
+
+unlink("db://Testing?$q");
+
+die();
+
+file_put_contents("db://User/11", json_encode([
+    "username" => "power1"
+]));
+
+
+die();
 $q = http_build_query([
     "fields" => ["user_id", "username"],
     /*     "filters" => [
@@ -35,7 +84,7 @@ $q = http_build_query([
 ]);
 
 
-print_r(json_decode(file_get_contents("db://User?meta=1"), true));
+print_r(json_decode(file_get_contents("db://User"), true));
 
 
 die();

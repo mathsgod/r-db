@@ -127,11 +127,18 @@ echo file_get_contents("db://User?$query"); //List all user with status=1
 
 ### List by limit and offset
 ```php
-
 echo file_get_contents("db://User?limit=10&offset=0"); //List first 10 users
-
 ```
 
+### Rename table
+```php
+rename("db://User","db://User2"); //rename table User to User2
+```
+
+### Drop table
+```php
+unlink("db://User2"); //drop table User2
+```
 
 ## Schema Aware
 You can define a static method GetSchema() in your class to define the schema of the table

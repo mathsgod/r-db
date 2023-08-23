@@ -3,7 +3,6 @@
 namespace R\DB;
 
 use Closure;
-use Laminas\Db\Adapter\Platform\Mysql;
 use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
@@ -189,7 +188,7 @@ class Q
         return clone $this;
     }
 
-    private function getSchema(): Schema
+    public function getSchema(): Schema
     {
         if (!class_exists($this->class)) {
             return Schema::Create();
@@ -305,5 +304,36 @@ class Q
         return [
             "total" => ($clone->get()[0])->count
         ];
+    }
+
+    public function insert(array $data)
+    {
+        $schema = $this->getSchema();
+        $table = $schema->getTable($this->getTableName());
+
+        $primary_key = $this->getPrimaryKey();
+
+        if (isset($data[$primary_key])) {
+            unset($data[$primary_key]);
+        }
+
+        return $table->insert($data);
+    }
+
+    public function update(array $data)
+    {
+        $schema = $this->getSchema();
+        $table = $schema->getTable($this->getTableName());
+
+        $primary_key = $this->getPrimaryKey();
+
+        return $table->update($data, [$primary_key => $data[$primary_key]]);
+    }
+
+    public function delete()
+    {
+        $schema = $this->getSchema();
+        $table = $schema->getTable($this->getTableName());
+        return $table->delete($this->select->where);
     }
 }

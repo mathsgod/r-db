@@ -2,6 +2,11 @@
 
 namespace R\DB;
 
+use Laminas\Db\Sql\Ddl\AlterTable;
+use Laminas\Db\Sql\Ddl\Column;
+use Laminas\Db\Sql\Ddl\CreateTable;
+
+
 class Stream
 {
 
@@ -98,26 +103,19 @@ class Stream
 
     function stream_write($data)
     {
-
-
-        $data = json_decode($data, true);
         $strlen = strlen($data);
+        $data = json_decode($data, true);
 
-        if (is_numeric($id = $this->_segment[0])) {
-            //update
-            $key = $this->table->getPrimaryKeys()[0];
-            $ret = $this->table->update($data, [$key => $id]);
+
+        $path = substr($this->path, 1);
+
+        if (is_numeric($path)) {
+            $q = Q($this->class);
+            $data[$q->getPrimaryKey()] = $path;
+            $q->update($data);
         } else {
             //insert
-
-            if (count($data) == count($data, COUNT_RECURSIVE)) {
-                //sigle insert
-                $this->table->insert($data);
-            } else {
-                foreach ($data as $records) {
-                    $this->table->insert($records);
-                }
-            }
+            Q($this->class)->insert($data);
         }
         return $strlen;
     }
@@ -135,5 +133,80 @@ class Stream
     function stream_seek($offset, $step)
     {
         //No need to be implemented
+    }
+
+    function unlink($path)
+    {
+        $url = parse_url($path);
+        $this->query = $url["query"] ?? "";
+        $this->class = $url["host"];
+        $this->path = $url["path"] ?? "";
+
+        $query = [];
+        parse_str($this->query, $query);
+        $q = Q($this->class, $query);
+
+
+        $id = substr($this->path, 1);
+        if ($id) {
+            $q->where([$q->getPrimaryKey() => $id]);
+        }
+
+        return $q->delete();
+    }
+
+    public function rmdir($path)
+    {
+        $url = parse_url($path);
+        $table = $url["host"];
+
+        $schema = Q($table)->getSchema();
+        $schema->dropTable($table);
+        return true;
+    }
+
+    public function mkdir($path)
+    {
+        //create table
+        $url = parse_url($path);
+        $table = $url["host"];
+
+        $query = [];
+        parse_str($url["query"], $query);
+
+        $schema = Q($table)->getSchema();
+
+        $columns = $query["columns"];
+        $schema->createTable($table, function (CreateTable $table) use ($columns) {
+
+            foreach ($columns as $name => $column) {
+
+                switch ($column["type"]) {
+
+                    case "int":
+                        $table->addColumn(new Column\Integer($name));
+                        break;
+
+                    case "varchar":
+                        $table->addColumn(new Column\Varchar($name, $column["length"]));
+                        break;
+                }
+            }
+        });
+
+        return true;
+    }
+
+    public function rename(string $from, string $to)
+    {
+        $url = parse_url($from);
+        $table = $url["host"];
+
+        $url = parse_url($to);
+        $newTable = $url["host"];
+
+        $schema = Q($table)->getSchema();
+        $schema->renameTable($table, $newTable);
+        return true;
     }
 }
