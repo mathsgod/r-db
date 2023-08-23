@@ -54,7 +54,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         return self::$_schema;
     }
 
-    private function __construct()
+    public function __construct()
     {
         $key = self::_key();
 
