@@ -12,7 +12,6 @@ use Laminas\Db\Sql\Delete;
 use Laminas\Db\Sql\Expression;
 use Laminas\Db\Sql\Update;
 use Laminas\Di\Injector;
-use Laminas\Paginator\Adapter\Callback;
 use Laminas\Paginator\Paginator;
 use R\DB\Paginator\Adapter;
 use Traversable;
@@ -151,11 +150,14 @@ class Query extends Select implements IteratorAggregate
                 return $item->getClass()->getName();
             }, $ref_params);
 
-
-            $injector = new Injector(null, $this->schema->getContainer());
+            $container = $this->schema->getContainer();
             $args = [];
             foreach ($ref_params as $param) {
-                $args[] = $injector->create($param);
+                if ($container->has($param)) {
+                    $args[] = $container->get($param);
+                } else {
+                    $args[] = null;
+                }
             }
 
             $this->statement->setFetchMode(PDO::FETCH_CLASS, $this->class, $args);

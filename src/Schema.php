@@ -104,9 +104,14 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         return $return_var === 0;
     }
 
+    protected static $Instance;
 
-    static function Create()
+    static function Create(): Schema
     {
+        if (self::$Instance) {
+            return self::$Instance;
+        }
+
         //load from .env
         $dotenv = \Dotenv\Dotenv::createImmutable(getcwd());
         $dotenv->load();
@@ -117,7 +122,8 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         $username = $_ENV["DATABASE_USERNAME"];
         $password = $_ENV["DATABASE_PASSWORD"];
         $charset = $_ENV["DATABASE_CHARSET"] ?? "utf8mb4";
-        return new Schema($name, $host, $username, $password, $charset, $port);
+        self::$Instance = new Schema($name, $host, $username, $password, $charset, $port);
+        return self::$Instance;
     }
 
     function beginTransaction(): bool

@@ -1,10 +1,12 @@
 <?php
 
-use Laminas\Di\Injector;
+use R\DB\Schema;
 
 require_once __DIR__ . '/vendor/autoload.php';
-
-class Service
+interface ServiceInterface
+{
+}
+class Service implements ServiceInterface
 {
     public $name = 'Service';
     public function __construct()
@@ -13,20 +15,31 @@ class Service
     }
 }
 
-/* $container = new League\Container\Container();
 
-$container->add(Service::class);
- */
+$container = new League\Container\Container();
+$container->add(ServiceInterface::class, new Service);
 
 class User extends \R\DB\Model
 {
     public $_service;
-    public function __construct(Service $service)
+    public function __construct(?ServiceInterface $service)
     {
-        $this->_service = $service;
-        $service->name = 'Service 2';
+        echo $service->name . "\n";
     }
 }
+Schema::Create()->setContainer($container);
+
+User::Get(1);
+
+die;
+
+
+
+
+print_r($container->get(ServiceInterface::class));
+print_r($container->get(ServiceInterface::class));
+print_r($container->get(ServiceInterface::class));
+die();
 
 /* $container->add(User::class)->addArgument(Service::class);
 
@@ -34,19 +47,18 @@ print_r($container->get(User::class));
 die();
  */
 
-/* print_r(User::Query()->toArray());
-die(); */
+User::GetSchema()->setContainer($container);
 
-$container = new League\Container\Container();
-$container->add(Service::class, new Service());
+User::Query()->toArray();
+die();
+$ref = new ReflectionClass(User::class);
+$param = $ref->getConstructor()->getParameters()[1];
 
-
-
-$injector = new Injector(null, $container);
-
-print_R($injector->getContainer()->get(Service::class));
-die;
+print_r($param->getAttributes()[0]->getName());
 
 
+die();
 
-print_r($injector->create(User::class));
+
+
+

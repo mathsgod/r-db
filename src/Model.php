@@ -11,6 +11,7 @@ use ReflectionObject;
 use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
+use Laminas\Di\Injector;
 use Psr\Http\Message\UploadedFileInterface;
 use ReflectionClass;
 use ReturnTypeWillChange;
@@ -113,7 +114,9 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     static function Create(?array $data = [])
     {
 
-        $obj = new static;
+        $injector = new Injector(null, self::GetSchema()->getContainer());
+
+        $obj = $injector->create(static::class);
 
         $fields = $obj->__fields();
         foreach ($data as $field => $value) {
