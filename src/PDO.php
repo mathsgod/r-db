@@ -18,7 +18,7 @@ class PDO extends Schema implements PDOInterface
             "charset" => "utf8mb4"
         ];
 
-        foreach ($str as $key => $value) {
+        foreach ($str as $value) {
             $values = explode("=", $value);
             $s[$values[0]] = $values[1];
         }
