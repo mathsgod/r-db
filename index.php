@@ -3,6 +3,12 @@
 use R\DB\Schema;
 
 require_once __DIR__ . '/vendor/autoload.php';
+
+
+print_r(Schema::Create()->getMetadata());
+die();
+
+
 interface ServiceInterface
 {
 }
@@ -27,7 +33,7 @@ class User extends \R\DB\Model
         echo $service->name . "\n";
     }
 }
-Schema::Create()->setContainer($container);
+
 
 User::Get(1);
 
@@ -58,7 +64,3 @@ print_r($param->getAttributes()[0]->getName());
 
 
 die();
-
-
-
-

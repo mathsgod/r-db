@@ -66,7 +66,7 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
             $driver_options = $driver_options + $options;
         }
 
-        $this->adapter = new Adapter([
+        $this->setDbAdapter(new Adapter([
             "database" => $database,
             "hostname" => $hostname,
             "username" => $username,
@@ -75,7 +75,7 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
             "charset" => $charset,
             "driver" => "Pdo_Mysql",
             "driver_options" => $driver_options
-        ]);
+        ]));
     }
 
     public function setContainer(ContainerInterface $container = null)
@@ -179,11 +179,6 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
             $this->validator = Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
         }
         return $this->validator;
-    }
-
-    public function getDbAdatpter()
-    {
-        return $this->adapter;
     }
 
     function getAdapter(): AdapterInterface

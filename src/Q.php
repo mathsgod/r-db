@@ -105,7 +105,6 @@ class Q
     private function getSchema(): Schema
     {
         $ref_class = new ReflectionClass($this->class);
-        $short_name = $ref_class->getShortName();
 
         if (in_array(SchemaAwareInterface::class, $ref_class->getInterfaceNames())) {
             return $ref_class->getMethod("GetSchema")->invoke(null);

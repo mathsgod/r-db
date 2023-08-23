@@ -388,7 +388,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
     static function __table_gateway()
     {
-        return new TableGateway(self::_table()->name, static::GetSchema()->getDbAdatpter());
+        return new TableGateway(self::_table()->name, static::GetSchema()->getAdapter());
     }
 
     function _id()
