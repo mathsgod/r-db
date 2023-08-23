@@ -120,7 +120,14 @@ $query=http_build_query([
     ]
 ]);
 
-file_get_contents("db://User?$query"); //List all user with status=1
+echo file_get_contents("db://User?$query"); //List all user with status=1
+
+```
+
+### List by limit and offset
+```php
+
+echo file_get_contents("db://User?limit=10&offset=0"); //List first 10 users
 
 ```
 
