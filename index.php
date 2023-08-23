@@ -19,7 +19,9 @@ class UserRole
  */
 
 Stream::Register(Schema::Create(), "db");
-rename("db://Testing5", "db://Testing4");
+//rename("db://Testing5", "db://Testing4");
+
+var_dump(file_exists("db://User"));
 
 
 die();

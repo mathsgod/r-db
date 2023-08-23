@@ -16,19 +16,19 @@ class Stream
     private $table;
 
     /**
-     * @var PDOInterface[]
+     * @var Schema[]
      */
-    private static $Stream = [];
+    private static $Schema = [];
 
     protected $mode;
     protected $class;
     protected $query;
     protected $path;
 
-    public static function Register(PDOInterface $pdo, $protocol, $flags = 0)
+    public static function Register(Schema $schema, $protocol, $flags = 0)
     {
         stream_wrapper_register($protocol, __CLASS__, $flags) or die("Failed to register protocol");
-        self::$Stream[$protocol] = $pdo;
+        self::$Schema[$protocol] = $schema;
     }
 
     public function stream_stat()
@@ -40,7 +40,6 @@ class Stream
     {
 
         $url = parse_url($path);
-        $pdo = self::$Stream[$url["scheme"]];
 
         $this->query = $url["query"] ?? "";
 
@@ -208,5 +207,34 @@ class Stream
         $schema = Q($table)->getSchema();
         $schema->renameTable($table, $newTable);
         return true;
+    }
+
+
+    public function url_stat(string $path, int $flags)
+    {
+        $url = parse_url($path);
+
+        $schema = self::$Schema[$url["scheme"]];
+        $table = $url["host"];
+
+        if ($schema->hasTable($table)) {
+            return [
+                "dev" => 0,
+                "ino" => 0,
+                "mode" => 0,
+                "nlink" => 0,
+                "uid" => 0,
+                "gid" => 0,
+                "rdev" => 0,
+                "size" => 0,
+                "atime" => 0,
+                "mtime" => 0,
+                "ctime" => 0,
+                "blksize" => 0,
+                "blocks" => 0
+            ];
+        }
+
+        return false;
     }
 }

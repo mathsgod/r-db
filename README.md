@@ -130,6 +130,11 @@ echo file_get_contents("db://User?$query"); //List all user with status=1
 echo file_get_contents("db://User?limit=10&offset=0"); //List first 10 users
 ```
 
+### Check if table exists
+```php
+file_exists("db://User"); //return true if table User exists
+```
+
 ### Rename table
 ```php
 rename("db://User","db://User2"); //rename table User to User2
