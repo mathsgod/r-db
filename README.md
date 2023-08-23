@@ -85,13 +85,14 @@ Array
 
 By using stream wrapper, you can access the database table as a file
 
+
 ```php
 use R\DB\Schema;
 use R\DB\Stream;
 
 Stream::Register(Schema::Create(), "db");
-echo file_get_contents("db://User"); //List all users
-
+echo file_get_contents("db://User"); //List all users, User is the table name
+// User can also be a class name, it will auto convert to table name
 ```
 
 ### List single record
