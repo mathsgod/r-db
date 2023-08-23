@@ -81,7 +81,7 @@ Array
 */
 ```
 
-### Stream wrapper
+## Stream wrapper
 
 By using stream wrapper, you can access the database table as a file
 
@@ -94,7 +94,7 @@ print_r(json_decode(file_get_contents("db://User"), true));
 
 ```
 
-### Schema Aware
+## Schema Aware
 You can define a static method GetSchema() in your class to define the schema of the table
 ```php
 class User implements SchemaAwareInterface{
