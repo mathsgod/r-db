@@ -23,23 +23,42 @@ DATABASE_CHARSET=
 Function Q is a fast way to select data from database.
 ### simple select
 
+This will select all data from table User and output as array of stdClass
 ```php
 use function R\DB\Q;
-class User{ //simple class file
-
-}
-
-print_r(Q(User::class)->get()); // select * from User
+print_r(Q("User")->get()); // select * from User
 
 ```
+
+### output with class asscociation
+
+You can also output as class association
+
+```php
+class User{
+
+}
+print_r(Q(User::class)->get()); // select * from User
+```
+
 
 ### select with fields and filter
 filter parameter is based on laminas-db where 
 
 ```php
-print_r(Q(User::class)->fields(["user_id","username"])->filter(["type"=>1])->get()); 
+print_r(Q("User")->fields(["user_id","username"])->filter(["type"=>1])->get()); 
 // select user_id,username from User where type=1
 
+```
+
+### select with limit and offset
+```php
+print_r(Q("User")->limit(10)->offset(0)->get()); // select * from User limit 10 offset 0
+```
+
+### select with order
+```php
+print_r(Q("User")->order("user_id desc")->get()); // select * from User order by user_id desc
 ```
 
 ### populate
