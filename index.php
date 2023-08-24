@@ -8,15 +8,38 @@ use R\DB\Stream;
 use function R\DB\Q;
 
 require_once __DIR__ . '/vendor/autoload.php';
-
-/* class User
+interface ServiceInterface
 {
 }
-
-class UserRole
+class Service implements ServiceInterface
 {
+    public $name = 'Service';
+    public function __construct()
+    {
+        echo "constructing service " . time() . "\n";
+    }
 }
- */
+
+class User
+{
+    public function __construct(ServiceInterface $service)
+    {
+        $this->service = $service;
+    }
+}
+
+
+
+$container = new League\Container\Container();
+$container->add(ServiceInterface::class, new Service);
+
+Schema::Create()->setContainer($container);
+
+
+
+print_R(Q(User::class)->get());
+
+die();
 
 Stream::Register(Schema::Create(), "db");
 //rename("db://Testing5", "db://Testing4");
@@ -94,18 +117,6 @@ die();
 print_r(Schema::Create()->getMetadata());
 die();
 
-
-interface ServiceInterface
-{
-}
-class Service implements ServiceInterface
-{
-    public $name = 'Service';
-    public function __construct()
-    {
-        echo "constructing service " . time() . "\n";
-    }
-}
 
 
 $container = new League\Container\Container();

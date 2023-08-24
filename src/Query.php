@@ -144,21 +144,22 @@ class Query extends Select implements IteratorAggregate
             //dependency injection
 
             //reflection 
-            $ref = new ReflectionClass($this->class);
-            $ref_params = $ref->getConstructor()->getParameters();
-            $ref_params = array_map(function ($item) {
-                return $item->getClass()->getName();
-            }, $ref_params);
-
-            $container = $this->schema->getContainer();
             $args = [];
-            foreach ($ref_params as $param) {
-                if ($container->has($param)) {
-                    $args[] = $container->get($param);
-                } else {
-                    $args[] = null;
+            $ref_class = new ReflectionClass($this->class);
+            if ($constructor = $ref_class->getConstructor()) {
+                $ref_params = array_map(function ($item) {
+                    return $item->getClass()->getName();
+                }, $constructor->getParameters());
+                $container = $this->schema->getContainer();
+                foreach ($ref_params as $param) {
+                    if ($container->has($param)) {
+                        $args[] = $container->get($param);
+                    } else {
+                        $args[] = null;
+                    }
                 }
             }
+
 
             $this->statement->setFetchMode(PDO::FETCH_CLASS, $this->class, $args);
         }

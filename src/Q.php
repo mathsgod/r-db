@@ -218,6 +218,12 @@ class Q
         return  $schema->getTablePrimaryKey($this->getTableName());
     }
 
+    public function getFields()
+    {
+        $schema = $this->getSchema();
+        return  $schema->getTable($this->getTableName())->getColumns();
+    }
+
     /**
      * @return array<T>
      */
@@ -248,19 +254,83 @@ class Q
         $statement = $schema->prepare($sql);
         $statement->execute();
 
+
+        $need_hydrator = false;
         if (count($this->fields) > 0) {
             $statement->setFetchMode(PDO::FETCH_CLASS, stdClass::class);
         } else {
+            $need_hydrator = true;
             if (class_exists($this->class)) {
-                $statement->setFetchMode(PDO::FETCH_CLASS, $this->class);
+
+
+                //injection
+                //reflection 
+                $args = [];
+                $ref_class = new ReflectionClass($this->class);
+                if ($constructor = $ref_class->getConstructor()) {
+                    $ref_params = array_map(function ($item) {
+                        return $item->getClass()->getName();
+                    }, $constructor->getParameters());
+
+                    if ($container = $schema->getContainer()) {
+                        foreach ($ref_params as $param) {
+                            if ($container->has($param)) {
+                                $args[] = $container->get($param);
+                            } else {
+                                $args[] = null;
+                            }
+                        }
+                    } else {
+                        $args[] = null;
+                    }
+                }
+
+
+                $statement->setFetchMode(PDO::FETCH_CLASS, $this->class, $args);
             } else {
                 $statement->setFetchMode(PDO::FETCH_CLASS, stdClass::class);
+            }
+        }
+
+        if ($need_hydrator) {
+            $attributes = [];
+            foreach ($this->getFields() as $field) {
+                switch ($field->getType()) {
+                    case "json":
+                        $attributes[$field->getName()] = function ($v) {
+                            if (!is_array($v)) {
+                                return json_decode($v, true);
+                            }
+                            return $v;
+                        };
+                        break;
+                    case "tinyint(1)":
+                        $attributes[$field->getName()] = function ($v) {
+
+                            if (!is_bool($v)) {
+                                return (bool)$v;
+                            }
+                            return $v;
+                        };
+                        break;
+                }
             }
         }
 
 
         $data = [];
         foreach ($statement as $o) {
+
+            if ($need_hydrator) {
+                $o = (function ($o) use ($attributes) {
+                    foreach ($attributes as $name => $callback) {
+                        $o->$name = $callback($o->$name);
+                    }
+                    return $o;
+                })($o);
+            }
+
+
             foreach ($this->populate as $class => $qq) {
 
                 $q = Q($class, $qq);
