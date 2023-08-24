@@ -10,6 +10,7 @@ use Laminas\Db\Sql\Expression;
 use Laminas\Db\Sql\Exception;
 use PDO;
 use ReflectionClass;
+use ReflectionParameter;
 use stdClass;
 
 /**
@@ -262,8 +263,8 @@ class Q
                 $args = [];
                 $ref_class = new ReflectionClass($this->class);
                 if ($constructor = $ref_class->getConstructor()) {
-                    $ref_params = array_map(function ($item) {
-                        return $item->getClass()->getName();
+                    $ref_params = array_map(function (ReflectionParameter $item) {
+                        return $item->getType()->getName();
                     }, $constructor->getParameters());
 
                     if ($container = $schema->getContainer()) {
