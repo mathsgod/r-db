@@ -76,7 +76,7 @@ class Q
                     case "eq":
                         $this->select->where->equalTo($name, $value);
                         break;
-                    case "neq":
+                    case "ne":
                         $this->select->where->notEqualTo($name, $value);
                         break;
                     case "gt":
@@ -94,32 +94,26 @@ class Q
                     case "in":
                         $this->select->where->in($name, $value);
                         break;
-                    case "nin":
+                    case "notIn":
                         $this->select->where->notIn($name, $value);
                         break;
-                    case "like":
-                        $this->select->where->like($name, $value);
+                    case "contains":
+                        $this->select->where->like($name, "%$value%");
                         break;
-                    case "nlike":
-                        $this->select->where->notLike($name, $value);
+                    case "notContains":
+                        $this->select->where->notLike($name, "%$value%");
                         break;
                     case "between":
                         $this->select->where->between($name, $value[0], $value[1]);
                         break;
-                    case "nbetween":
+                    case "notBetween":
                         $this->select->where->notBetween($name, $value[0], $value[1]);
                         break;
                     case "null":
                         $this->select->where->isNull($name);
                         break;
-                    case "nnull":
+                    case "notNull":
                         $this->select->where->isNotNull($name);
-                        break;
-                    case "exists":
-                        $this->select->where->expression("$name IS NOT NULL");
-                        break;
-                    case "nexists":
-                        $this->select->where->expression("$name IS NULL");
                         break;
                 }
             }
