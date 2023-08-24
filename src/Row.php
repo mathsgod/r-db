@@ -2,7 +2,7 @@
 
 namespace R\DB;
 
-use ArrayObject;
+
 use Laminas\Db\Adapter\AdapterAwareInterface;
 use Laminas\Db\Adapter\AdapterAwareTrait;
 use Laminas\Db\RowGateway\RowGatewayInterface;
