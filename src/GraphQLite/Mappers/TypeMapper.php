@@ -10,6 +10,7 @@ use GraphQL\Type\Definition\OutputType;
 use GraphQL\Type\Definition\Type;
 use R\DB\Model;
 use R\DB\Query;
+use ReflectionClass;
 use RuntimeException;
 use TheCodingMachine\GraphQLite\FactoryContext;
 use TheCodingMachine\GraphQLite\Mappers\CannotMapTypeException;
@@ -86,6 +87,9 @@ class TypeMapper implements TypeMapperInterface
                         ],
                         "key" => [
                             "type" => Type::string(),
+                        ], "name" => [
+                            "type" => Type::string(),
+                            "description" => "Name of the records"
                         ]
 
                     ];
@@ -159,6 +163,7 @@ class TypeMapper implements TypeMapperInterface
                                 }
 
                                 return [
+                                    "name" => (new ReflectionClass($root->getClassName()))->getShortName(),
                                     "class" => $root->getClassName(),
                                     "total" => $root->count(),
                                     "key" => $key
