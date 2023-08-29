@@ -227,43 +227,50 @@ class Query extends Select implements IteratorAggregate
         $query = clone $this;
         foreach ($filters as $field => $filter) {
 
-            foreach ($filter as $operator => $value) {
+            if (is_array($filter)) {
 
-                if ($operator == 'eq') {
-                    $query->where->equalTo($field, $value);
-                }
 
-                if ($operator == 'contains') {
-                    $query->where->like($field, "%$value%");
-                }
 
-                if ($operator == 'in') {
-                    $query->where->in($field, $value);
-                }
+                foreach ($filter as $operator => $value) {
 
-                if ($operator == 'between') {
-                    $query->where->between($field, $value[0], $value[1]);
-                }
+                    if ($operator == 'eq') {
+                        $query->where->equalTo($field, $value);
+                    }
 
-                if ($operator == 'gt') {
-                    $query->where->greaterThan($field, $value);
-                }
+                    if ($operator == 'contains') {
+                        $query->where->like($field, "%$value%");
+                    }
 
-                if ($operator == 'gte') {
-                    $query->where->greaterThanOrEqualTo($field, $value);
-                }
+                    if ($operator == 'in') {
+                        $query->where->in($field, $value);
+                    }
 
-                if ($operator == 'lt') {
-                    $query->where->lessThan($field, $value);
-                }
+                    if ($operator == 'between') {
+                        $query->where->between($field, $value[0], $value[1]);
+                    }
 
-                if ($operator == 'lte') {
-                    $query->where->lessThanOrEqualTo($field, $value);
-                }
+                    if ($operator == 'gt') {
+                        $query->where->greaterThan($field, $value);
+                    }
 
-                if ($operator == 'ne') {
-                    $query->where->notEqualTo($field, $value);
+                    if ($operator == 'gte') {
+                        $query->where->greaterThanOrEqualTo($field, $value);
+                    }
+
+                    if ($operator == 'lt') {
+                        $query->where->lessThan($field, $value);
+                    }
+
+                    if ($operator == 'lte') {
+                        $query->where->lessThanOrEqualTo($field, $value);
+                    }
+
+                    if ($operator == 'ne') {
+                        $query->where->notEqualTo($field, $value);
+                    }
                 }
+            } else {
+                $query->where->equalTo($field, $filter);
             }
         }
         return $query;
