@@ -122,6 +122,12 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         $username = $_ENV["DATABASE_USERNAME"];
         $password = $_ENV["DATABASE_PASSWORD"];
         $charset = $_ENV["DATABASE_CHARSET"] ?? "utf8mb4";
+
+        if(!$host) throw new \Exception("DATABASE_HOSTNAME not found in .env");
+        if(!$name) throw new \Exception("DATABASE_DATABASE not found in .env");
+        if(!$username) throw new \Exception("DATABASE_USERNAME not found in .env");
+        
+
         self::$Instance = new Schema($name, $host, $username, $password, $charset, $port);
         return self::$Instance;
     }
