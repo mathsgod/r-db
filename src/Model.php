@@ -150,7 +150,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
      * @param Where|string|int|array $where
      * @return ?static
      */
-    static function Get($where)
+    static function Get($where, array $default = [])
     {
         if (is_numeric($where) || is_string($where)) {
             $key = self::_key();
@@ -159,7 +159,12 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             $q = self::Query($where);
         }
 
-        return $q->first();
+        $obj = $q->first();
+        if ($obj) {
+            return $obj;
+        }
+
+        return self::Create($default);
     }
 
     // change to proxy object later
