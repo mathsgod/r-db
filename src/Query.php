@@ -60,13 +60,13 @@ class Query extends Select implements IteratorAggregate
         return parent::columns($columns, $prefixColumnsWithTable);
     }
 
-    public function count(): int
+    public function count(?string $column="*"): int
     {
         $c = clone $this;
         $c->offset(0);
         $c->limit(1);
         $c->columns([
-            "c" => new Expression("count(*)")
+            "c" => new Expression("count($column)")
         ]);
 
         $sql = $c->getSqlString($this->schema->getPlatform());
