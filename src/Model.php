@@ -148,9 +148,21 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
     /**
      * @param Where|string|int|array $where
+     * @return static
+     */
+    static function GetOrCreate($where, array $default = [])
+    {
+        if ($obj = static::Get($where)) {
+            return $obj;
+        }
+        return static::Create($default);
+    }
+
+    /**
+     * @param Where|string|int|array $where
      * @return ?static
      */
-    static function Get($where, array $default = [])
+    static function Get($where)
     {
         if (is_numeric($where) || is_string($where)) {
             $key = self::_key();
@@ -163,8 +175,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         if ($obj) {
             return $obj;
         }
-
-        return self::Create($default);
+        return null;
     }
 
     // change to proxy object later
