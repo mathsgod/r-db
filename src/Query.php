@@ -46,6 +46,12 @@ class Query extends Select implements IteratorAggregate
         $this->schema = $class::GetSchema();
     }
 
+    private static $Order = [];
+    static function RegisterOrder(string $class, string $name, callable $callback)
+    {
+        self::$Order[$class][$name] = $callback;
+    }
+
     public function getClassName()
     {
         return $this->class;
@@ -60,7 +66,7 @@ class Query extends Select implements IteratorAggregate
         return parent::columns($columns, $prefixColumnsWithTable);
     }
 
-    public function count(?string $column="*"): int
+    public function count(?string $column = "*"): int
     {
         $c = clone $this;
         $c->offset(0);
@@ -217,7 +223,12 @@ class Query extends Select implements IteratorAggregate
         $query = clone $this;
         if ($sort) {
             $s = explode(':', $sort);
-            $query->order($s[0] . " " . $s[1]);
+            //custom order
+            if (isset(self::$Order[$this->class][$s[0]])) {
+                $query->order([self::$Order[$this->class][$s[0]]($s[1])]);
+            } else {
+                $query->order($s[0] . " " . $s[1]);
+            }
         }
         return $query;
     }

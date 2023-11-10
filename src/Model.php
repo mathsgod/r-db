@@ -36,6 +36,11 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
      */
     private $_validator;
 
+    static function RegisterOrder(string $name, callable $callback)
+    {
+        Query::RegisterOrder(get_called_class(), $name, $callback);
+    }
+
     /**
      * @var Schema
      */
