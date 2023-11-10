@@ -442,6 +442,26 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
     function bind($rs)
     {
+        if (is_object($rs)) { // convert to array
+            $rs = (array)$rs;
+        }
+
+        $fields = $this->__fields();
+
+        foreach ($rs as $k => $v) {
+            if (!in_array($k, $fields)) continue;
+            if ($v === null) continue;
+            if ($v === "") {
+                //if this field is nullable, set to null
+                $attribute = $this->__attribute($k);
+                if ($attribute["Null"] == "YES") {
+                    $this->$k = null;
+                }
+            } else {
+                $this->$k = $v;
+            }
+        }
+        /* 
         foreach (array_column(self::__attributes(), "Field") as $field) {
             if (is_object($rs)) {
                 if (property_exists($rs, $field)) {
@@ -452,7 +472,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
                     $this->$field = $rs[$field];
                 }
             }
-        }
+        } */
         return $this;
     }
 
