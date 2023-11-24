@@ -12,8 +12,6 @@
     "require": {
         "php": ">=8.0",
         "ext-pdo": "*",
-        "mathsgod/data-structure": "^1.3",
-        "mathsgod/php-util": "^1.5",
         "laminas/laminas-db": "^2.18",
         "laminas/laminas-hydrator": "^4.2",
         "psr/event-dispatcher": "^1.0",
@@ -24,7 +22,8 @@
         "laminas/laminas-paginator": "^2.11",
         "vlucas/phpdotenv": "^5.4",
         "psr/container": "*",
-        "laminas/laminas-di": "^3.12"
+        "laminas/laminas-di": "^3.12",
+        "illuminate/collections": "^9.52"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.6",
