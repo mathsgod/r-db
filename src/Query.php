@@ -222,12 +222,15 @@ class Query extends Select implements IteratorAggregate
     {
         $query = clone $this;
         if ($sort) {
-            $s = explode(':', $sort);
-            //custom order
-            if (isset(self::$Order[$this->class][$s[0]])) {
-                $query->order([self::$Order[$this->class][$s[0]]($s[1])]);
-            } else {
-                $query->order($s[0] . " " . $s[1]);
+            $sorts = explode(",", $sort);
+            foreach ($sorts as $sort) {
+                $s = explode(':', $sort);
+                //custom order
+                if (isset(self::$Order[$this->class][$s[0]])) {
+                    $query->order([self::$Order[$this->class][$s[0]]($s[1])]);
+                } else {
+                    $query->order($s[0] . " " . $s[1]);
+                }
             }
         }
         return $query;
