@@ -123,13 +123,29 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         $password = $_ENV["DATABASE_PASSWORD"];
         $charset = $_ENV["DATABASE_CHARSET"] ?? "utf8mb4";
 
-        if(!$host) throw new \Exception("DATABASE_HOSTNAME not found in .env");
-        if(!$name) throw new \Exception("DATABASE_DATABASE not found in .env");
-        if(!$username) throw new \Exception("DATABASE_USERNAME not found in .env");
-        
+        if (!$host) throw new \Exception("DATABASE_HOSTNAME not found in .env");
+        if (!$name) throw new \Exception("DATABASE_DATABASE not found in .env");
+        if (!$username) throw new \Exception("DATABASE_USERNAME not found in .env");
+
 
         self::$Instance = new Schema($name, $host, $username, $password, $charset, $port);
         return self::$Instance;
+    }
+
+    function isConnected(): bool
+    {
+        try {
+            $this->adapter->getDriver()->getConnection()->execute("SELECT 1");
+        } catch (\Exception $e) {
+            return false;
+        }
+        return true;
+    }
+
+    public function connect()
+    {
+        self::$Instance = null;
+        self::Create();
     }
 
     function beginTransaction(): bool
