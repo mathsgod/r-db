@@ -132,6 +132,12 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         return self::$Instance;
     }
 
+
+    function getPDO(): PDO
+    {
+        return $this->adapter->getDriver()->getConnection()->getResource();
+    }
+
     function isConnected(): bool
     {
         try {
