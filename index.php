@@ -2,12 +2,31 @@
 
 use Laminas\Db\Sql\Ddl\Column\Integer;
 use Laminas\Db\Sql\Ddl\Column\Varchar;
+use PHPUnit\Framework\Test;
+use R\DB\Model;
 use R\DB\Schema;
 use R\DB\Stream;
 
 use function R\DB\Q;
 
 require_once __DIR__ . '/vendor/autoload.php';
+
+
+class Testing4 extends Model
+{
+}
+//print_r(Testing4::__attributes());die();
+
+$t=Testing4::Get(4);
+$t->c=1233;
+$t->save();
+
+print_R($t);
+
+
+die();
+
+
 interface ServiceInterface
 {
 }

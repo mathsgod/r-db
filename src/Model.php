@@ -169,7 +169,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
      */
     static function Get($where)
     {
-        if($where===null){
+        if ($where === null) {
             return null;
         }
 
@@ -367,6 +367,14 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             $dispatcher->dispatch(new Event\BeforeInsert($this));
             $records = $this->getDBSet();
             $records[$key] = null; // key is auto increment
+
+            foreach ($records as $key => $value) {
+                //if VIRTUAL GENERATED, remove from records
+                $attribute = $this->__attribute($key);
+                if ($attribute["Extra"] == "VIRTUAL GENERATED") {
+                    unset($records[$key]);
+                }
+            }
             $ret = $gateway->insert($records);
 
             $this->$key = $gateway->getLastInsertValue(); //save the id
@@ -389,6 +397,13 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             $records = $this->getDBSet();
             $records[$key] = $this->$key;
 
+            //if VIRTUAL GENERATED, remove from records
+            foreach ($records as $key => $value) {
+                $attribute = $this->__attribute($key);
+                if ($attribute["Extra"] == "VIRTUAL GENERATED") {
+                    unset($records[$key]);
+                }
+            }
 
             $ret = $gateway->update($records, [$key => $this->$key]);
             $dispatcher->dispatch(new Event\AfterUpdate($this));
