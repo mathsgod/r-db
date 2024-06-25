@@ -530,7 +530,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
 
     /**
-     * @return Query<static>
+     * @return Query<static> & iterable<static>
      * @param Where|\Closure|string|array|Predicate\PredicateInterface $predicate
      */
     static function Query($predicate = null, $combination = Predicate\PredicateSet::OP_AND)
