@@ -218,7 +218,7 @@ class Query extends Select implements IteratorAggregate
         return $this->schema->exec($sql);
     }
 
-    public function sort(string $sort)
+    public function sort(?string $sort)
     {
         $query = clone $this;
         if ($sort) {
