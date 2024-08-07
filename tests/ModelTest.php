@@ -273,18 +273,18 @@ final class ModelTest extends TestCase
         $o->null_field = null;
         $o->not_null_field = null;
         $o->save();
-
-        $o1 = Testing2::Get($o->testing_id);
+        
+        $o1 = Testing2::Get($o->testing2_id);
+        
         $this->assertNull($o1->null_field);
         $this->assertEquals("", $o1->not_null_field);
-
 
         //update
         $o1->null_field = null;
         $o1->not_null_field = null;
         $o->save();
 
-        $o2 =  Testing2::Get($o1->testing_id);
+        $o2 =  Testing2::Get($o1->testing2_id);
         $this->assertNull($o2->null_field);
         $this->assertEquals("", $o2->not_null_field);
     }

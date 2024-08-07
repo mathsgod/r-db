@@ -294,7 +294,7 @@ class Q
                     case "json":
                         $attributes[$field->getName()] = function ($v) {
                             if (!is_array($v)) {
-                                return json_decode($v, true);
+                                return json_decode($v ?? '{}', true);
                             }
                             return $v;
                         };
