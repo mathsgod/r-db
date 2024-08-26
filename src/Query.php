@@ -236,10 +236,10 @@ class Query extends Select implements IteratorAggregate
         return $query;
     }
 
-    public function filters(array $filters)
+    public function filters(?array $filters)
     {
         $query = clone $this;
-        foreach ($filters as $field => $filter) {
+        foreach ($filters ?? [] as $field => $filter) {
 
             if (is_array($filter)) {
 
