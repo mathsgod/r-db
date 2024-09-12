@@ -128,6 +128,11 @@ class Query extends Select implements IteratorAggregate
         return [intval($this->limit)];
     }
 
+    public function collect()
+    {
+        return $this->execute();
+    }
+
 
     public function execute(array $input_parameters = [])
     {
