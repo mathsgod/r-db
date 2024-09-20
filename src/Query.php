@@ -133,6 +133,26 @@ class Query extends Select implements IteratorAggregate
         return $this->execute();
     }
 
+    public function max(string $column)
+    {
+        $c = clone $this;
+        $c->columns([
+            "c" => new Expression("max($column)")
+        ]);
+        $sql = $c->getSqlString($this->schema->getPlatform());
+        return $this->schema->query($sql)->fetchColumn(0);
+    }
+
+    public function min(string $column)
+    {
+        $c = clone $this;
+        $c->columns([
+            "c" => new Expression("min($column)")
+        ]);
+        $sql = $c->getSqlString($this->schema->getPlatform());
+        return $this->schema->query($sql)->fetchColumn(0);
+    }
+
 
     public function execute(array $input_parameters = [])
     {
