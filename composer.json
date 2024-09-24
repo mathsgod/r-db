@@ -22,7 +22,6 @@
         "laminas/laminas-paginator": "^2.11",
         "vlucas/phpdotenv": "^5.4",
         "psr/container": "*",
-        "laminas/laminas-di": "^3.12",
         "illuminate/collections": "^9.52|^10.0"
     },
     "require-dev": {

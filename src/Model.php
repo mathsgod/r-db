@@ -119,9 +119,29 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     static function Create(?array $data = [])
     {
 
-        $injector = new Injector(null, self::GetSchema()->getContainer());
+        //container
+        $container = self::GetSchema()->getContainer();
 
-        $obj = $injector->create(static::class);
+        //reflector class
+        $ref_class = new ReflectionClass(static::class);
+
+        //get contructor
+        $constructor = $ref_class->getConstructor();
+
+        //get parameters
+        $parameters = $constructor->getParameters();
+
+        $args = [];
+        foreach ($parameters as $parameter) {
+            if ($container->has($parameter->getType()->getName())) {
+                $args[] = $container->get($parameter->getType()->getName());
+            } else {
+                $args[] = null;
+            }
+        }
+
+        //create instance with args
+        $obj = $ref_class->newInstanceArgs($args);
 
         $fields = $obj->__fields();
         foreach ($data as $field => $value) {
