@@ -87,7 +87,8 @@ class TypeMapper implements TypeMapperInterface
                         ],
                         "key" => [
                             "type" => Type::string(),
-                        ], "name" => [
+                        ],
+                        "name" => [
                             "type" => Type::string(),
                             "description" => "Name of the records"
                         ]
@@ -155,6 +156,7 @@ class TypeMapper implements TypeMapperInterface
                             'description' => 'The total count of items.',
                             'resolve' => static function (Query $root) {
 
+                                $key = "";
                                 $class = $root->getClassName();
 
 

@@ -216,11 +216,11 @@ class Table implements TableInterface
         }, $names));
 
         $set = "";
+        $update = [];
         foreach ($records as $k => $v) {
             $update[] = "`$k`=values(`$k`)";
         }
         $set = implode(",", $update);
-
 
         return  $this->pdo->prepare("INSERT INTO `$this->name` ({$names}) values ({$values}) on duplicate key update {$set}")->execute($records);
     }
