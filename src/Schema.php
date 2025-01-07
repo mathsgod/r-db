@@ -113,8 +113,10 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         }
 
         //load from .env
-        $dotenv = \Dotenv\Dotenv::createImmutable(getcwd());
-        $dotenv->load();
+        if (!$_ENV["DATABASE_HOSTNAME"]) {
+            $dotenv = \Dotenv\Dotenv::createImmutable(getcwd());
+            $dotenv->load();
+        }
 
         $host = $_ENV["DATABASE_HOSTNAME"];
         $name = $_ENV["DATABASE_DATABASE"];
