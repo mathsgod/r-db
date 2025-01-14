@@ -133,6 +133,26 @@ class Query extends Select implements IteratorAggregate
         return $this->execute();
     }
 
+    public function avg(string $column)
+    {
+        $c = clone $this;
+        $c->columns([
+            "c" => new Expression("avg($column)")
+        ]);
+        $sql = $c->getSqlString($this->schema->getPlatform());
+        return $this->schema->query($sql)->fetchColumn(0);
+    }
+
+    public function sum(string $column)
+    {
+        $c = clone $this;
+        $c->columns([
+            "c" => new Expression("sum($column)")
+        ]);
+        $sql = $c->getSqlString($this->schema->getPlatform());
+        return $this->schema->query($sql)->fetchColumn(0);
+    }
+
     public function max(string $column)
     {
         $c = clone $this;
