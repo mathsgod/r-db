@@ -63,7 +63,9 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         ];
 
         if ($options !== null) {
-            $driver_options = $driver_options + $options;
+            foreach ($options as $key => $opt) {
+                $driver_options[$key] = $opt;
+            }
         }
 
         $this->setDbAdapter(new Adapter([
@@ -106,14 +108,10 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
 
     protected static $Instance;
 
-    static function Create(): Schema
+    static function Create(array $options = []): Schema
     {
-        if (self::$Instance) {
-            return self::$Instance;
-        }
-
         //load from .env
-        if (!$_ENV["DATABASE_HOSTNAME"]) {
+        if (!isset($_ENV["DATABASE_HOSTNAME"])) {
             $dotenv = \Dotenv\Dotenv::createImmutable(getcwd());
             $dotenv->load();
         }
@@ -129,9 +127,7 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         if (!$name) throw new \Exception("DATABASE_DATABASE not found in .env");
         if (!$username) throw new \Exception("DATABASE_USERNAME not found in .env");
 
-
-        self::$Instance = new Schema($name, $host, $username, $password, $charset, $port);
-        return self::$Instance;
+        return new Schema($name, $host, $username, $password, $charset, $port, $options);
     }
 
 
