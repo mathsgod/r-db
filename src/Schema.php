@@ -80,6 +80,7 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         ]));
     }
 
+
     public function setContainer(ContainerInterface $container = null)
     {
         $this->container = $container;
