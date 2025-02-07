@@ -100,6 +100,7 @@ class TypeMapper implements TypeMapperInterface
         return $this->cache["DB_META"];
     }
 
+
     /**
      * @param OutputType&Type $subType
      *
@@ -108,7 +109,7 @@ class TypeMapper implements TypeMapperInterface
     private function getObjectType(OutputType $subType): MutableInterface
     {
         /** @var mixed $name - invalid vendor mapping */
-        $name = $subType->name;
+        $name = $subType->toString();
 
         if ($name === null) {
             throw new RuntimeException('Cannot get name property from sub type ' . get_class($subType));
@@ -191,7 +192,7 @@ class TypeMapper implements TypeMapperInterface
         return strpos($typeName, 'DB_QUERY_') === 0;
     }
 
-    /**
+     /**
      * Returns a GraphQL type by name (can be either an input or output type)
      *
      * @param string $typeName The name of the GraphQL type
@@ -200,8 +201,9 @@ class TypeMapper implements TypeMapperInterface
      *
      * @throws CannotMapTypeExceptionInterface
      */
-    public function mapNameToType(string $typeName): Type
+    public function mapNameToType(string $typeName): Type&NamedType
     {
+        
         if (!$this->canMapNameToType($typeName)) {
             throw CannotMapTypeException::createForName($typeName);
         }
