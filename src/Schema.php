@@ -81,7 +81,7 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
     }
 
 
-    public function setContainer(ContainerInterface $container = null)
+    public function setContainer(?ContainerInterface $container = null)
     {
         $this->container = $container;
     }
@@ -213,15 +213,14 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
         return $this->validator;
     }
 
-    function getAdapter(): AdapterInterface
+    function getAdapter(): Adapter
     {
         return $this->adapter;
     }
 
     public function table(string $name)
     {
-        $table = new Table($this, $name);
-        return $table;
+        return new Table($name, $this->adapter);
     }
 
     /**
@@ -258,8 +257,7 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
     public function getTable(string $name): ?Table
     {
         if ($this->hasTable($name)) {
-            $t = new Table($this, $name);
-            return $t;
+            return new Table($name, $this->adapter);
         }
         return null;
     }
@@ -333,6 +331,7 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
 
     public function renameTable(string $old_name, string $new_name)
     {
+
         return $this->adapter->query("ALTER TABLE $old_name RENAME TO $new_name", Adapter::QUERY_MODE_EXECUTE);
     }
 

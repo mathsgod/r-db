@@ -327,6 +327,10 @@ class Query extends Select implements IteratorAggregate
                     if ($operator == 'ne') {
                         $query->where->notEqualTo($field, $value);
                     }
+
+                    if ($operator == 'nin') {
+                        $query->where->notIn($field, $value);
+                    }
                 }
             } else {
                 $query->where->equalTo($field, $filter);

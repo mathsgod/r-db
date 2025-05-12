@@ -3,6 +3,7 @@
 namespace R\DB;
 
 use Closure;
+use Laminas\Db\Adapter\Adapter;
 use Laminas\Db\Sql\Ddl\AlterTable;
 use Laminas\Db\Sql\Ddl\Column\ColumnInterface;
 use Laminas\Db\Sql\Expression;
@@ -12,24 +13,11 @@ use Laminas\Db\TableGateway\TableGateway;
 use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Sql;
 use Laminas\Hydrator\ObjectPropertyHydrator;
+use Symfony\Contracts\Cache\ItemInterface;
 
-class Table implements TableInterface
+class Table extends TableGateway
 {
-    private $pdo;
-    public $name;
-    private $adapter;
 
-    public function __construct(PDOInterface $pdo, string $name)
-    {
-        $this->pdo = $pdo;
-        $this->name = $name;
-        $this->adapter = $pdo->getAdapter();
-    }
-
-    function  getAdapter()
-    {
-        return $this->adapter;
-    }
 
     function getPrimaryKeys(): array
     {
@@ -42,15 +30,6 @@ class Table implements TableInterface
         }, $ret);
     }
 
-    function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function getPDO()
-    {
-        return $this->pdo;
-    }
 
     /**
      * @param Where|\Closure|string|array|Predicate\PredicateInterface $predicate
@@ -58,65 +37,72 @@ class Table implements TableInterface
      */
     public function getRows($predicate = null, string $combination = Predicate\PredicateSet::OP_AND)
     {
-        $select = new Select($this->name);
+        $select = new Select($this->table);
         if ($predicate) {
             $select->where($predicate, $combination);
         }
 
         $row = new Row($this);
-        $row->setDbAdapter($this->pdo->getAdapter());
+        $row->setDbAdapter($this->adapter);
         $resultSet = new  Rows(new ObjectPropertyHydrator, $row);
-        $gateway = new  TableGateway($this->name, $this->adapter, null, $resultSet);
+        $gateway = new  TableGateway($this->table, $this->adapter, null, $resultSet);
 
         return $gateway->selectWith($select);
     }
 
     public function dropColumn(string $name)
     {
-        $alter = new AlterTable($this->name);
+        $alter = new AlterTable($this->table);
         $alter->dropColumn($name);
         $sql = new Sql($this->adapter);
-        $this->pdo->exec($sql->buildSqlString($alter));
+        $this->execute($sql->buildSqlString($alter));
     }
 
     public function addColumn(ColumnInterface $column)
     {
-        $alter = new AlterTable($this->name);
+        $alter = new AlterTable($this->table);
         $alter->addColumn($column);
         $sql = new Sql($this->adapter);
-        $this->pdo->exec($sql->buildSqlString($alter));
+        return $this->execute($sql->buildSqlString($alter));
     }
 
     public function changeColumn(string $name, ColumnInterface $column)
     {
-        $alter = new AlterTable($this->name);
+        $alter = new AlterTable($this->table);
         $alter->changeColumn($name, $column);
         $sql = new Sql($this->adapter);
-        $this->pdo->exec($sql->buildSqlString($alter));
+        return $this->execute($sql->buildSqlString($alter));
+    }
+
+
+    private function execute(string $sql, $parametersOrQueryMode = Adapter::QUERY_MODE_EXECUTE)
+    {
+        /**
+         * @var  \Laminas\Db\Adapter\Adapter $adapter
+         */
+        $adapter = $this->adapter;
+
+        return $adapter->query($sql, $parametersOrQueryMode);
+    }
+
+    private function query(string $sql, $parametersOrQueryMode = Adapter::QUERY_MODE_PREPARE)
+    {
+        /**
+         * @var \Laminas\Db\Adapter\Adapter $adapter
+         */
+        $adapter = $this->adapter;
+        return $adapter->query($sql, $parametersOrQueryMode);
     }
 
     public function truncate()
     {
-        $sql = "TRUNCATE `{$this->name}`";
-        return $this->pdo->exec($sql);
+        return $this->execute("TRUNCATE TABLE `{$this->table}`");
     }
 
-
-    public function getColumns()
-    {
-        $sth = $this->pdo->query("SHOW COLUMNS FROM `$this->name`");
-        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this]);
-        return $sth->fetchAll();
-    }
-
-    /**
-     * @return ColumnInterface[]
-     */
     public function columns()
     {
-        $sth = $this->pdo->query("SHOW COLUMNS FROM `$this->name`");
-        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this]);
-        return $sth->fetchAll();
+        $metadata = \Laminas\Db\Metadata\Source\Factory::createSourceFromAdapter($this->adapter);
+        return $metadata->getColumns($this->table);
     }
 
     public function column(string $field): ?Column
@@ -130,18 +116,12 @@ class Table implements TableInterface
         return $ret;
     }
 
-    public function __toString()
-    {
-        return $this->name;
-    }
 
     public function describe(): array
     {
-        $sql = "DESCRIBE `{$this->name}`";
-        if ($sth = $this->pdo->query($sql)) {
-            return $sth->fetchAll();
-        }
-        return [];
+        $name = $this->getTable();
+
+        return iterator_to_array($this->query("desc `{$name}`"));
     }
 
     public function getPrimaryKey()
@@ -160,38 +140,16 @@ class Table implements TableInterface
         }, $ret);
     }
 
-    /**
-     * @param Where|\Closure|string|array $where
-     */
-    public function select($where = null)
-    {
-        $gateway = $this->pdo->getTableGateway($this->name);
-        return $gateway->select($where);
-    }
 
-    public function insert(array $data = [])
-    {
-        $gateway = $this->pdo->getTableGateway($this->name);
-        return $gateway->insert($data);
-    }
 
     /**
      * @param Where|\Closure|string|array $where
      */
-    public function delete($where)
-    {
-        $gateway = $this->pdo->getTableGateway($this->name);
-        return $gateway->delete($where);
-    }
-
-    /**
-     * @param Where|\Closure|string|array $where
-     */
-    public function update(array $data, $where = null)
+    /*     public function update(array $data, $where = null)
     {
         $gateway = $this->pdo->getTableGateway($this->name);
         return $gateway->update($data, $where);
-    }
+    } */
 
     public function replace(array $records = [])
     {
@@ -230,73 +188,58 @@ class Table implements TableInterface
      */
     public function first($where = null, $combination = Predicate\PredicateSet::OP_AND)
     {
-        $select = new Select($this->name);
+        $select = new Select($this->table);
         if (isset($where)) {
             $select->where($where, $combination);
         }
-
         $select->limit(1);
-
-
-        $sql = new Sql($this->adapter, $this->name);
-        return $this->pdo->query($sql->buildSqlString($select))->fetch();
-    }
-
-    protected function getGateway()
-    {
-        return $this->pdo->getTableGateway($this->name);
+        return iterator_to_array($this->selectWith($select))[0] ?? null;
     }
 
     public function max($column)
     {
-        $select = new Select($this->name);
+        $select = new Select($this->table);
         $select->columns([
             "c" => new Expression("max(`$column`)")
         ]);
-
-        $sql = new Sql($this->adapter, $this->name);
-        return $this->pdo->query($sql->buildSqlString($select))->fetchColumn(0);
+        return iterator_to_array($this->selectWith($select))[0]["c"] ?? null;
     }
 
     public function count(): int
     {
-        $select = new Select($this->name);
+        $select = new Select($this->table);
         $select->columns([
             "c" => new Expression("count(*)")
         ]);
+        $select->limit(1);
 
-        $sql = new Sql($this->adapter, $this->name);
-        return $this->pdo->query($sql->buildSqlString($select))->fetchColumn(0);
+        return iterator_to_array($this->selectWith($select))[0]["c"] ?? 0;
     }
 
     public function min(string $column)
     {
-        $select = new Select($this->name);
+        $select = new Select($this->table);
         $select->columns([
             "c" => new Expression("min(`$column`)")
         ]);
 
-        $sql = new Sql($this->adapter, $this->name);
-        return $this->pdo->query($sql->buildSqlString($select))->fetchColumn(0);
+        return iterator_to_array($this->selectWith($select))[0]["c"] ?? null;
     }
 
     public function avg(string $column)
     {
-        $select = new Select($this->name);
+        $select = new Select($this->table);
         $select->columns([
             "c" => new Expression("avg(`$column`)")
         ]);
 
-        $sql = new Sql($this->adapter, $this->name);
-        return $this->pdo->query($sql->buildSqlString($select))->fetchColumn(0);
+        return iterator_to_array($this->selectWith($select))[0]["c"] ?? null;
     }
 
     public function top(int $top)
     {
-        $select = new Select($this->name);
+        $select = new Select($this->table);
         $select->limit($top);
-
-        $sql = new Sql($this->adapter, $this->name);
-        return $this->pdo->query($sql->buildSqlString($select))->fetchAll();
+        return iterator_to_array($this->selectWith($select));
     }
 }
