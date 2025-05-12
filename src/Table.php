@@ -15,12 +15,9 @@ use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Sql;
 use Laminas\Db\Sql\Update;
 use Laminas\Hydrator\ObjectPropertyHydrator;
-use Symfony\Contracts\Cache\ItemInterface;
 
 class Table extends TableGateway
 {
-
-
     function getPrimaryKeys(): array
     {
         $ret = array_filter($this->describe(), function ($o) {
@@ -31,7 +28,6 @@ class Table extends TableGateway
             return $o["Field"];
         }, $ret);
     }
-
 
     /**
      * @param Where|\Closure|string|array|Predicate\PredicateInterface $predicate
