@@ -37,11 +37,17 @@ class Query extends Select implements IteratorAggregate
     protected $schema;
 
     /**
+     * @var \R\DB\Table
+     */
+    protected $_table;
+
+    /**
      * @param class-string<T> $class
      */
     public function __construct(string $class)
     {
         $this->class = $class;
+        $this->_table = $class::_table();
         parent::__construct($class::_table()->getTable());
         $this->schema = $class::GetSchema();
     }
@@ -149,6 +155,7 @@ class Query extends Select implements IteratorAggregate
         $c->columns([
             "c" => new Expression("sum($column)")
         ]);
+
         $sql = $c->getSqlString($this->schema->getPlatform());
         return $this->schema->query($sql)->fetchColumn(0);
     }
@@ -159,6 +166,7 @@ class Query extends Select implements IteratorAggregate
         $c->columns([
             "c" => new Expression("max($column)")
         ]);
+
         $sql = $c->getSqlString($this->schema->getPlatform());
         return $this->schema->query($sql)->fetchColumn(0);
     }
