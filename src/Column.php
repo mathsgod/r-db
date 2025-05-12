@@ -3,6 +3,7 @@
 namespace R\DB;
 
 use Laminas\Db\Metadata\Source\Factory;
+use Laminas\Db\Sql\Ddl\Column\Varchar;
 use Laminas\Hydrator\ObjectPropertyHydrator;
 
 class Column implements ColumnInterface
@@ -47,10 +48,11 @@ class Column implements ColumnInterface
 
 	public function rename(string $field)
 	{
-		$sql = "ALTER TABLE `{$this->table}` CHANGE COLUMN `$this->Field` `$field` {$this->Type} {$this->Extra}";
-		$this->Field = $field;
+		$table_name = $this->table->getTable();
 
-		return $this->table->getPDO()->exec($sql);
+		$sql = "ALTER TABLE `{$table_name}` CHANGE COLUMN `$this->Field` `$field` {$this->Type} {$this->Extra}";
+
+		return $this->table->getAdapter()->query($sql)->execute();
 	}
 
 	public function __debugInfo()

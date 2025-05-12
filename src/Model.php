@@ -139,9 +139,9 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
                 $args[] = null;
             }
         }
-
         //create instance with args
         $obj = $ref_class->newInstanceArgs($args);
+
 
         $fields = $obj->__fields();
         foreach ($data as $field => $value) {
@@ -265,7 +265,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     }
 
     // get the attributes of the model
-    static function __attribute(string $name = null)
+    static function __attribute(?string $name = null)
     {
         if ($name) {
             foreach (self::__attributes() as $attribute) {
@@ -288,7 +288,10 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         return self::$_attributes[$class];
     }
 
-    private function getDBSet(): array
+    /**
+     * get the database set of the model before save
+     */
+    public function getDBSet(): array
     {
         $set = $this->getDirty();
 
@@ -298,13 +301,25 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             }
         }
 
-        foreach ($set as $field => $value) {
+        foreach ($this->__fields() as $field) {
+
+            $value = null;
+            if (isset($set[$field])) {
+                $value = $set[$field];
+            }
 
             $attribute = $this->__attribute($field);
+
+            //skip primary key
+            if ($attribute["Key"] == "PRI") {
+                continue;
+            }
+
+
             $extra = $attribute["Extra"];
 
+
             if ($extra == "STORED GENERATED" || $extra == "VIRTUAL GENERATED") {
-                $generated[] = $field;
                 continue;
             }
 
@@ -328,9 +343,16 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
                 }
             }
 
-            if ($attribute["Null"] == "NO" && $value === null) {
-                $value = "";
+
+            if ($attribute["Null"] == "NO" && ($value === null || $value === "")) {
+
+                if (in_array($type, self::NUMERIC_DATA_TYPE)) {
+                    $value = 0;
+                } else {
+                    $value = "";
+                }
             }
+
 
             //如果是uni 而value是"",直接set null, 因為uniqie key 不會check null value
             if ($attribute["Key"] == "UNI" && $value === "") {
@@ -344,7 +366,8 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             }
 
             if (in_array($type, self::NUMERIC_DATA_TYPE) && $attribute["Null"] == "YES" && $value === "") {
-                $value = null;
+                $set[$field] = null;
+                continue;
             }
 
             if (is_array($value)) {
@@ -357,14 +380,18 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
                 $value = 1;
             }
 
-            $set[$field] = $value;
+            if ($value !== null) {
+                $set[$field] = $value;
+            }
         }
+
         return $set;
     }
 
 
     function save()
     {
+
         $error = $this->getValidator()->validate($this);
         if ($error->count() !== 0) {
             throw new Exception($error->get(0)->getMessage());
@@ -381,20 +408,12 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
             $mode = "insert";
         }
 
-
         if ($mode == "insert") {
 
             $dispatcher->dispatch(new Event\BeforeInsert($this));
-            $records = $this->getDBSet();
-            $records[$key] = null; // key is auto increment
 
-            foreach ($records as $key => $value) {
-                //if VIRTUAL GENERATED, remove from records
-                $attribute = $this->__attribute($key);
-                if ($attribute["Extra"] == "VIRTUAL GENERATED") {
-                    unset($records[$key]);
-                }
-            }
+            $records = $this->getDBSet();
+
             $ret = $gateway->insert($records);
 
             $this->$key = $gateway->getLastInsertValue(); //save the id
@@ -415,15 +434,8 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
             $records = [];
             $records = $this->getDBSet();
-            $records[$key] = $this->$key;
 
-            //if VIRTUAL GENERATED, remove from records
-            foreach ($records as $key => $value) {
-                $attribute = $this->__attribute($key);
-                if ($attribute["Extra"] == "VIRTUAL GENERATED") {
-                    unset($records[$key]);
-                }
-            }
+            $records[$key] = $this->$key;
 
             $ret = $gateway->update($records, [$key => $this->$key]);
             $dispatcher->dispatch(new Event\AfterUpdate($this));
@@ -449,7 +461,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
     static function __table_gateway()
     {
-        return new TableGateway(self::_table()->name, static::GetSchema()->getAdapter());
+        return new TableGateway(self::_table()->getTable(), static::GetSchema()->getAdapter());
     }
 
     function _id()
@@ -580,18 +592,23 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
             $default = $attribute["Default"];
             if ($default === null && $attribute["Null"] == "YES") {
-                return null;
+                $null = null;
+                return $null;
             }
 
             $type = explode("(", $attribute["Type"])[0];
             if ($attribute["Type"] == "tinyint(1)") { //bool
-                return (bool)$default;
+                $v = (bool)$default;
+                return $v;
             } elseif (in_array($type, self::INT_DATA_TYPE)) {
-                return (int)$default;
+                $v = (int)$default;
+                return $v;
             } elseif (in_array($type, self::FLOAT_DATA_TYPE)) {
-                return (float)$default;
+                $v = (float)$default;
+                return $v;
             } else {
-                return (string)$default;
+                $v = (string)$default;
+                return $v;
             }
         }
 
@@ -616,23 +633,25 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     }
 
 
-    function getDirty(): array
+    public function getDirty(): array
     {
         //get current fields
         $fields = $this->_fields;
 
-        foreach ($this->__fields() as $field) {
-            if (property_exists($this, $field)) {
-                $fields[$field] = $this->$field;
+        $dirty = [];
+        foreach ($fields as $field => $value) {
+            if (array_key_exists($field, $this->_original)) {
+                if ($this->_original[$field] === $value) {
+                    continue;
+                } else {
+
+                    $dirty[$field] = $value;
+                }
+            } else {
+                $dirty[$field] = $value;
             }
         }
 
-        $dirty = [];
-        foreach ($fields as $field => $value) {
-            if ($this->_original[$field] !== $value) {
-                $dirty[$field] = $this->$field;
-            }
-        }
         return $dirty;
     }
 

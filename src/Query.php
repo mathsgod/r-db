@@ -42,7 +42,7 @@ class Query extends Select implements IteratorAggregate
     public function __construct(string $class)
     {
         $this->class = $class;
-        parent::__construct((string)$class::_table());
+        parent::__construct($class::_table()->getTable());
         $this->schema = $class::GetSchema();
     }
 

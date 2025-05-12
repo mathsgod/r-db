@@ -134,7 +134,7 @@ final class ModelTest extends TestCase
     public function test_table()
     {
         $table = Testing::_table();
-        $this->assertEquals("Testing", $table->name);
+        $this->assertEquals("Testing", $table->getTable());
     }
 
     public function test_attribute()

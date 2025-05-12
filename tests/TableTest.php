@@ -31,8 +31,10 @@ final class TableTest extends TestCase
         $table = $db->table("Testing");
         $testing_id_column = $table->column("testing_id");
 
-        $this->assertInstanceOf(R\DB\Column::class, $testing_id_column);
+    
 
+        $this->assertInstanceOf(R\DB\Column::class, $testing_id_column);
+        
         $col_not_exist = $table->column("testing_id_not_exist");
         $this->assertNull($col_not_exist);
     }
@@ -41,6 +43,12 @@ final class TableTest extends TestCase
     {
         $db = Testing::GetSchema();
         $table = $db->table("Testing");
+
+        if($table->column("new_column")) {
+            $table->dropColumn("new_column");
+        }
+
+
         $table->addColumn(new ColumnColumn\Integer("new_column"));
         $new_column = $table->column("new_column");
         $this->assertInstanceOf(Column::class, $new_column);

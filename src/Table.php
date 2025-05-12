@@ -7,11 +7,13 @@ use Laminas\Db\Adapter\Adapter;
 use Laminas\Db\Sql\Ddl\AlterTable;
 use Laminas\Db\Sql\Ddl\Column\ColumnInterface;
 use Laminas\Db\Sql\Expression;
+use Laminas\Db\Sql\Insert;
 use Laminas\Db\Sql\Select;
 use Laminas\Db\Sql\Where;
 use Laminas\Db\TableGateway\TableGateway;
 use Laminas\Db\Sql\Predicate;
 use Laminas\Db\Sql\Sql;
+use Laminas\Db\Sql\Update;
 use Laminas\Hydrator\ObjectPropertyHydrator;
 use Symfony\Contracts\Cache\ItemInterface;
 
@@ -55,7 +57,7 @@ class Table extends TableGateway
         $alter = new AlterTable($this->table);
         $alter->dropColumn($name);
         $sql = new Sql($this->adapter);
-        $this->execute($sql->buildSqlString($alter));
+        return $this->execute($sql->buildSqlString($alter));
     }
 
     public function addColumn(ColumnInterface $column)
@@ -91,7 +93,7 @@ class Table extends TableGateway
          * @var \Laminas\Db\Adapter\Adapter $adapter
          */
         $adapter = $this->adapter;
-        return $adapter->query($sql, $parametersOrQueryMode);
+        return iterator_to_array($adapter->query($sql, $parametersOrQueryMode)->execute());
     }
 
     public function truncate()
@@ -107,13 +109,20 @@ class Table extends TableGateway
 
     public function column(string $field): ?Column
     {
-        $sth = $this->pdo->query("SHOW COLUMNS FROM `{$this->name}` WHERE Field='$field'");
-        $sth->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Column::class, [$this]);
-        $ret = $sth->fetch();
-        if ($ret === false) {
+        $ret = $this->query("SHOW COLUMNS FROM `{$this->table}` WHERE Field='$field'")[0];
+
+        if (empty($ret)) {
             return null;
         }
-        return $ret;
+
+        $col = new Column($this);
+
+        foreach ($ret as $k => $v) {
+            if (property_exists($col, $k)) {
+                $col->$k = $v;
+            }
+        }
+        return $col;
     }
 
 
@@ -121,7 +130,7 @@ class Table extends TableGateway
     {
         $name = $this->getTable();
 
-        return iterator_to_array($this->query("desc `{$name}`"));
+        return $this->query("DESCRIBE `{$name}`");
     }
 
     public function getPrimaryKey()
@@ -153,34 +162,36 @@ class Table extends TableGateway
 
     public function replace(array $records = [])
     {
-        $names = array_keys($records);
-        $values = implode(",", array_map(function ($name) {
-            return ":" . $name;
-        }, $names));
-        $names = implode(",", array_map(function ($name) {
-            return "`" . $name . "`";
-        }, $names));
-        return $this->pdo->prepare("REPLACE INTO `$this->name` ({$names}) values ({$values})")->execute($records);
+        $insert = new Insert($this->table);
+        $insert->values($records);
+        $sql = new Sql($this->adapter);
+        $s = $sql->buildSqlString($insert);
+        $s = str_replace("INSERT INTO", "REPLACE INTO", $s);
+        return $this->execute($s);
     }
 
     public function updateOrCreate(array $records = [])
     {
-        $names = array_keys($records);
-        $values = implode(",", array_map(function ($name) {
-            return ":" . $name;
-        }, $names));
-        $names = implode(",", array_map(function ($name) {
-            return "`" . $name . "`";
-        }, $names));
+
+        $insert = new Insert($this->table);
+        $insert->values($records);
+
+        $update = new Update($this->table);
+        $update->set($records);
+
+
 
         $set = "";
         $update = [];
         foreach ($records as $k => $v) {
-            $update[] = "`$k`=values(`$k`)";
+            $update[] = "`$k`=A.`$k`";
         }
         $set = implode(",", $update);
 
-        return  $this->pdo->prepare("INSERT INTO `$this->name` ({$names}) values ({$values}) on duplicate key update {$set}")->execute($records);
+        $sql = new Sql($this->adapter);
+        $s = $sql->buildSqlString($insert) . " AS A ON DUPLICATE KEY UPDATE " . $set;
+
+        return $this->execute($s);
     }
 
     /**
