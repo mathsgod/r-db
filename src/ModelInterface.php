@@ -34,8 +34,8 @@ interface ModelInterface
     public function save();
     public function delete();
 
-    public function isDirty(string $name = null): bool;
-    public function wasChanged(string $name = null): bool;
+    public function isDirty(?string $name = null): bool;
+    public function wasChanged(?string $name = null): bool;
     public function __isset(string $name);
     public function __fields(): array;
 }

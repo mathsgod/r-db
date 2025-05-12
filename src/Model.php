@@ -636,7 +636,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         return $dirty;
     }
 
-    function isDirty(string $name = null): bool
+    function isDirty(?string $name = null): bool
     {
         if (is_null($name)) {
             return count($this->getDirty()) > 0;
@@ -644,7 +644,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         return $this->$name !== $this->_original[$name];
     }
 
-    function wasChanged(string $name = null): bool
+    function wasChanged(?string $name = null): bool
     {
         if (is_null($name)) {
             return count($this->_changed) > 0;
@@ -652,7 +652,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         return array_key_exists($name, $this->_changed);
     }
 
-    function getOriginal(string $name = null)
+    function getOriginal(?string $name = null)
     {
         if ($name === null) {
             return $this->_original;
