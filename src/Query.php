@@ -245,7 +245,8 @@ class Query extends Select implements IteratorAggregate
 
     function getIterator(): Traversable
     {
-        return $this->execute();
+        return $this->cursor();
+        
     }
 
 
