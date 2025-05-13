@@ -64,32 +64,45 @@ class Query extends Select implements IteratorAggregate
         return $this->class;
     }
 
-    public function cursor()
+    public function cursor(array $params = [])
     {
-        $args = [];
         $sql = $this->getSqlString($this->schema->getPlatform());
-        $this->statement = $this->schema->prepare($sql);
-        $this->statement->execute();
 
-        $args=[];
-        $ref_class = new ReflectionClass($this->class);
-        if ($constructor = $ref_class->getConstructor()) {
-            $ref_params = array_map(function (ReflectionParameter $item) {
-                return $item->getType()->getName();
-            }, $constructor->getParameters());
-            $container = $this->schema->getContainer();
-            foreach ($ref_params as $param) {
-                if ($container->has($param)) {
-                    $args[] = $container->get($param);
-                } else {
-                    $args[] = null;
-                }
-            }
+        try {
+            $statement = $this->schema->prepare($sql);
+        } catch (Exception $e) {
+            throw new Exception("Error preparing statement: " . $e->getMessage());
         }
 
-        $this->statement->setFetchMode(PDO::FETCH_CLASS, $this->class, $args);
+        if (!$statement->execute($params)) {
+            $error = $statement->errorInfo();
+            throw new Exception("PDO SQLSTATE [" . $error[0] . "] " . $error[2] . " sql: $sql ", $error[1]);
+        }
 
-        while ($row = $this->statement->fetch()) {
+
+        if ($this->_custom_column) {
+            $statement->setFetchMode(PDO::FETCH_ASSOC);
+        } else {
+            $args = [];
+            $ref_class = new ReflectionClass($this->class);
+            if ($constructor = $ref_class->getConstructor()) {
+                $ref_params = array_map(function (ReflectionParameter $item) {
+                    return $item->getType()->getName();
+                }, $constructor->getParameters());
+                $container = $this->schema->getContainer();
+                foreach ($ref_params as $param) {
+                    if ($container->has($param)) {
+                        $args[] = $container->get($param);
+                    } else {
+                        $args[] = null;
+                    }
+                }
+            }
+
+            $statement->setFetchMode(PDO::FETCH_CLASS, $this->class, $args);
+        }
+
+        while ($row = $statement->fetch()) {
             yield $row;
         }
     }
@@ -215,48 +228,8 @@ class Query extends Select implements IteratorAggregate
 
     public function execute(array $input_parameters = [])
     {
-        $sql = $this->getSqlString($this->schema->getPlatform());
-
-        try {
-            $this->statement = $this->schema->prepare($sql);
-        } catch (Exception $e) {
-            throw new Exception("Error preparing query: " . $e->getMessage() . "\n\n" . $sql);
-        }
-
-        if (!$this->statement->execute($input_parameters)) {
-            $error = $this->statement->errorInfo();
-            throw new Exception("PDO SQLSTATE [" . $error[0] . "] " . $error[2] . " sql: $sql ", $error[1]);
-        }
-
-        if ($this->_custom_column) {
-            $this->statement->setFetchMode(PDO::FETCH_ASSOC);
-        } else {
-
-            //dependency injection
-
-            //reflection 
-            $args = [];
-            $ref_class = new ReflectionClass($this->class);
-            if ($constructor = $ref_class->getConstructor()) {
-                $ref_params = array_map(function (ReflectionParameter $item) {
-                    return $item->getType()->getName();
-                }, $constructor->getParameters());
-                $container = $this->schema->getContainer();
-                foreach ($ref_params as $param) {
-                    if ($container->has($param)) {
-                        $args[] = $container->get($param);
-                    } else {
-                        $args[] = null;
-                    }
-                }
-            }
-
-
-            $this->statement->setFetchMode(PDO::FETCH_CLASS, $this->class, $args);
-        }
-
         $a = collect([]);
-        foreach ($this->statement as $obj) {
+        foreach ($this->cursor($input_parameters) as $obj) {
             if ($this->_custom_column) {
                 $aa = [];
                 foreach ($obj as $k => $v) {
@@ -267,7 +240,6 @@ class Query extends Select implements IteratorAggregate
                 $a->add($obj);
             }
         }
-
         return $a;
     }
 
