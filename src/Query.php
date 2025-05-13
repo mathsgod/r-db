@@ -146,8 +146,8 @@ class Query extends Select implements IteratorAggregate
     // https://github.com/laminas/laminas-db/issues/136
     protected function processOffset(
         PlatformInterface $platform,
-        DriverInterface $driver = null,
-        ParameterContainer $parameterContainer = null
+        ?DriverInterface $driver = null,
+        ?ParameterContainer $parameterContainer = null
     ) {
         if ($this->offset === null) {
             return;
@@ -164,8 +164,8 @@ class Query extends Select implements IteratorAggregate
     // https://github.com/laminas/laminas-db/issues/136
     protected function processLimit(
         PlatformInterface $platform,
-        DriverInterface $driver = null,
-        ParameterContainer $parameterContainer = null
+        ?DriverInterface $driver = null,
+        ?ParameterContainer $parameterContainer = null
     ) {
         if ($this->limit === null) {
             return;
