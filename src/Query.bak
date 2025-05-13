@@ -6,15 +6,12 @@ use Laminas\Db\Sql\Select;
 use Exception;
 use Generator;
 use IteratorAggregate;
-use Laminas\Db\Adapter\AdapterInterface;
 use Laminas\Db\Adapter\Driver\DriverInterface;
 use Laminas\Db\Adapter\ParameterContainer;
 use Laminas\Db\Adapter\Platform\PlatformInterface;
 use Laminas\Db\Sql\Delete;
 use Laminas\Db\Sql\Expression;
 use Laminas\Db\Sql\Update;
-use Laminas\Db\TableGateway\Feature\RowGatewayFeature;
-use Laminas\Db\TableGateway\TableGateway;
 use Laminas\Di\Injector;
 use Laminas\Paginator\Paginator;
 use R\DB\Paginator\Adapter;
@@ -35,8 +32,10 @@ class Query extends Select implements IteratorAggregate
     protected $class;
     protected $statement;
     private $_custom_column = false;
-
-    protected $adapter;
+    /**
+     * @var \R\DB\Schema 
+     */
+    protected $schema;
 
     /**
      * @var \R\DB\Table
@@ -45,13 +44,13 @@ class Query extends Select implements IteratorAggregate
 
     /**
      * @param class-string<T> $class
-     * @param string $table
      */
-    public function __construct(string $class, string $table, AdapterInterface $adapter)
+    public function __construct(string $class)
     {
         $this->class = $class;
-        parent::__construct($table);
-        $this->adapter = $adapter;
+        $this->_table = $class::_table();
+        parent::__construct($class::_table()->getTable());
+        $this->schema = $class::GetSchema();
     }
 
     private static $Order = [];
@@ -65,39 +64,47 @@ class Query extends Select implements IteratorAggregate
         return $this->class;
     }
 
-    public function cursor()
+    public function cursor(array $params = [])
     {
+        $sql = $this->getSqlString($this->schema->getPlatform());
 
-        if (count($this->columns) == 1 && $this->columns[0] == "*") {
-            //get primary key
-            $meta = \Laminas\Db\Metadata\Source\Factory::createSourceFromAdapter($this->adapter);
+        try {
+            $statement = $this->schema->prepare($sql);
+        } catch (Exception $e) {
+            throw new Exception("Error preparing statement: " . $e->getMessage());
+        }
 
-            $primaryKey = "";
-            foreach ($meta->getConstraints($this->table) as $constraint) {
-                if ($constraint->getType() == "PRIMARY KEY") {
-                    $primaryKey = $constraint->getColumns()[0];
-                    break;
+        if (!$statement->execute($params)) {
+            $error = $statement->errorInfo();
+            throw new Exception("PDO SQLSTATE [" . $error[0] . "] " . $error[2] . " sql: $sql ", $error[1]);
+        }
+
+
+        if ($this->_custom_column) {
+            $statement->setFetchMode(PDO::FETCH_ASSOC);
+        } else {
+            $args = [];
+            $ref_class = new ReflectionClass($this->class);
+            if ($constructor = $ref_class->getConstructor()) {
+                $ref_params = array_map(function (ReflectionParameter $item) {
+                    return $item->getType()->getName();
+                }, $constructor->getParameters());
+                $container = $this->schema->getContainer();
+                foreach ($ref_params as $param) {
+                    if ($container->has($param)) {
+                        $args[] = $container->get($param);
+                    } else {
+                        $args[] = null;
+                    }
                 }
             }
-            if (!$primaryKey) {
-                throw new Exception("No primary key found for table $this->table");
-            }
-            //reflector class
-            $ref_class = new ReflectionClass($this->class);
-            $instance = $ref_class->newInstanceArgs([
-                $primaryKey,
-                $this->table,
-                $this->adapter
-            ]);
-            $table = new Table($this->table, $this->adapter, new RowGatewayFeature($instance));
-        } else {
-            $table = new Table($this->table, $this->adapter);
+
+            $statement->setFetchMode(PDO::FETCH_CLASS, $this->class, $args);
         }
 
-        foreach ($table->selectWith($this) as $row) {
+        while ($row = $statement->fetch()) {
             yield $row;
         }
-       
     }
 
     /**
@@ -117,8 +124,9 @@ class Query extends Select implements IteratorAggregate
         $c->columns([
             "c" => new Expression("count($column)")
         ]);
-        $table = new Table($this->table, $this->adapter);
-        return $table->selectWith($c)->current()["c"];
+
+        $sql = $c->getSqlString($this->schema->getPlatform());
+        return $this->schema->query($sql)->fetchColumn(0);
     }
 
     /**
@@ -135,7 +143,7 @@ class Query extends Select implements IteratorAggregate
         return null;
     }
 
-    /*  // https://github.com/laminas/laminas-db/issues/136
+    // https://github.com/laminas/laminas-db/issues/136
     protected function processOffset(
         PlatformInterface $platform,
         ?DriverInterface $driver = null,
@@ -151,8 +159,8 @@ class Query extends Select implements IteratorAggregate
         }
 
         return [intval($this->offset)];
-    } */
-    /* 
+    }
+
     // https://github.com/laminas/laminas-db/issues/136
     protected function processLimit(
         PlatformInterface $platform,
@@ -169,7 +177,7 @@ class Query extends Select implements IteratorAggregate
         }
         return [intval($this->limit)];
     }
- */
+
     public function collect()
     {
         return $this->execute();
@@ -181,9 +189,8 @@ class Query extends Select implements IteratorAggregate
         $c->columns([
             "c" => new Expression("avg($column)")
         ]);
-
-        $table = new Table($this->table, $this->adapter);
-        return $table->selectWith($c)->current()["c"];
+        $sql = $c->getSqlString($this->schema->getPlatform());
+        return $this->schema->query($sql)->fetchColumn(0);
     }
 
     public function sum(string $column)
@@ -193,8 +200,8 @@ class Query extends Select implements IteratorAggregate
             "c" => new Expression("sum($column)")
         ]);
 
-        $table = new Table($this->table, $this->adapter);
-        return $table->selectWith($c)->current()["c"];
+        $sql = $c->getSqlString($this->schema->getPlatform());
+        return $this->schema->query($sql)->fetchColumn(0);
     }
 
     public function max(string $column)
@@ -204,8 +211,8 @@ class Query extends Select implements IteratorAggregate
             "c" => new Expression("max($column)")
         ]);
 
-        $table = new Table($this->table, $this->adapter);
-        return $table->selectWith($c)->current()["c"];
+        $sql = $c->getSqlString($this->schema->getPlatform());
+        return $this->schema->query($sql)->fetchColumn(0);
     }
 
     public function min(string $column)
@@ -214,8 +221,8 @@ class Query extends Select implements IteratorAggregate
         $c->columns([
             "c" => new Expression("min($column)")
         ]);
-        $table = new Table($this->table, $this->adapter);
-        return $table->selectWith($c)->current()["c"];
+        $sql = $c->getSqlString($this->schema->getPlatform());
+        return $this->schema->query($sql)->fetchColumn(0);
     }
 
 
@@ -239,6 +246,7 @@ class Query extends Select implements IteratorAggregate
     function getIterator(): Traversable
     {
         return $this->cursor();
+        
     }
 
 
@@ -252,12 +260,19 @@ class Query extends Select implements IteratorAggregate
 
     public function delete()
     {
-        return (new Table($this->table, $this->adapter))->delete($this->where);
+        $delete = new Delete($this->table);
+        $delete->where($this->where);
+        $sql = $delete->getSqlString($this->schema->getPlatform());
+        return $this->schema->exec($sql);
     }
 
     public function update(array $values)
     {
-        return (new Table($this->table, $this->adapter))->update($values, $this->where);
+        $update = new Update($this->table);
+        $update->where($this->where);
+        $update->set($values);
+        $sql = $update->getSqlString($this->schema->getPlatform());
+        return $this->schema->exec($sql);
     }
 
     public function sort(?string $sort)

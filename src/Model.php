@@ -2,49 +2,314 @@
 
 namespace R\DB;
 
-use ArrayIterator;
 use ArrayObject;
 use Exception;
-use IteratorAggregate;
-use JsonSerializable;
-use ReflectionObject;
+use Illuminate\Support\Arr;
+use Laminas\Db\Metadata\Source\Factory;
+use Laminas\Db\RowGateway\RowGateway;
 use Laminas\Db\Sql\Predicate;
-use Laminas\Db\Sql\Where;
-use Laminas\Db\TableGateway\TableGateway;
-use Laminas\Di\Injector;
-use Psr\Http\Message\UploadedFileInterface;
 use ReflectionClass;
-use ReturnTypeWillChange;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Traversable;
+use ReflectionObject;
 
-abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializable, SchemaAwareInterface
+class Proxy extends ArrayObject
 {
-    const NUMERIC_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint", "float", "double", "decimal"];
-    const INT_DATA_TYPE = ["tinyint", "smallint", "mediumint", "int", "bigint"];
-    const FLOAT_DATA_TYPE = ["float", "double", "decimal"];
 
-    private static $_keys = [];
-    private static $_attributes = [];
+    public $obj;
+    public $property;
+    public $data;
+    public function __construct($obj, $property, $data)
+    {
+        $this->obj = $obj;
+        $this->property = $property;
+        $this->data = json_decode($data, true);
+        parent::__construct(json_decode($data, true), ArrayObject::ARRAY_AS_PROPS);
+    }
 
-    protected $_original = [];
-    protected $_fields = [];
-    protected $_changed = [];
+
+    public function offsetSet(mixed $key, mixed $value): void
+    {
+        parent::offsetSet($key, $value);
+
+        $this->data[$key] = $value;
+        $this->obj->__set($this->property, $this->data);
+    }
+}
+abstract class Model extends RowGateway
+{
+    public $original = [];
+    public $changed = [];
 
     /**
-     * @var ValidatorInterface|null
+     * @return static
      */
-    private $_validator;
-
-    static function RegisterOrder(string $name, callable $callback)
+    static function Create(?array $data = [])
     {
-        Query::RegisterOrder(get_called_class(), $name, $callback);
+
+        //reflector class
+        $ref_class = new ReflectionClass(static::class);
+
+        $schema = self::GetSchema();
+        $adapter = $schema->getAdapter();
+
+        $primaryKey = "";
+        $meta = Factory::createSourceFromAdapter($adapter);
+
+
+        foreach ($meta->getConstraints(static::class) as $constraint) {
+            if ($constraint->getType() == "PRIMARY KEY") {
+                $primaryKey = $constraint->getColumns()[0];
+                break;
+            }
+        }
+
+        if (empty($primaryKey)) {
+            throw new \Exception("No primary key found for " . static::class);
+        }
+
+
+        $obj = $ref_class->newInstance($primaryKey, static::class, $adapter);
+
+        //$data[$primaryKey] = null;
+
+
+        $metadata = \Laminas\Db\Metadata\Source\Factory::createSourceFromAdapter($adapter);
+        foreach ($data as $key => $value) {
+            if ($metadata->getColumn($key, static::class)->getDataType() == "json") {
+                if (is_array($value)) {
+                    $data[$key] = json_encode($value, 0, JSON_UNESCAPED_UNICODE);
+                }
+            }
+        }
+        $obj->populate($data, false);
+
+
+        return $obj;
     }
 
     /**
-     * @var Schema
+     * @param Where|string|int|array $where
+     * @return ?static
      */
-    static $_schema;
+    static function Get($where)
+    {
+        if ($where === null) {
+            return null;
+        }
+
+        if (is_numeric($where) || is_string($where)) {
+            $key = self::_table()->getPrimaryKey();
+            $q = self::Query([$key => $where]);
+        } else {
+            $q = self::Query($where);
+        }
+
+        $obj = $q->first();
+        if ($obj) {
+            return $obj;
+        }
+        return null;
+    }
+
+    public static function _table()
+    {
+        $class = new \ReflectionClass(get_called_class());
+        $props = $class->getStaticProperties();
+
+        $table = $class->getShortName();
+        if (isset($props["_table"]))
+            $table = $props["_table"];
+
+
+        return static::GetSchema()->table($table);
+    }
+
+
+
+    public function populate(array $rowData, $rowExistsInDatabase = false)
+    {
+        return parent::populate($rowData, $rowExistsInDatabase);
+    }
+
+    public function exchangeArray($array)
+    {
+
+        $this->original = $array;
+        $r = parent::exchangeArray($array);
+        $this->data = [];
+
+        /* //remove data from array except for primary key
+        foreach ($this->data as $key => $value) {
+            if (!in_array($key, $this->primaryKeyColumn)) {
+                unset($this->data[$key]);
+            }
+        } */
+        return $r;
+    }
+
+    public function __debugInfo()
+    {
+        return [
+            'original' => $this->original,
+            'data' => $this->data,
+            'changed' => $this->changed,
+        ];
+        return array_merge($this->original, $this->data);
+    }
+
+    /**
+     * __get
+     *
+     * @param  string $name
+     * @throws Exception\InvalidArgumentException
+     * @return mixed
+     */
+    public function __get($name)
+    {
+        $adapter = $this->sql->getAdapter();
+
+        $metadata = \Laminas\Db\Metadata\Source\Factory::createSourceFromAdapter($adapter);
+        $columns = $metadata->getColumnNames($this->sql->getTable());
+
+        if (!in_array($name, $columns)) {
+            //relation
+            $ro = new ReflectionObject($this);
+
+            $namespace = $ro->getNamespaceName();
+            if ($namespace == "") {
+                $class = $name;
+            } else {
+                $class = $namespace . "\\" . $name;
+                if (!class_exists($class)) {
+                    $class = $name;
+                }
+            }
+            if (!class_exists($class)) {
+                return parent::__get($name);
+            }
+
+            $key = static::_key();
+            return $class::Query([$key => $this->$key]);
+        }
+
+
+
+        $column = $metadata->getColumn($name, $this->sql->getTable());
+
+
+
+        $data = array_merge($this->original, $this->data);
+        if ($column->getDataType() == "tinyint") {
+            return (bool) $data[$name];
+        }
+
+        if ($column->getDataType() == "json") {
+
+            if (array_key_exists($name, $this->data)) {
+                $v = new Proxy($this, $name, $this->data[$name]);
+                return $v;
+            }
+
+            if (array_key_exists($name, $this->original)) {
+                if ($this->original[$name] == null) {
+                    $v = null;
+                    return $v;
+                }
+
+                $v = new Proxy($this, $name, $this->original[$name]);
+                return $v;
+            }
+
+            $v = new Proxy($this, $name, parent::__get($name));
+            return $v;
+        }
+
+        return $data[$name] ?? null;
+        $v = parent::__get($name);
+        return $v;
+    }
+
+    /**
+     * __set
+     *
+     * @param  string $name
+     * @param  mixed $value
+     * @return void
+     */
+    public function __set($name, $value)
+    {
+        if (is_array($value)) {
+            return parent::__set($name, json_encode($value));
+        }
+
+        return parent::__set($name, $value);
+    }
+
+    protected function getPrimaryKey()
+    {
+        $primaryKey = "";
+        $meta = Factory::createSourceFromAdapter($this->sql->getAdapter());
+        foreach ($meta->getConstraints(static::class) as $constraint) {
+            if ($constraint->getType() == "PRIMARY KEY") {
+                $primaryKey = $constraint->getColumns()[0];
+                break;
+            }
+        }
+        return $primaryKey;
+    }
+
+    public function save()
+    {
+        $key = $this->getPrimaryKey();
+
+        if (array_key_exists($key, $this->original)) {
+            $this->data[$key] = $this->original[$key];
+        } else {
+            $this->data[$key] = null;
+        }
+
+        $adapter = $this->sql->getAdapter();
+        $metadata = \Laminas\Db\Metadata\Source\Factory::createSourceFromAdapter($adapter);
+
+        foreach ($this->data as $name => $value) {
+            $column = $metadata->getColumn($name, $this->table);
+
+
+            if ($column->getDataType() == "int" && $value === "") {
+                if ($column->isNullable()) {
+                    $this->data[$name] = null;
+                }
+            }
+        }
+
+
+
+
+
+        $result = parent::save();
+        $this->changed = $this->data;
+        $this->original = array_merge($this->original, $this->data);
+        $this->data = [];
+
+        return $result;
+    }
+
+    /**
+     * @return Query<static> & iterable<static>
+     * @param Where|\Closure|string|array|Predicate\PredicateInterface $predicate
+     */
+    static function Query($predicate = null, $combination = Predicate\PredicateSet::OP_AND)
+    {
+        //get class name
+        $class = get_called_class();
+
+        $query = new Query(static::class, $class, self::GetSchema()->getAdapter());
+        if ($predicate) {
+            $query->where($predicate, $combination);
+        }
+        return $query;
+    }
+
+    static $_schema = null;
 
     static function SetSchema(Schema $schema)
     {
@@ -59,175 +324,26 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         return self::$_schema;
     }
 
-    public function __construct()
+    function wasChanged(?string $name = null): bool
     {
-        $key = self::_key();
-
-        if ($this->$key) { //already fetch from pdo
-            foreach ($this->__fields() as $field) {
-                if (property_exists($this, $field)) {
-                    $this->_original[$field] = $this->$field;
-                }
-            }
-
-            foreach ($this->_fields as $name => $value) {
-                $this->_original[$name] = $value;
-            }
-
-            foreach ($this->_original as $name => $value) {
-                $attribute = $this->__attribute($name);
-                switch ($attribute["Type"]) {
-                    case "json":
-                        $this->_original[$name] = json_decode($value ?? "", true);
-                        break;
-                    case "tinyint(1)":
-                        $this->_original[$name] = (bool)$value;
-                        break;
-                    default:
-                        $this->_original[$name] = $value;
-                        break;
-                }
-            }
-            $this->_fields = [];
-
-            return;
+        if (is_null($name)) {
+            return count($this->changed) > 0;
         }
+        return array_key_exists($name, $this->changed);
     }
 
-    #[ReturnTypeWillChange]
-    function jsonSerialize()
+
+    function isDirty(?string $name = null): bool
     {
-        $fields = $this->__fields();
-        $data = [];
-        foreach ($this->__fields() as $field) {
-            $data[$field] = $this->$field;
+        if (is_null($name)) {
+            return count($this->getDirty()) > 0;
         }
-
-        foreach ($this->_fields as $field => $value) {
-            if (in_array($field, $fields)) {
-                continue;
-            }
-            $data[$field] = $value;
-        }
-
-        return $data;
+        return $this->data[$name] !== $this->original[$name];
     }
 
-    /**
-     * @return static
-     */
-    static function Create(?array $data = [])
+    function getDirty(): array
     {
-
-        //container
-        $container = self::GetSchema()->getContainer();
-
-        //reflector class
-        $ref_class = new ReflectionClass(static::class);
-
-        //get contructor
-        $constructor = $ref_class->getConstructor();
-
-        //get parameters
-        $parameters = $constructor->getParameters();
-
-        $args = [];
-        foreach ($parameters as $parameter) {
-            if ($container->has($parameter->getType()->getName())) {
-                $args[] = $container->get($parameter->getType()->getName());
-            } else {
-                $args[] = null;
-            }
-        }
-        //create instance with args
-        $obj = $ref_class->newInstanceArgs($args);
-
-
-        $fields = $obj->__fields();
-        foreach ($data as $field => $value) {
-            if (in_array($field, $fields)) {
-                $obj->_fields[$field] = $value;
-                if (property_exists($obj, $field)) {
-                    $obj->$field = $value;
-                }
-            }
-        }
-
-        return $obj;
-    }
-
-    function getIterator(): Traversable
-    {
-        return new ArrayIterator($this->jsonSerialize());
-    }
-
-    function setValidator(ValidatorInterface $validator)
-    {
-        $this->_validator = $validator;
-    }
-
-    function getValidator(): ValidatorInterface
-    {
-        return $this->_validator ?? self::GetSchema()->getValidator();
-    }
-
-    /**
-     * @param Where|string|int|array $where
-     * @return static
-     */
-    static function GetOrCreate($where, array $default = [])
-    {
-        if ($obj = static::Get($where)) {
-            return $obj;
-        }
-        return static::Create($default);
-    }
-
-    /**
-     * @param Where|string|int|array $where
-     * @return ?static
-     */
-    static function Get($where)
-    {
-        if ($where === null) {
-            return null;
-        }
-
-
-        if (is_numeric($where) || is_string($where)) {
-            $key = self::_key();
-            $q = self::Query([$key => $where]);
-        } else {
-            $q = self::Query($where);
-        }
-
-        $obj = $q->first();
-        if ($obj) {
-            return $obj;
-        }
-        return null;
-    }
-
-    // change to proxy object later
-    /**
-     * @return static
-     */
-    static function Load($id)
-    {
-        $key = self::_key();
-        return self::Query([$key => $id])->first();
-    }
-
-    static function _table(): \R\DB\Table
-    {
-        $class = new \ReflectionClass(get_called_class());
-        $props = $class->getStaticProperties();
-
-        $table = $class->getShortName();
-        if (isset($props["_table"]))
-            $table = $props["_table"];
-
-        return static::GetSchema()->table($table);
+        return $this->data;
     }
 
     /**
@@ -238,30 +354,16 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
      */
     static function _key()
     {
-        $class = get_called_class();
-        if (isset(self::$_keys[$class])) return self::$_keys[$class];
-
-        $ref = new ReflectionClass($class);
-        if ($ref->hasProperty("_primary_key")) {
-            self::$_keys[$class] = $ref->getStaticPropertyValue("_primary_key");
-            return self::$_keys[$class];
-        }
-
-        $keys = [];
-        foreach (static::__attributes() as $attribute) {
-            if ($attribute["Key"] == "PRI") {
-                $keys[] = $attribute["Field"];
+        $adapter = self::GetSchema()->getAdapter();
+        $primaryKey = "";
+        $meta = Factory::createSourceFromAdapter($adapter);
+        foreach ($meta->getConstraints(static::class) as $constraint) {
+            if ($constraint->getType() == "PRIMARY KEY") {
+                $primaryKey = $constraint->getColumns()[0];
+                break;
             }
         }
-
-        if (count($keys) == 0) {
-            self::$_keys[$class] = null;
-        } elseif (count($keys) == 1) {
-            self::$_keys[$class] = $keys[0];
-        } else {
-            self::$_keys[$class] = $keys;
-        }
-        return self::$_keys[$class];
+        return $primaryKey;
     }
 
     // get the attributes of the model
@@ -269,7 +371,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     {
         if ($name) {
             foreach (self::__attributes() as $attribute) {
-                if ($attribute["Field"] == $name) {
+                if ($attribute->getName() == $name) {
                     return $attribute;
                 }
             }
@@ -279,253 +381,9 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         return self::__attributes();
     }
 
-    static function __attributes(): array
+    static function __attributes()
     {
-        $class = get_called_class();
-        if (!isset(self::$_attributes[$class])) {
-            self::$_attributes[$class] = static::_table()->describe();
-        }
-        return self::$_attributes[$class];
-    }
-
-    /**
-     * get the database set of the model before save
-     */
-    public function getDBSet(): array
-    {
-        $set = $this->getDirty();
-
-        foreach ($this->__fields() as $field) {
-            if (property_exists($this, $field)) {
-                $set[$field] = $this->$field;
-            }
-        }
-
-        foreach ($this->__fields() as $field) {
-
-            $value = null;
-            if (isset($set[$field])) {
-                $value = $set[$field];
-            }
-
-            $attribute = $this->__attribute($field);
-
-            //skip primary key
-            if ($attribute["Key"] == "PRI") {
-                continue;
-            }
-
-
-            $extra = $attribute["Extra"];
-
-
-            if ($extra == "STORED GENERATED" || $extra == "VIRTUAL GENERATED") {
-                continue;
-            }
-
-            if ($value instanceof UploadedFileInterface) {
-                $value = $value->getStream()->getContents();
-            }
-
-            $type = explode("(", $attribute["Type"])[0];
-
-            if ($attribute["Type"] == "json") {
-                $value = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                if ($value === false) {
-                    $value = null;
-                }
-            }
-
-            if (($attribute["Type"] == "longtext" || $attribute["Type"] == "text") && is_object($value)) {
-                $value = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                if ($value === false) {
-                    $value = null;
-                }
-            }
-
-
-            if ($attribute["Null"] == "NO" && ($value === null || $value === "")) {
-
-                if (in_array($type, self::NUMERIC_DATA_TYPE)) {
-                    $value = 0;
-                } else {
-                    $value = "";
-                }
-            }
-
-
-            //如果是uni 而value是"",直接set null, 因為uniqie key 不會check null value
-            if ($attribute["Key"] == "UNI" && $value === "") {
-                $value = null;
-            }
-
-            if ($value === "") {
-                if ($type == "date" || $type == "datetime" || $type == "time" || $type == "enum") {
-                    $value = null;
-                }
-            }
-
-            if (in_array($type, self::NUMERIC_DATA_TYPE) && $attribute["Null"] == "YES" && $value === "") {
-                $set[$field] = null;
-                continue;
-            }
-
-            if (is_array($value)) {
-                $value = implode(",", $value);
-            }
-
-            if ($value === false) {
-                $value = 0;
-            } elseif ($value === true) {
-                $value = 1;
-            }
-
-            if ($value !== null) {
-                $set[$field] = $value;
-            }
-        }
-
-        return $set;
-    }
-
-
-    function save()
-    {
-
-        $error = $this->getValidator()->validate($this);
-        if ($error->count() !== 0) {
-            throw new Exception($error->get(0)->getMessage());
-        }
-
-        $dispatcher = self::GetSchema()->eventDispatcher();
-        $gateway = static::__table_gateway();
-
-        $key = static::_key();
-
-        if ($this->$key) { // update
-            $mode = "update";
-        } else { // insert
-            $mode = "insert";
-        }
-
-        if ($mode == "insert") {
-
-            $dispatcher->dispatch(new Event\BeforeInsert($this));
-
-            $records = $this->getDBSet();
-
-            $ret = $gateway->insert($records);
-
-            $this->$key = $gateway->getLastInsertValue(); //save the id
-
-            //move the data to original
-            $this->_original = $this->_fields;
-            foreach ($this->__fields() as $field) {
-                if (property_exists($this, $field)) {
-                    $this->_original[$field] = $this->$field;
-                }
-            }
-
-            $this->_fields = [];
-
-            $dispatcher->dispatch(new Event\AfterInsert($this));
-        } else { //update
-            $dispatcher->dispatch(new Event\BeforeUpdate($this));
-
-            $records = [];
-            $records = $this->getDBSet();
-
-            $records[$key] = $this->$key;
-
-            $ret = $gateway->update($records, [$key => $this->$key]);
-            $dispatcher->dispatch(new Event\AfterUpdate($this));
-
-            //move the data to original
-            foreach ($this->_fields as $field => $value) {
-                $this->_original[$field] = $value;
-            }
-            foreach ($this->__fields() as $field) {
-                if (property_exists($this, $field)) {
-                    $this->_original[$field] = $this->$field;
-                }
-            }
-            $this->_changed = $this->_fields;
-            $this->_fields = [];
-        }
-
-        $dispatcher->dispatch(new Event\BeforeUpdate($this));
-
-
-        return $ret;
-    }
-
-    static function __table_gateway()
-    {
-        return new TableGateway(self::_table()->getTable(), static::GetSchema()->getAdapter());
-    }
-
-    function _id()
-    {
-        $key = $this->_key();
-        if (is_array($key)) {
-            $id = [];
-            foreach ($key as $k) {
-                $id[$k] = $this->$k;
-            }
-            return $id;
-        }
-        return $this->$key;
-    }
-
-    function delete()
-    {
-        $key = static::_key();
-        $gateway = static::__table_gateway();
-        $dispatcher = self::GetSchema()->eventDispatcher();
-        $dispatcher->dispatch(new Event\BeforeDelete($this));
-        if (is_array($key)) {
-            $result = $gateway->delete($this->_id());
-        } else {
-            $result = $gateway->delete([$key => $this->$key]);
-        }
-        $dispatcher->dispatch(new Event\AfterDelete($this));
-        return $result;
-    }
-
-    function bind($rs)
-    {
-        if (is_object($rs)) { // convert to array
-            $rs = (array)$rs;
-        }
-
-        $fields = $this->__fields();
-
-        foreach ($rs as $k => $v) {
-            if (!in_array($k, $fields)) continue;
-            if ($v === null) continue;
-            if ($v === "") {
-                //if this field is nullable, set to null
-                $attribute = $this->__attribute($k);
-                if ($attribute["Null"] == "YES") {
-                    $this->$k = null;
-                }
-            } else {
-                $this->$k = $v;
-            }
-        }
-        /* 
-        foreach (array_column(self::__attributes(), "Field") as $field) {
-            if (is_object($rs)) {
-                if (property_exists($rs, $field)) {
-                    $this->$field = $rs->$field;
-                }
-            } else {
-                if (array_key_exists($field, $rs)) {
-                    $this->$field = $rs[$field];
-                }
-            }
-        } */
-        return $this;
+        return self::_table()->columns();
     }
 
     function __call($class_name, $args)
@@ -547,7 +405,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         }
 
         $key = forward_static_call(array($class, "_key"));
-        if (self::__attribute($key)) {
+        if (self::_table()->column($key)) {
             $id = $this->$key;
             if (!$id) return null;
             return $class::Get($this->$key);
@@ -562,138 +420,17 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
 
     /**
-     * @return Query<static> & iterable<static>
-     * @param Where|\Closure|string|array|Predicate\PredicateInterface $predicate
+     * @deprecated
      */
-    static function Query($predicate = null, $combination = Predicate\PredicateSet::OP_AND)
+    function bind($rs)
     {
-        $query = new Query(static::class);
-        if ($predicate) {
-            $query->where($predicate, $combination);
-        }
-        return $query;
-    }
-
-
-    function &__get(string $name)
-    {
-        if (array_key_exists($name, $this->_fields)) {
-            return $this->_fields[$name];
+        if (is_object($rs)) { // convert to array
+            $rs = (array)$rs;
         }
 
-        if ($attribute = self::__attribute($name)) {
-            if (array_key_exists($name, $this->_original)) {
-                if ($attribute["Type"] == "json") { //should be assign to _fields and return pointer of array value in fields
-                    $this->_fields[$name] = $this->_original[$name];
-                    return $this->_fields[$name];
-                }
-                return $this->_original[$name];
-            }
+        $this->data = array_merge($this->data, $rs);
 
-            $default = $attribute["Default"];
-            if ($default === null && $attribute["Null"] == "YES") {
-                $null = null;
-                return $null;
-            }
 
-            $type = explode("(", $attribute["Type"])[0];
-            if ($attribute["Type"] == "tinyint(1)") { //bool
-                $v = (bool)$default;
-                return $v;
-            } elseif (in_array($type, self::INT_DATA_TYPE)) {
-                $v = (int)$default;
-                return $v;
-            } elseif (in_array($type, self::FLOAT_DATA_TYPE)) {
-                $v = (float)$default;
-                return $v;
-            } else {
-                $v = (string)$default;
-                return $v;
-            }
-        }
-
-        //relation
-        $ro = new ReflectionObject($this);
-
-        $namespace = $ro->getNamespaceName();
-        if ($namespace == "") {
-            $class = $name;
-        } else {
-            $class = $namespace . "\\" . $name;
-            if (!class_exists($class)) {
-                $class = $name;
-            }
-        }
-        if (!class_exists($class)) {
-            return $this->_fields[$name];
-        }
-
-        $key = static::_key();
-        return $class::Query([$key => $this->$key]);
+        return $this;
     }
-
-
-    public function getDirty(): array
-    {
-        //get current fields
-        $fields = $this->_fields;
-
-        $dirty = [];
-        foreach ($fields as $field => $value) {
-            if (array_key_exists($field, $this->_original)) {
-                if ($this->_original[$field] === $value) {
-                    continue;
-                } else {
-
-                    $dirty[$field] = $value;
-                }
-            } else {
-                $dirty[$field] = $value;
-            }
-        }
-
-        return $dirty;
-    }
-
-    function isDirty(?string $name = null): bool
-    {
-        if (is_null($name)) {
-            return count($this->getDirty()) > 0;
-        }
-        return $this->$name !== $this->_original[$name];
-    }
-
-    function wasChanged(?string $name = null): bool
-    {
-        if (is_null($name)) {
-            return count($this->_changed) > 0;
-        }
-        return array_key_exists($name, $this->_changed);
-    }
-
-    function getOriginal(?string $name = null)
-    {
-        if ($name === null) {
-            return $this->_original;
-        }
-
-        return $this->_original[$name];
-    }
-
-    function __set($name, $value)
-    {
-        $this->_fields[$name] = $value;
-    }
-
-    function __isset($name)
-    {
-        return array_key_exists($name, $this->_original) || array_key_exists($name, $this->_fields);
-    }
-
-    function __fields(): array
-    {
-        return array_column(self::__attributes(), "Field");
-    }
-
-
 }
