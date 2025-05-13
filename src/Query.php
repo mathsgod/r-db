@@ -4,6 +4,7 @@ namespace R\DB;
 
 use Laminas\Db\Sql\Select;
 use Exception;
+use Generator;
 use IteratorAggregate;
 use Laminas\Db\Adapter\Driver\DriverInterface;
 use Laminas\Db\Adapter\ParameterContainer;
@@ -61,6 +62,36 @@ class Query extends Select implements IteratorAggregate
     public function getClassName()
     {
         return $this->class;
+    }
+
+    public function cursor()
+    {
+        $args = [];
+        $sql = $this->getSqlString($this->schema->getPlatform());
+        $this->statement = $this->schema->prepare($sql);
+        $this->statement->execute();
+
+        $args=[];
+        $ref_class = new ReflectionClass($this->class);
+        if ($constructor = $ref_class->getConstructor()) {
+            $ref_params = array_map(function (ReflectionParameter $item) {
+                return $item->getType()->getName();
+            }, $constructor->getParameters());
+            $container = $this->schema->getContainer();
+            foreach ($ref_params as $param) {
+                if ($container->has($param)) {
+                    $args[] = $container->get($param);
+                } else {
+                    $args[] = null;
+                }
+            }
+        }
+
+        $this->statement->setFetchMode(PDO::FETCH_CLASS, $this->class, $args);
+
+        while ($row = $this->statement->fetch()) {
+            yield $row;
+        }
     }
 
     /**
