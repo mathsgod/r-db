@@ -5,6 +5,7 @@ namespace R\DB;
 use Closure;
 use Laminas\Db\Adapter\Adapter;
 use Laminas\Db\Sql\Ddl\AlterTable;
+use Laminas\Db\Sql\Ddl\Column\Column;
 use Laminas\Db\Sql\Ddl\Column\ColumnInterface;
 use Laminas\Db\Sql\Expression;
 use Laminas\Db\Sql\Insert;
@@ -18,6 +19,69 @@ use Laminas\Hydrator\ObjectPropertyHydrator;
 
 class Table extends TableGateway
 {
+    function getColumn(string $columnName)
+    {
+        $metadata = \Laminas\Db\Metadata\Source\Factory::createSourceFromAdapter($this->adapter);
+        return $metadata->getColumn($columnName, $this->table);
+    }
+
+    function renameColumn(string $oldName, string $newName)
+    {
+        $column = $this->getColumn($oldName);
+
+        // 取得原本的型別與屬性
+        $type = $column->getDataType();
+        $nullable = $column->isNullable();
+        $default = $column->getColumnDefault();
+        $length = $column->getCharacterMaximumLength();
+        $precision = $column->getNumericPrecision();
+        $scale = $column->getNumericScale();
+
+        // 根據型別建立對應的 Column 物件
+        switch (strtolower($type)) {
+            case 'varchar':
+            case 'char':
+                $newColumn = new \Laminas\Db\Sql\Ddl\Column\Varchar($newName, $length, $nullable, $default);
+                break;
+            case 'int':
+            case 'integer':
+                $newColumn = new \Laminas\Db\Sql\Ddl\Column\Integer($newName, $nullable, $default);
+                break;
+            case 'text':
+                $newColumn = new \Laminas\Db\Sql\Ddl\Column\Text($newName, $nullable, $default);
+                break;
+            case 'decimal':
+                $newColumn = new \Laminas\Db\Sql\Ddl\Column\Decimal($newName, $precision, $scale, $nullable, $default);
+                break;
+            // 其他型別請依需求補齊
+            case 'datetime':
+            case 'timestamp':
+                $newColumn = new \Laminas\Db\Sql\Ddl\Column\Datetime($newName, $nullable, $default);
+                break;
+            case 'date':
+                $newColumn = new \Laminas\Db\Sql\Ddl\Column\Date($newName, $nullable, $default);
+                break;
+            case 'float':
+                $newColumn = new \Laminas\Db\Sql\Ddl\Column\Floating($newName, $nullable, $default);
+                break;
+            case 'boolean':
+            case 'tinyint':
+                $newColumn = new \Laminas\Db\Sql\Ddl\Column\Boolean($newName, $nullable, $default);
+                break;
+            // 其他型別請依需求補齊
+            default:
+                // fallback: 用最基本的 Column
+                $newColumn = new Column($newName, $nullable, $default);
+                break;
+        }
+
+        $alter = new AlterTable($this->table);
+        $alter->changeColumn($oldName, $newColumn);
+
+        $sql = new Sql($this->adapter);
+        return $this->execute($sql->buildSqlString($alter));
+    }
+
     function getPrimaryKeys(): array
     {
         $ret = array_filter($this->describe(), function ($o) {
@@ -103,22 +167,15 @@ class Table extends TableGateway
         return $metadata->getColumns($this->table);
     }
 
-    public function column(string $field): ?Column
+    public function column(string $field)
     {
-        $ret = $this->query("SHOW COLUMNS FROM `{$this->table}` WHERE Field='$field'")[0];
-
-        if (empty($ret)) {
+        $metadata = \Laminas\Db\Metadata\Source\Factory::createSourceFromAdapter($this->adapter);
+        $columnNames = $metadata->getColumnNames($this->table);
+        if (!in_array($field, $columnNames)) {
             return null;
         }
 
-        $col = new Column($this);
-
-        foreach ($ret as $k => $v) {
-            if (property_exists($col, $k)) {
-                $col->$k = $v;
-            }
-        }
-        return $col;
+        return $metadata->getColumn($field, $this->table);
     }
 
 

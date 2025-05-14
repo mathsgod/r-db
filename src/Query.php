@@ -128,9 +128,9 @@ class Query extends Select implements IteratorAggregate
     {
         $c = clone $this;
         $c->limit(1);
-        $result = $c->execute();
-        if ($result->count()) {
-            return $result->toArray()[0];
+        $result = $c->toArray();
+        if (count($result) > 0) {
+            return $result[0];
         }
         return null;
     }

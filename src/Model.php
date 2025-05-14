@@ -238,7 +238,19 @@ abstract class Model extends RowGateway
     public function __set($name, $value)
     {
         if (is_array($value)) {
-            return parent::__set($name, json_encode($value));
+
+            //check if the value is a json
+            $adapter = $this->sql->getAdapter();
+            $metadata = \Laminas\Db\Metadata\Source\Factory::createSourceFromAdapter($adapter);
+            $column = $metadata->getColumn($name, $this->sql->getTable());
+            if ($column->getDataType() == "json") {
+                $value = json_encode($value, 0, JSON_UNESCAPED_UNICODE);
+            } else {
+                $value = implode(",", $value);
+            }
+
+
+            return parent::__set($name, $value);
         }
 
         return parent::__set($name, $value);
@@ -261,12 +273,6 @@ abstract class Model extends RowGateway
     {
         $key = $this->getPrimaryKey();
 
-        if (array_key_exists($key, $this->original)) {
-            $this->data[$key] = $this->original[$key];
-        } else {
-            $this->data[$key] = null;
-        }
-
         $adapter = $this->sql->getAdapter();
         $metadata = \Laminas\Db\Metadata\Source\Factory::createSourceFromAdapter($adapter);
 
@@ -277,10 +283,26 @@ abstract class Model extends RowGateway
             if ($column->getDataType() == "int" && $value === "") {
                 if ($column->isNullable()) {
                     $this->data[$name] = null;
+                    continue;
+                }
+            }
+
+
+
+            if ($column->getDataType() == "int" && !$column->isNullable()) {
+                
+                if ($value === "" || is_null($value)) {
+                    $this->data[$name] = 0;
+                    continue;
                 }
             }
         }
 
+        if (array_key_exists($key, $this->original)) {
+            $this->data[$key] = $this->original[$key];
+        } else {
+            $this->data[$key] = null;
+        }
 
 
 
@@ -338,7 +360,8 @@ abstract class Model extends RowGateway
         if (is_null($name)) {
             return count($this->getDirty()) > 0;
         }
-        return $this->data[$name] !== $this->original[$name];
+
+        return isset($this->data[$name]);
     }
 
     function getDirty(): array

@@ -16,7 +16,7 @@ class Testing extends Model
 
 class Testing2 extends Model
 {
-    public $name;
+   
 }
 
 class Testing3 extends Model

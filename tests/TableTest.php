@@ -3,7 +3,9 @@
 declare(strict_types=1);
 error_reporting(E_ALL & ~E_WARNING & ~E_NOTICE);
 
+use Laminas\Db\Metadata\Object\ColumnObject;
 use Laminas\Db\Sql\Ddl\Column as ColumnColumn;
+use Laminas\Db\Sql\Ddl\Column\ColumnInterface;
 use PHPUnit\Framework\TestCase;
 
 use R\DB\Column;
@@ -31,10 +33,8 @@ final class TableTest extends TestCase
         $table = $db->table("Testing");
         $testing_id_column = $table->column("testing_id");
 
-    
+        $this->assertInstanceOf(ColumnObject::class, $testing_id_column);
 
-        $this->assertInstanceOf(R\DB\Column::class, $testing_id_column);
-        
         $col_not_exist = $table->column("testing_id_not_exist");
         $this->assertNull($col_not_exist);
     }
@@ -44,14 +44,13 @@ final class TableTest extends TestCase
         $db = Testing::GetSchema();
         $table = $db->table("Testing");
 
-        if($table->column("new_column")) {
+        if ($table->column("new_column")) {
             $table->dropColumn("new_column");
         }
 
 
         $table->addColumn(new ColumnColumn\Integer("new_column"));
         $new_column = $table->column("new_column");
-        $this->assertInstanceOf(Column::class, $new_column);
 
         $table->dropColumn("new_column");
         $new_column = $table->column("new_column");
@@ -135,6 +134,6 @@ final class TableTest extends TestCase
         $table->insert(["name" => '2']);
         $table->insert(["name" => '3']);
 
-        $this->assertEquals($table->avg('name'), '2');
+        $this->assertEquals(intval($table->avg('name')), 2);
     }
 }

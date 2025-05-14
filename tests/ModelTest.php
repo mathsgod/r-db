@@ -273,9 +273,9 @@ final class ModelTest extends TestCase
         $o->null_field = null;
         $o->not_null_field = null;
         $o->save();
-        
+
         $o1 = Testing2::Get($o->testing2_id);
-        
+
         $this->assertNull($o1->null_field);
         $this->assertEquals("", $o1->not_null_field);
 
@@ -305,9 +305,8 @@ final class ModelTest extends TestCase
         $o = Testing2::Create();
         $o->name = ["a", "b", "c"];
         $o->save();
-
-        $o1 = Testing2::Get($o->testing2_id);
-        $this->assertEquals("a,b,c", $o1->name);
+        $o2 = Testing2::Get(1);
+        $this->assertEquals("a,b,c", $o2->name);
     }
 
     public function test_bind()

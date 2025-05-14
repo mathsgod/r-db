@@ -14,17 +14,15 @@ final class ColumnTest extends TestCase
         $db = Testing::GetSchema();
         $table = $db->table("Testing");
 
-        $col_name = $table->column("name");
-        $col_name->rename("name1");
+        $table->renameColumn("name", "name1");
 
         $new_name = $table->column("name1");
-        $this->assertEquals($new_name->Field, "name1");
+        $this->assertEquals($new_name->getName(), "name1");
 
-        $new_name = $table->column("name1");
-        $new_name->rename("name");
+        $table->renameColumn("name1", "name");
 
         $org_name = $table->column("name");
 
-        $this->assertEquals($org_name->Field, "name");
+        $this->assertEquals($org_name->getName(), "name");
     }
 }
