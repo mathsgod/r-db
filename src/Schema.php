@@ -157,7 +157,10 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
     function getValidator(): ValidatorInterface
     {
         if (!$this->validator) {
-            $this->validator = Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
+            $this->validator = Validation::createValidatorBuilder()
+                ->enableAnnotationMapping(true)
+                ->addDefaultDoctrineAnnotationReader()
+                ->getValidator();
         }
         return $this->validator;
     }

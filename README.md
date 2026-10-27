@@ -2,6 +2,41 @@
 
 # r-db
 
+## PHP compatibility (v4)
+
+The v4 branch requires PHP 8.3 or later. Core ORM behavior is retained.
+PSR HTTP Message 1 and 2 are accepted, including uploaded-file conversion.
+The optional GraphQLite mapper's return type is compatible with newer
+GraphQLite interfaces; GraphQLite 6.2.3 and 8.3.1 are covered by regression tests.
+
+## Regression tests
+
+```sh
+composer install
+php8.3 vendor/bin/phpunit --testsuite unit
+```
+
+The default suite covers model defaults, dirty tracking, JSON references and
+GraphQL mappings. It also includes MySQL integration tests for CRUD, JSON,
+sorting, pagination, transactions and uploaded files. Integration tests skip
+unless an isolated database is explicitly configured:
+
+```sh
+RDB_TEST_DATABASE=rdb_test_compat \
+RDB_TEST_HOST=127.0.0.1 RDB_TEST_PORT=3306 \
+RDB_TEST_USER=root RDB_TEST_PASSWORD=test-password \
+php8.3 vendor/bin/phpunit
+```
+
+Use a disposable database beginning with `rdb_test_`: the integration suite
+creates and truncates its `RdbCompatibilityRecord` table. The original tests
+directly under `tests/` use a different, manually provisioned database fixture
+and are not included in the new PHPUnit configuration.
+
+Warnings, notices and deprecations fail the suite. With `mathsgod/php-util`
+1.5.2 or later, all 11 regression tests (56 assertions), including the MySQL
+integration tests, pass on PHP 8.3, 8.4 and 8.5 without warnings or deprecations.
+
 ## Install
 ```
 composer require mathsgod/r-db

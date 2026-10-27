@@ -4,3 +4,4 @@
 test.bat
 test.php
 .env
+/.phpunit.cache/

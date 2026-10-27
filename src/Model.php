@@ -267,7 +267,7 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
     }
 
     // get the attributes of the model
-    static function __attribute(string $name = null)
+    static function __attribute(?string $name = null)
     {
         if ($name) {
             foreach (self::__attributes() as $attribute) {
@@ -547,19 +547,20 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
             $default = $attribute["Default"];
             if ($default === null && $attribute["Null"] == "YES") {
-                return null;
+                return $default;
             }
 
             $type = explode("(", $attribute["Type"])[0];
             if ($attribute["Type"] == "tinyint(1)") { //bool
-                return (bool)$default;
+                $default = (bool)$default;
             } elseif (in_array($type, self::INT_DATA_TYPE)) {
-                return (int)$default;
+                $default = (int)$default;
             } elseif (in_array($type, self::FLOAT_DATA_TYPE)) {
-                return (float)$default;
+                $default = (float)$default;
             } else {
-                return (string)$default;
+                $default = (string)$default;
             }
+            return $default;
         }
 
         //relation
@@ -579,7 +580,8 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         }
 
         $key = static::_key();
-        return $class::Query([$key => $this->$key]);
+        $query = $class::Query([$key => $this->$key]);
+        return $query;
     }
 
 
@@ -596,22 +598,22 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
 
         $dirty = [];
         foreach ($fields as $field => $value) {
-            if ($this->_original[$field] !== $value) {
+            if (($this->_original[$field] ?? null) !== $value) {
                 $dirty[$field] = $this->$field;
             }
         }
         return $dirty;
     }
 
-    function isDirty(string $name = null): bool
+    function isDirty(?string $name = null): bool
     {
         if (is_null($name)) {
             return count($this->getDirty()) > 0;
         }
-        return $this->$name !== $this->_original[$name];
+        return $this->$name !== ($this->_original[$name] ?? null);
     }
 
-    function wasChanged(string $name = null): bool
+    function wasChanged(?string $name = null): bool
     {
         if (is_null($name)) {
             return count($this->_changed) > 0;
@@ -619,13 +621,13 @@ abstract class Model implements ModelInterface, IteratorAggregate, JsonSerializa
         return array_key_exists($name, $this->_changed);
     }
 
-    function getOriginal(string $name = null)
+    function getOriginal(?string $name = null)
     {
         if ($name === null) {
             return $this->_original;
         }
 
-        return $this->_original[$name];
+        return $this->_original[$name] ?? null;
     }
 
     function __set($name, $value)
