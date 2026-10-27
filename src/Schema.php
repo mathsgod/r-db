@@ -4,6 +4,8 @@ namespace R\DB;
 
 use PDO;
 use PDOStatement;
+use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\Common\Annotations\PsrCachedReader;
 use Laminas\Db\Adapter\Adapter;
 use Laminas\Db\Adapter\AdapterAwareInterface;
 use Laminas\Db\Adapter\AdapterAwareTrait;
@@ -18,6 +20,8 @@ use Laminas\Db\TableGateway\TableGatewayInterface;
 use League\Event\EventDispatcherAware;
 use League\Event\EventDispatcherAwareBehavior;
 use Symfony\Component\Validator\Validation;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Validator\Mapping\Loader\AnnotationLoader;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterface
@@ -158,8 +162,7 @@ class Schema implements AdapterAwareInterface, EventDispatcherAware, PDOInterfac
     {
         if (!$this->validator) {
             $this->validator = Validation::createValidatorBuilder()
-                ->enableAnnotationMapping(true)
-                ->addDefaultDoctrineAnnotationReader()
+                ->addLoader(new AnnotationLoader(new PsrCachedReader(new AnnotationReader(), new ArrayAdapter())))
                 ->getValidator();
         }
         return $this->validator;

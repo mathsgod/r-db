@@ -33,9 +33,15 @@ creates and truncates its `RdbCompatibilityRecord` table. The original tests
 directly under `tests/` use a different, manually provisioned database fixture
 and are not included in the new PHPUnit configuration.
 
-Warnings, notices and deprecations fail the suite. With `mathsgod/php-util`
-1.5.2 or later, all 11 regression tests (56 assertions), including the MySQL
-integration tests, pass on PHP 8.3, 8.4 and 8.5 without warnings or deprecations.
+Warnings, notices and unexpected deprecations fail the suite. All 14 regression
+tests (65 assertions), including the MySQL integration tests, pass on PHP 8.3,
+8.4 and 8.5 with Symfony Validator 6.4 and `mathsgod/php-util` 1.5.2 or later.
+
+Symfony Validator `^5.3 || ^6.4` is accepted. Both PHP attributes and legacy
+Doctrine annotations retain their validation behavior. Symfony 6.4 deliberately
+emits a deprecation when a legacy annotation constraint is used; the regression
+test explicitly checks that warning. Prefer PHP attributes (`#[Assert\NotBlank]`)
+for code that must run without this upstream deprecation.
 
 ## Install
 ```

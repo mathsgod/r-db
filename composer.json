@@ -17,7 +17,7 @@
         "laminas/laminas-db": "^2.12",
         "laminas/laminas-hydrator": "^4.2",
         "psr/event-dispatcher": "^1.0",
-        "symfony/validator": "^5.3",
+        "symfony/validator": "^5.3 || ^6.4",
         "doctrine/annotations": "^1.13",
         "league/event": "^3.0",
         "symfony/cache": "^5 | ^6.0",
